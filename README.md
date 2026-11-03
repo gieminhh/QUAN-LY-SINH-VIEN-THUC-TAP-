@@ -167,11 +167,11 @@ Môi trường đã dùng để kiểm tra: Windows, .NET 10, MySQL Server 8.0. 
 ### 6.2. Tải mã nguồn
 
 ```powershell
-git clone https://github.com/gieminhh/cnpm-n10-prj36.git
+git clone https://github.com/gieminhh/QUAN-LY-SINH-VIEN-THUC-TAP-.git cnpm-n10-prj36
 cd cnpm-n10-prj36
 ```
 
-Repo đang ở chế độ riêng tư; tài khoản GitHub cần được cấp quyền truy cập để clone.
+Lệnh trên tải mã nguồn vào thư mục `cnpm-n10-prj36`. Repo hiện công khai trên GitHub.
 
 ### 6.3. Nhập CSDL
 
@@ -409,6 +409,6 @@ Kiểm tra kết nối Internet tới CDN được tham chiếu trong layout. C�
 
 **Nhóm thực hiện:** N10 — Đề tài 36, học phần Công nghệ phần mềm, Trường Đại học Vinh.
 
-**Mã nguồn:** [gieminhh/cnpm-n10-prj36](https://github.com/gieminhh/cnpm-n10-prj36).
+**Mã nguồn:** [gieminhh/QUAN-LY-SINH-VIEN-THUC-TAP-](https://github.com/gieminhh/QUAN-LY-SINH-VIEN-THUC-TAP-).
 
 **Phạm vi tài liệu:** phiên bản Sprint 1 và bản CSDL demo ngày 03/11/2026.
