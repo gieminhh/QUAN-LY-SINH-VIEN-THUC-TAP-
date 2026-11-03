@@ -1,0 +1,600 @@
+/* ==========================================================================
+   USMART PORTAL - TRƯỜNG ĐẠI HỌC VINH (VINH UNIVERSITY)
+   Pixel-perfect clone using Bootstrap 5, Bootstrap Icons, and Vanilla CSS/JS
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --nav-blue: #397ac3;
+  --nav-blue-dark: #2d68a8;
+  --title-blue: #1976d2;
+  --subtitle-blue: #397ac3;
+  --badge-blue: #448fff;
+  --border-color: #e5e7eb;
+  --text-dark: #4b5563;
+  --text-muted: #6b7280;
+  --hover-bg: #f3f6fb;
+  --active-bg: #eaf1fa;
+  --sidebar-w: 156px;
+  --navbar-h: 32px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text-dark);
+  background-color: #ffffff;
+  user-select: none;
+}
+
+/* ==========================================================================
+   TOP NAVIGATION BAR (Exact 32px Height)
+   ========================================================================== */
+.top-navbar {
+  height: var(--navbar-h);
+  background-color: var(--nav-blue);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px 0 5px;
+  z-index: 1050;
+  position: relative;
+}
+
+/* Left Section: Hamburger + Brand + Semester */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hamburger-btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+.brand-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #ffffff;
+  padding: 0.5px;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.school-name {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.system-name {
+  font-size: 8px;
+  font-weight: 400;
+  opacity: 0.95;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.nav-divider {
+  width: 1px;
+  height: 16px;
+  background-color: rgba(255, 255, 255, 0.4);
+  margin: 0 6px 0 4px;
+}
+
+.semester-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* Right Section: Search + App Grid + Bell + Profile */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.search-input-group {
+  display: flex;
+  align-items: center;
+  height: 20px;
+}
+
+.search-input-group .form-control {
+  font-size: 9.5px;
+  padding: 1px 6px;
+  height: 20px;
+  border: 1px solid #ced4da;
+  border-radius: 2px 0 0 2px;
+  width: 148px;
+  background-color: #ffffff;
+  box-shadow: none;
+}
+
+.search-input-group .form-control::placeholder {
+  color: #8c8c8c;
+  font-size: 9.5px;
+}
+
+.search-btn {
+  background-color: #ffffff;
+  border: 1px solid #ced4da;
+  border-left: none;
+  color: #666666;
+  padding: 0 5px;
+  height: 20px;
+  font-size: 9.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.advanced-filter-btn {
+  background-color: #e6e6e6;
+  border: 1px solid #ced4da;
+  border-left: 1px solid #d0d0d0;
+  border-radius: 0 2px 2px 0;
+  color: #555555;
+  font-size: 9px;
+  height: 20px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nav-icon-btn {
+  color: #ffffff;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.nav-icon-btn:hover {
+  color: #e0f2fe;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+.user-name {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+}
+
+.user-avatar-icon {
+  font-size: 19px;
+  line-height: 1;
+}
+
+/* ==========================================================================
+   APP CONTAINER & LAYOUT
+   ========================================================================== */
+.app-container {
+  display: flex;
+  height: calc(100vh - var(--navbar-h));
+  width: 100vw;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   LEFT SIDEBAR (156px Width, 16 Compact Items)
+   ========================================================================== */
+.app-sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background-color: #ffffff;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: margin-left 0.2s ease, width 0.2s ease;
+  z-index: 1020;
+}
+
+.app-sidebar.collapsed {
+  margin-left: calc(-1 * var(--sidebar-w));
+}
+
+.sidebar-header {
+  height: 26px;
+  min-height: 26px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--title-blue);
+  font-weight: 700;
+  font-size: 9.5px;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+}
+
+.sidebar-header i {
+  font-size: 10.5px;
+  color: var(--title-blue);
+}
+
+/* Menu list */
+.sidebar-menu {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-menu::-webkit-scrollbar {
+  width: 3px;
+}
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.menu-item {
+  display: block;
+  flex: 0 0 29px;
+  height: 29px;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 6px;
+  color: #4b5563;
+  font-size: 9.5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.1s, color 0.1s;
+}
+
+.menu-link:hover {
+  background-color: var(--hover-bg);
+  color: var(--title-blue);
+}
+
+.menu-link.active {
+  background-color: var(--active-bg);
+  color: var(--title-blue);
+  font-weight: 600;
+}
+
+.menu-link-content {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.menu-icon {
+  font-size: 10px;
+  color: #6b7280;
+  width: 13px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.menu-link:hover .menu-icon,
+.menu-link.active .menu-icon {
+  color: var(--title-blue);
+}
+
+.menu-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-chevron {
+  font-size: 7.5px;
+  color: #9ca3af;
+  margin-left: 2px;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.menu-item.open {
+  height: auto;
+}
+
+.menu-item.open > .menu-link .menu-chevron {
+  transform: rotate(180deg);
+}
+
+/* Accordion Submenu */
+.submenu {
+  list-style: none;
+  padding: 1px 0;
+  margin: 0;
+  background-color: #f8fafc;
+  display: none;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.menu-item.open > .submenu {
+  display: block;
+}
+
+.submenu-link {
+  display: flex;
+  align-items: center;
+  padding: 3px 6px 3px 22px;
+  color: #4b5563;
+  font-size: 9px;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+}
+
+.submenu-link::before {
+  content: '•';
+  position: absolute;
+  left: 13px;
+  color: #9ca3af;
+  font-size: 8.5px;
+}
+
+.submenu-link:hover {
+  background-color: #eef2f7;
+  color: var(--title-blue);
+}
+
+.submenu-link.active {
+  background-color: #e2e8f0;
+  color: var(--title-blue);
+  font-weight: 600;
+}
+
+/* Sidebar Footer (Search Function) */
+.sidebar-footer {
+  height: 26px;
+  min-height: 26px;
+  margin-top: auto;
+  padding: 2px 4px;
+  border-top: 1px solid var(--border-color);
+  background-color: #ffffff;
+}
+
+.sidebar-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.sidebar-search-input {
+  width: 100%;
+  height: 20px;
+  font-size: 9px;
+  padding: 1px 16px 1px 4px;
+  border: 1px solid #d1d5db;
+  border-radius: 2px;
+  outline: none;
+  color: #4b5563;
+  background-color: #ffffff;
+}
+
+.sidebar-search-input:focus {
+  border-color: var(--nav-blue);
+}
+
+.sidebar-search-icon {
+  position: absolute;
+  right: 4px;
+  font-size: 8.5px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   MAIN CONTENT AREA (CENTER VIEW)
+   ========================================================================== */
+.main-content {
+  flex: 1;
+  height: 100%;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 90px;
+  position: relative;
+  overflow-y: auto;
+}
+
+.welcome-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Badge Icon Container */
+.badge-icon-wrap {
+  margin-bottom: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-icon-svg {
+  width: 35px;
+  height: 28px;
+}
+
+.welcome-subtitle {
+  font-size: 14.5px;
+  font-weight: 400;
+  color: var(--subtitle-blue);
+  margin-bottom: 3px;
+  letter-spacing: 0.1px;
+}
+
+.welcome-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--title-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  margin-bottom: 9px;
+}
+
+.back-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--subtitle-blue);
+  font-size: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+
+.back-home-link i {
+  font-size: 10.5px;
+}
+
+.back-home-link:hover {
+  text-decoration: underline;
+  color: var(--nav-blue-dark);
+}
+
+/* ==========================================================================
+   DROPDOWNS
+   ========================================================================== */
+.dropdown-menu {
+  border-radius: 3px;
+  font-size: 11px;
+  padding: 4px 0;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #374151;
+}
+
+.dropdown-item:hover {
+  background-color: #f3f6fb;
+  color: var(--nav-blue);
+}
+
+/* Toast container */
+.toast-container {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 1090;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 768px) {
+  .nav-divider,
+  .semester-badge,
+  .search-container {
+    display: none;
+  }
+
+  .app-sidebar {
+    position: fixed;
+    top: var(--navbar-h);
+    left: 0;
+    bottom: 0;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+    transform: translateX(0);
+    transition: transform 0.2s ease;
+  }
+
+  .app-sidebar.collapsed {
+    transform: translateX(-100%);
+    margin-left: 0;
+  }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: var(--navbar-h);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 1015;
+  }
+
+  .sidebar-backdrop.show {
+    display: block;
+  }
+}

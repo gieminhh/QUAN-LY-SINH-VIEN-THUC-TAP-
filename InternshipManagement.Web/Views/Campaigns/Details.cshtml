@@ -1,0 +1,175 @@
+@model InternshipManagement.Web.ViewModels.Campaigns.CampaignDetailsViewModel
+@using InternshipManagement.Web.Models
+
+@{
+    ViewData["Title"] = "Chi tiết đợt: " + Model.Code;
+}
+
+<div class="page-container" style="max-width: 900px;">
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-info-circle-fill me-2"></i>Chi tiết đợt đào tạo
+            </h4>
+            <div class="text-muted small">Mã đợt: <span class="font-monospace fw-bold text-dark">@Model.Code</span></div>
+        </div>
+        <div class="d-flex gap-2">
+            @if (Model.CanEdit)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-pencil-square me-1"></i> Chỉnh sửa đợt
+                </a>
+            }
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Danh sách đợt
+            </a>
+        </div>
+    </div>
+
+    <!-- Status & Action Banner -->
+    <div class="card card-custom p-4 mb-4" style="background: #f8fafc;">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <span class="text-muted small d-block mb-1">Trạng thái vận hành hiện tại:</span>
+                @switch (Model.Status)
+                {
+                    case CampaignStatuses.Draft:
+                        <span class="badge bg-secondary fs-6 px-3 py-2"><i class="bi bi-file-earmark me-1"></i>Bản nháp</span>
+                        break;
+                    case CampaignStatuses.Open:
+                        <span class="badge bg-success fs-6 px-3 py-2"><i class="bi bi-door-open-fill me-1"></i>Đang mở</span>
+                        break;
+                    case CampaignStatuses.Closed:
+                        <span class="badge bg-warning text-dark fs-6 px-3 py-2"><i class="bi bi-door-closed-fill me-1"></i>Đã đóng</span>
+                        break;
+                    case CampaignStatuses.Archived:
+                        <span class="badge bg-dark fs-6 px-3 py-2"><i class="bi bi-archive-fill me-1"></i>Lưu trữ</span>
+                        break;
+                }
+            </div>
+
+            <!-- Quick Status Change Actions (US-05) -->
+            @if (Model.CanChangeStatus)
+            {
+                <div class="d-flex gap-2 flex-wrap">
+                    @if (Model.Status == CampaignStatuses.Draft)
+                    {
+                        <form asp-action="ChangeStatus" method="post" onsubmit="return confirm('Mở đợt này cho sinh viên và giảng viên tham gia?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="newStatus" value="@CampaignStatuses.Open" />
+                            <button type="submit" class="btn btn-sm btn-success px-3">
+                                <i class="bi bi-door-open-fill me-1"></i> Chuyển sang: Đang mở
+                            </button>
+                        </form>
+                    }
+                    else if (Model.Status == CampaignStatuses.Open)
+                    {
+                        <form asp-action="ChangeStatus" method="post" onsubmit="return confirm('Đóng đợt này (ngừng nhận đăng ký/thao tác mới)?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="newStatus" value="@CampaignStatuses.Closed" />
+                            <button type="submit" class="btn btn-sm btn-warning text-dark px-3">
+                                <i class="bi bi-door-closed-fill me-1"></i> Chuyển sang: Đã đóng
+                            </button>
+                        </form>
+                    }
+                    else if (Model.Status == CampaignStatuses.Closed)
+                    {
+                        <form asp-action="ChangeStatus" method="post" class="d-inline" onsubmit="return confirm('Mở lại đợt này?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="newStatus" value="@CampaignStatuses.Open" />
+                            <button type="submit" class="btn btn-sm btn-outline-success px-3">
+                                <i class="bi bi-arrow-repeat me-1"></i> Mở lại đợt
+                            </button>
+                        </form>
+
+                        <form asp-action="ChangeStatus" method="post" class="d-inline" onsubmit="return confirm('Lưu trữ đợt này? Sau khi lưu trữ sẽ không thể chỉnh sửa.');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="newStatus" value="@CampaignStatuses.Archived" />
+                            <button type="submit" class="btn btn-sm btn-dark px-3">
+                                <i class="bi bi-archive-fill me-1"></i> Lưu trữ
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="card card-custom mb-4">
+        <div class="card-header-custom">
+            Thông tin kế hoạch đào tạo
+        </div>
+        <div class="card-body p-4">
+            <h5 class="fw-bold text-dark mb-4">@Model.Name</h5>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="text-muted small">Mã đợt đào tạo</div>
+                    <div class="fw-bold font-monospace fs-6 text-primary">@Model.Code</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Loại hình đợt</div>
+                    <div class="fw-semibold">
+                        @if (Model.Kind == CampaignKinds.Project)
+                        {
+                            <span class="badge bg-primary"><i class="bi bi-mortarboard me-1"></i>Đồ án tốt nghiệp</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-info text-dark"><i class="bi bi-building me-1"></i>Thực tập doanh nghiệp</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Ngành đào tạo</div>
+                    <div class="fw-semibold">@Model.MajorName <span class="badge bg-light text-dark border">@Model.MajorCode</span></div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Khoa quản lý chuyên môn</div>
+                    <div class="fw-semibold text-dark">@Model.FacultyName</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Học kỳ & Năm học</div>
+                    <div class="fw-semibold">@Model.TermName (Năm học @Model.AcademicYear)</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Hệ đào tạo</div>
+                    <div class="fw-semibold">@(Model.TrainingSystem == "CHINH_QUY" ? "Chính quy" : Model.TrainingSystem)</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Thời gian diễn ra đợt</div>
+                    <div class="fw-semibold text-dark">
+                        <i class="bi bi-calendar-event me-1 text-primary"></i>
+                        @Model.StartDate.ToString("dd/MM/yyyy") — @Model.EndDate.ToString("dd/MM/yyyy")
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Người tạo đợt</div>
+                    <div class="fw-semibold">@Model.CreatedByFullName (<code>@Model.CreatedByUserName</code>)</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Thời gian tạo trên hệ thống</div>
+                    <div class="text-muted">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Cập nhật lần cuối</div>
+                    <div class="text-muted">@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm:ss")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

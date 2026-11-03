@@ -1,0 +1,181 @@
+@model InternshipManagement.Web.ViewModels.Users.AssignRoleScopeViewModel
+@using InternshipManagement.Web.Models
+
+@{
+    ViewData["Title"] = "Phân quyền phạm vi - " + Model.FullName;
+}
+
+<div class="page-container" style="max-width: 900px;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-shield-lock-fill me-2"></i>Phân quyền theo phạm vi
+            </h4>
+            <div class="text-muted small">Cấp quyền quản lý dữ liệu theo toàn trường, khoa, ngành hoặc theo từng đợt cụ thể</div>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Danh sách tài khoản
+        </a>
+    </div>
+
+    <!-- User Overview Card -->
+    <div class="card card-custom p-3 mb-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <strong class="fs-6">@Model.FullName</strong> (<code>@Model.UserName</code>)
+            </div>
+            <div>
+                <span class="small text-muted me-1">Vai trò đã gán:</span>
+                @foreach (var r in Model.UserRoles)
+                {
+                    <span class="badge bg-primary">@AppRoles.GetDisplayName(r)</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Scopes Table Card -->
+    <div class="card card-custom mb-4">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span>Các phạm vi quyền hiện có (@Model.ExistingScopes.Count)</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                    <tr>
+                        <th>Vai trò áp dụng</th>
+                        <th>Loại phạm vi</th>
+                        <th>Mục tiêu ủy quyền</th>
+                        <th>Thời gian cấp</th>
+                        <th>Người cấp</th>
+                        <th class="text-end pe-3">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    @if (Model.ExistingScopes.Any())
+                    {
+                        @foreach (var s in Model.ExistingScopes)
+                        {
+                            <tr>
+                                <td><span class="badge bg-secondary">@AppRoles.GetDisplayName(s.RoleName)</span></td>
+                                <td><span class="badge bg-primary">@ScopeTypes.GetDisplayName(s.ScopeType)</span></td>
+                                <td class="fw-semibold text-dark">@s.TargetDescription</td>
+                                <td class="text-muted">@s.GrantedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-muted">@(s.GrantedByName ?? "Hệ thống")</td>
+                                <td class="text-end pe-3">
+                                    <form asp-action="RemoveScope" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn gỡ bỏ phạm vi quyền này?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="scopeId" value="@s.Id" />
+                                        <input type="hidden" name="userId" value="@Model.UserId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa phạm vi này">
+                                            <i class="bi bi-trash"></i> Gỡ
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-3">
+                                Người dùng này chưa được cấp phạm vi quản lý.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add New Scope Form Card -->
+    <div class="card card-custom">
+        <div class="card-header-custom">
+            <i class="bi bi-plus-circle me-1"></i> Gán thêm phạm vi quyền mới
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="AddScope" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="UserId" />
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Chọn vai trò cần ủy quyền</label> <span class="text-danger">*</span>
+                        <select asp-for="SelectedRoleId" class="form-select form-select-sm" asp-items="Model.RoleOptions" required>
+                            <option value="">-- Chọn vai trò --</option>
+                        </select>
+                        <small class="text-muted">Chỉ hiển thị các vai trò tài khoản này đang sở hữu.</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Cấp độ phạm vi</label> <span class="text-danger">*</span>
+                        <select asp-for="SelectedScopeType" id="scopeTypeSelect" class="form-select form-select-sm" required>
+                            <option value="@ScopeTypes.Global">Toàn hệ thống</option>
+                            <option value="@ScopeTypes.Faculty">Theo Khoa</option>
+                            <option value="@ScopeTypes.Major">Theo Ngành đào tạo</option>
+                            <option value="@ScopeTypes.Campaign">Theo Đợt cụ thể</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dynamic Target Containers -->
+                <div class="mb-3 d-none" id="facultyTargetDiv">
+                    <label class="form-label small fw-semibold">Chọn Khoa áp dụng</label> <span class="text-danger">*</span>
+                    <select asp-for="SelectedFacultyId" class="form-select form-select-sm" asp-items="Model.FacultyOptions">
+                        <option value="">-- Chọn Khoa --</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 d-none" id="majorTargetDiv">
+                    <label class="form-label small fw-semibold">Chọn Ngành đào tạo áp dụng</label> <span class="text-danger">*</span>
+                    <select asp-for="SelectedMajorId" class="form-select form-select-sm" asp-items="Model.MajorOptions">
+                        <option value="">-- Chọn Ngành --</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 d-none" id="campaignTargetDiv">
+                    <label class="form-label small fw-semibold">Chọn Đợt thực tập / Đồ án áp dụng</label> <span class="text-danger">*</span>
+                    <select asp-for="SelectedCampaignId" class="form-select form-select-sm" asp-items="Model.CampaignOptions">
+                        <option value="">-- Chọn Đợt --</option>
+                    </select>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3">Quay lại danh sách</a>
+                    <button type="submit" class="btn btn-sm btn-primary px-4">
+                        <i class="bi bi-shield-plus me-1"></i> Gán phạm vi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const scopeSelect = document.getElementById('scopeTypeSelect');
+        const facultyDiv = document.getElementById('facultyTargetDiv');
+        const majorDiv = document.getElementById('majorTargetDiv');
+        const campaignDiv = document.getElementById('campaignTargetDiv');
+
+        function updateTargetVisibility() {
+            const val = scopeSelect.value;
+            facultyDiv.classList.add('d-none');
+            majorDiv.classList.add('d-none');
+            campaignDiv.classList.add('d-none');
+
+            if (val === 'FACULTY') {
+                facultyDiv.classList.remove('d-none');
+            } else if (val === 'MAJOR') {
+                majorDiv.classList.remove('d-none');
+            } else if (val === 'CAMPAIGN') {
+                campaignDiv.classList.remove('d-none');
+            }
+        }
+
+        scopeSelect.addEventListener('change', updateTargetVisibility);
+        updateTargetVisibility();
+    });
+</script>
+}

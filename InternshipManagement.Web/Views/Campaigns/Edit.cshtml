@@ -1,0 +1,111 @@
+@model InternshipManagement.Web.ViewModels.Campaigns.CampaignCreateEditViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa đợt đào tạo";
+}
+
+<div class="page-container" style="max-width: 860px;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa đợt: @Model.Code
+            </h4>
+            <div class="text-muted small">Cập nhật thông tin kế hoạch và trạng thái vận hành của đợt</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-info btn-sm">
+                <i class="bi bi-eye"></i> Xem chi tiết
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Danh sách đợt
+            </a>
+        </div>
+    </div>
+
+    <div class="card card-custom">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span>Thông tin đợt đào tạo</span>
+            <span class="badge bg-secondary">ID: @Model.Id</span>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Code" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="Code" class="form-control form-control-sm font-monospace">
+                        <span asp-validation-for="Code" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-8">
+                        <label asp-for="Name" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="Name" class="form-control form-control-sm">
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Kind" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <select asp-for="Kind" class="form-select form-select-sm" asp-items="Model.KindOptions"></select>
+                        <span asp-validation-for="Kind" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Status" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <select asp-for="Status" class="form-select form-select-sm" asp-items="Model.StatusOptions"></select>
+                        <span asp-validation-for="Status" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="TrainingSystem" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="TrainingSystem" class="form-control form-control-sm"
+                               value="@(Model.TrainingSystem == "CHINH_QUY" ? "Chính quy" : Model.TrainingSystem)" placeholder="Ví dụ: Chính quy">
+                        <span asp-validation-for="TrainingSystem" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <label asp-for="TermId" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <select asp-for="TermId" class="form-select form-select-sm" asp-items="Model.TermOptions"></select>
+                        <span asp-validation-for="TermId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="MajorId" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <select asp-for="MajorId" class="form-select form-select-sm" asp-items="Model.MajorOptions"></select>
+                        <small class="form-text d-md-none" data-selected-label-for="MajorId"></small>
+                        <small class="form-text d-block">Giữ ngành hiện tại hoặc chọn ngành thuộc phạm vi quản lý của bạn.</small>
+                        <span asp-validation-for="MajorId" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="StartDate" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="StartDate" class="form-control form-control-sm" type="date">
+                        <span asp-validation-for="StartDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EndDate" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="EndDate" class="form-control form-control-sm" type="date">
+                        <span asp-validation-for="EndDate" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-sm btn-primary px-4">
+                        <i class="bi bi-check-lg me-1"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

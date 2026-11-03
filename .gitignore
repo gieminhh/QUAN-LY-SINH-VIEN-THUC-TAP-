@@ -1,0 +1,28 @@
+# Build output and IDE state
+**/bin/
+**/obj/
+.vs/
+.idea/
+*.user
+*.suo
+__pycache__/
+*.pyc
+
+# Machine-specific settings and secrets
+**/appsettings.Development.json
+**/appsettings.Local.json
+.env
+.env.*
+!.env.example
+*.pfx
+*.pem
+*.key
+
+# Personal documents, scratch project and generated previews
+/WORKSPACE/
+/test/
+/css.zip
+/cloned_preview.png
+**/login_preview.png
+*.log
+*.bak

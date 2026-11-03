@@ -1,0 +1,124 @@
+@model InternshipManagement.Web.ViewModels.Users.UserEditViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa tài khoản";
+}
+
+<div class="page-container" style="max-width: 800px;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa tài khoản: @Model.UserName
+            </h4>
+            <div class="text-muted small">Cập nhật thông tin định danh, trạng thái và vai trò người dùng</div>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Danh sách tài khoản
+        </a>
+    </div>
+
+    <div class="card card-custom">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span>Thông tin tài khoản</span>
+            <span class="badge bg-secondary font-monospace">@Model.Id</span>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="UserName" />
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+                @if (Model.IsSelf)
+                {
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="bi bi-info-circle me-1"></i> Bạn đang chỉnh sửa tài khoản cá nhân của chính mình.
+                    </div>
+                }
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Tên đăng nhập</label>
+                        <input type="text" class="form-control form-control-sm bg-light" value="@Model.UserName" disabled>
+                        <small class="text-muted">Tên đăng nhập không thể thay đổi sau khi tạo.</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="FullName" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="FullName" class="form-control form-control-sm">
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="Email" class="form-control form-control-sm">
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="PhoneNumber" class="form-label small fw-semibold"></label>
+                        <input asp-for="PhoneNumber" class="form-control form-control-sm">
+                        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold d-block">Vai trò người dùng</label>
+                    <div class="row g-2 p-2 border rounded bg-light">
+                        @foreach (var role in Model.AvailableRoles)
+                        {
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedRoles" value="@role" id="role_@role"
+                                           @(Model.SelectedRoles.Contains(role) ? "checked" : "")>
+                                    <label class="form-check-label small" for="role_@role">
+                                        <strong>@AppRoles.GetDisplayName(role)</strong>
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3 p-3 bg-light rounded border">
+                    <div class="col-12">
+                        <label asp-for="NewPassword" class="form-label small fw-semibold"></label>
+                        <input asp-for="NewPassword" class="form-control form-control-sm" placeholder="Nhập mật khẩu mới nếu muốn đổi (bỏ trống nếu giữ nguyên)">
+                        <span asp-validation-for="NewPassword" class="text-danger small"></span>
+                        <small class="text-muted">Là Quản trị viên, bạn có thể đặt lại mật khẩu trực tiếp cho người dùng này.</small>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        <input asp-for="IsActive" class="form-check-input" disabled="@(Model.IsSelf ? "disabled" : null)">
+                        <label asp-for="IsActive" class="form-check-label small fw-semibold">
+                            Tài khoản đang hoạt động
+                        </label>
+                    </div>
+                    @if (Model.IsSelf)
+                    {
+                        <small class="text-warning"><i class="bi bi-shield-exclamation me-1"></i>Hệ thống ngăn không cho bạn tự vô hiệu hóa tài khoản đang đăng nhập.</small>
+                    }
+                    else
+                    {
+                        <small class="text-muted">Khi tắt cờ này, người dùng sẽ bị chặn đăng nhập ngay lập tức.</small>
+                    }
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                    <a asp-action="ManageScopes" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-shield-lock me-1"></i> Quản lý phạm vi quyền (Scope)
+                    </a>
+                    <div class="d-flex gap-2">
+                        <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-sm btn-primary px-4">
+                            <i class="bi bi-check-lg me-1"></i> Lưu thay đổi
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

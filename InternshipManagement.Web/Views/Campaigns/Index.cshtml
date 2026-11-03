@@ -1,0 +1,199 @@
+@model InternshipManagement.Web.ViewModels.Campaigns.CampaignListViewModel
+@using InternshipManagement.Web.Models
+
+@{
+    ViewData["Title"] = "Quản lý đợt thực tập và đồ án";
+}
+
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-calendar2-range-fill me-2"></i>Quản lý đợt thực tập & đồ án
+            </h4>
+            <div class="text-muted small">Tổ chức các đợt đồ án tốt nghiệp và thực tập doanh nghiệp theo năm học, ngành đào tạo</div>
+        </div>
+        <div>
+            <a asp-action="Create" class="btn btn-primary btn-sm px-3">
+                <i class="bi bi-plus-circle me-1"></i> Tạo đợt mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="card card-custom p-3 mb-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Mã hoặc tên đợt..." value="@Model.Search">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select name="kindFilter" class="form-select form-select-sm">
+                    <option value="ALL">-- Tất cả loại đợt --</option>
+                    <option value="@CampaignKinds.Project" selected="@(Model.KindFilter == CampaignKinds.Project)">Đồ án tốt nghiệp</option>
+                    <option value="@CampaignKinds.Internship" selected="@(Model.KindFilter == CampaignKinds.Internship)">Thực tập doanh nghiệp</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="statusFilter" class="form-select form-select-sm">
+                    <option value="ALL">-- Tất cả trạng thái --</option>
+                    <option value="@CampaignStatuses.Draft" selected="@(Model.StatusFilter == CampaignStatuses.Draft)">Bản nháp (DRAFT)</option>
+                    <option value="@CampaignStatuses.Open" selected="@(Model.StatusFilter == CampaignStatuses.Open)">Đang mở (OPEN)</option>
+                    <option value="@CampaignStatuses.Closed" selected="@(Model.StatusFilter == CampaignStatuses.Closed)">Đã đóng (CLOSED)</option>
+                    <option value="@CampaignStatuses.Archived" selected="@(Model.StatusFilter == CampaignStatuses.Archived)">Lưu trữ (ARCHIVED)</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="termFilter" class="form-select form-select-sm">
+                    <option value="">-- Tất cả học kỳ --</option>
+                    @foreach (var t in Model.TermOptions)
+                    {
+                        <option value="@t.Value" selected="@(Model.TermFilter?.ToString() == t.Value)">@t.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="majorFilter" class="form-select form-select-sm">
+                    <option value="">-- Tất cả ngành --</option>
+                    @foreach (var m in Model.MajorOptions)
+                    {
+                        <option value="@m.Value" selected="@(Model.MajorFilter?.ToString() == m.Value)">@m.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100" title="Áp dụng bộ lọc">
+                    <i class="bi bi-funnel"></i>
+                </button>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary" title="Xóa bộ lọc">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Campaigns Table Card -->
+    <div class="card card-custom">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span>Danh sách đợt (@Model.TotalCount đợt)</span>
+            <span class="small text-muted">Trang @Model.Page / @Math.Max(1, Model.TotalPages)</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                    <tr>
+                        <th>Mã đợt</th>
+                        <th>Tên đợt</th>
+                        <th>Loại đợt</th>
+                        <th>Ngành đào tạo</th>
+                        <th>Học kỳ</th>
+                        <th>Thời gian</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end pe-3">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    @if (Model.Campaigns.Any())
+                    {
+                        @foreach (var c in Model.Campaigns)
+                        {
+                            <tr>
+                                <td><span class="fw-bold font-monospace text-primary">@c.Code</span></td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@c.Id" class="text-decoration-none fw-semibold text-dark">
+                                        @c.Name
+                                    </a>
+                                    <div class="text-muted small">Người tạo: @c.CreatedByUserName</div>
+                                </td>
+                                <td>
+                                    @if (c.Kind == CampaignKinds.Project)
+                                    {
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary"><i class="bi bi-mortarboard me-1"></i>Đồ án</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info bg-opacity-10 text-info border border-info text-dark"><i class="bi bi-building me-1"></i>Thực tập</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@c.MajorName</div>
+                                    <small class="text-muted">@c.FacultyName</small>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">@c.TermDisplayName</span></td>
+                                <td class="text-muted">
+                                    <div>@c.StartDate.ToString("dd/MM/yyyy")</div>
+                                    <div>đến @c.EndDate.ToString("dd/MM/yyyy")</div>
+                                </td>
+                                <td class="text-center">
+                                    @switch (c.Status)
+                                    {
+                                        case CampaignStatuses.Draft:
+                                            <span class="badge bg-secondary"><i class="bi bi-file-earmark me-1"></i>Nháp</span>
+                                            break;
+                                        case CampaignStatuses.Open:
+                                            <span class="badge bg-success"><i class="bi bi-door-open-fill me-1"></i>Đang mở</span>
+                                            break;
+                                        case CampaignStatuses.Closed:
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-door-closed-fill me-1"></i>Đã đóng</span>
+                                            break;
+                                        case CampaignStatuses.Archived:
+                                            <span class="badge bg-dark"><i class="bi bi-archive-fill me-1"></i>Lưu trữ</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@c.Id" class="btn btn-outline-info" title="Xem chi tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (c.CanEdit)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-primary" title="Chỉnh sửa đợt">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="bi bi-calendar-x fs-3 d-block mb-1"></i>
+                                Không tìm thấy đợt thực tập / đồ án nào trong phạm vi quản lý của bạn.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+                <span class="small text-muted">Hiển thị @Model.Campaigns.Count / tổng số @Model.TotalCount đợt</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-search="@Model.Search" asp-route-kindFilter="@Model.KindFilter" asp-route-statusFilter="@Model.StatusFilter" asp-route-termFilter="@Model.TermFilter" asp-route-majorFilter="@Model.MajorFilter">Trước</a>
+                        </li>
+                        @for (int p = 1; p <= Model.TotalPages; p++)
+                        {
+                            <li class="page-item @(p == Model.Page ? "active" : "")">
+                                <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-search="@Model.Search" asp-route-kindFilter="@Model.KindFilter" asp-route-statusFilter="@Model.StatusFilter" asp-route-termFilter="@Model.TermFilter" asp-route-majorFilter="@Model.MajorFilter">@p</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-search="@Model.Search" asp-route-kindFilter="@Model.KindFilter" asp-route-statusFilter="@Model.StatusFilter" asp-route-termFilter="@Model.TermFilter" asp-route-majorFilter="@Model.MajorFilter">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+</div>

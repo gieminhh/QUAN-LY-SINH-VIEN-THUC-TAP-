@@ -1,0 +1,107 @@
+@model InternshipManagement.Web.ViewModels.Users.UserCreateViewModel
+
+@{
+    ViewData["Title"] = "Thêm tài khoản mới";
+}
+
+<div class="page-container" style="max-width: 800px;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-person-plus-fill me-2"></i>Thêm tài khoản người dùng mới
+            </h4>
+            <div class="text-muted small">Tạo thông tin đăng nhập và gán vai trò ban đầu cho người dùng</div>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Danh sách tài khoản
+        </a>
+    </div>
+
+    <div class="card card-custom">
+        <div class="card-header-custom">
+            Thông tin người dùng mới
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="FullName" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="FullName" class="form-control form-control-sm" placeholder="Ví dụ: Nguyễn Văn An">
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="UserName" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="UserName" class="form-control form-control-sm" placeholder="Ví dụ: nvan hoặc cb_daotao">
+                        <span asp-validation-for="UserName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="Email" class="form-control form-control-sm" placeholder="Ví dụ: nvan@vinhuni.edu.vn">
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="PhoneNumber" class="form-label small fw-semibold"></label>
+                        <input asp-for="PhoneNumber" class="form-control form-control-sm" placeholder="Ví dụ: 0912345678">
+                        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Password" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="Password" class="form-control form-control-sm" placeholder="Mật khẩu tối thiểu 6 ký tự">
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ConfirmPassword" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="ConfirmPassword" class="form-control form-control-sm" placeholder="Nhập lại mật khẩu để xác nhận">
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold d-block">Gán vai trò cho tài khoản</label>
+                    <div class="row g-2 p-2 border rounded bg-light">
+                        @foreach (var role in Model.AvailableRoles)
+                        {
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedRoles" value="@role" id="role_@role"
+                                           @(Model.SelectedRoles.Contains(role) ? "checked" : "")>
+                                    <label class="form-check-label small" for="role_@role">
+                                        <strong>@AppRoles.GetDisplayName(role)</strong>
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        <input asp-for="IsActive" class="form-check-input" checked>
+                        <label asp-for="IsActive" class="form-check-label small fw-semibold">
+                            Kích hoạt tài khoản ngay sau khi tạo
+                        </label>
+                    </div>
+                    <small class="text-muted">Nếu tắt, người dùng sẽ không thể đăng nhập vào hệ thống cho tới khi được mở khóa.</small>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-sm btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Lưu tài khoản
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

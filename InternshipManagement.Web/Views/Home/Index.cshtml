@@ -1,0 +1,258 @@
+@using InternshipManagement.Web.Models
+@{
+    ViewData["Title"] = "Bảng điều khiển";
+    var userRoles = ViewBag.UserRoles as IList<string> ?? new List<string>();
+    var isAdmin = userRoles.Contains(AppRoles.Admin);
+    var isManager = isAdmin || userRoles.Contains(AppRoles.TrainingManager) || userRoles.Contains(AppRoles.FacultyManager);
+    var userScopes = ViewBag.UserScopes as List<UserRoleScope> ?? new List<UserRoleScope>();
+}
+
+<div class="page-container">
+    <!-- Welcome Header Banner -->
+    <div class="card card-custom p-4 mb-4" style="background: linear-gradient(90deg, #f0f7ff 0%, #ffffff 100%); border-left: 4px solid #1976d2;">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h4 class="fw-bold text-primary mb-1">
+                    <i class="bi bi-mortarboard-fill me-2"></i>Xin chào, @ViewBag.FullName!
+                </h4>
+                <div class="text-secondary small">
+                    Hệ thống Quản lý Thực tập & Đồ án Sinh viên — Trường Đại học Vinh | <strong>Học kỳ 1 / Năm học 2026-2027</strong>
+                </div>
+            </div>
+            <div>
+                @foreach (var r in userRoles)
+                {
+                    <span class="badge bg-primary px-3 py-2 me-1">@AppRoles.GetDisplayName(r)</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (isManager)
+    {
+    <!-- Quick Stat Cards -->
+    <div class="row g-3 mb-4">
+        @if (isAdmin)
+        {
+            <div class="col-sm-6 col-lg-3">
+                <div class="card card-custom p-3 h-100">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-muted small fw-semibold">TỔNG TÀI KHOẢN</div>
+                            <h3 class="fw-bold mb-0 text-dark">@ViewBag.TotalUsers</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle">
+                            <i class="bi bi-people-fill fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-top small">
+                        <a asp-controller="Users" asp-action="Index" class="text-decoration-none text-primary">
+                            Quản lý tài khoản <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-custom p-3 h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-semibold">ĐỢT TRONG PHẠM VI QUẢN LÝ</div>
+                        <h3 class="fw-bold mb-0 text-dark">@ViewBag.TotalCampaigns</h3>
+                    </div>
+                    <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle">
+                        <i class="bi bi-calendar2-range-fill fs-4"></i>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-top small">
+                    <a asp-controller="Campaigns" asp-action="Index" class="text-decoration-none text-success">
+                        Xem danh sách đợt <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-custom p-3 h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-semibold">ĐỢT ĐANG MỞ</div>
+                        <h3 class="fw-bold mb-0 text-success">@ViewBag.OpenCampaigns</h3>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle">
+                        <i class="bi bi-door-open-fill fs-4"></i>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-top small">
+                    <a asp-controller="Campaigns" asp-action="Index" asp-route-statusFilter="OPEN" class="text-decoration-none text-warning text-dark">
+                        Xem đợt đang mở <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-custom p-3 h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-semibold">TRONG PHẠM VI CỦA BẠN</div>
+                        <h3 class="fw-bold mb-0 text-info">@ViewBag.AccessibleCampaignsCount</h3>
+                    </div>
+                    <div class="bg-info bg-opacity-10 text-info p-3 rounded-circle">
+                        <i class="bi bi-shield-check fs-4"></i>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-top small text-muted">
+                    Phân quyền theo phạm vi
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User's Scopes Info Box (US-03) -->
+    <div class="card card-custom mb-4">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-shield-lock me-2"></i>Phạm vi phân quyền quản lý của bạn</span>
+            @if (isAdmin)
+            {
+                <span class="badge bg-danger">Toàn quyền hệ thống</span>
+            }
+        </div>
+        <div class="card-body p-3">
+            @if (userScopes.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light small">
+                            <tr>
+                                <th>Vai trò</th>
+                                <th>Loại phạm vi</th>
+                                <th>Mục tiêu ủy quyền</th>
+                                <th>Thời gian cấp</th>
+                            </tr>
+                        </thead>
+                        <tbody class="small">
+                            @foreach (var s in userScopes)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-secondary">@AppRoles.GetDisplayName(s.Role?.Name ?? s.RoleId)</span></td>
+                                    <td><span class="badge bg-primary">@ScopeTypes.GetDisplayName(s.ScopeType)</span></td>
+                                    <td>
+                                        @if (s.ScopeType == ScopeTypes.Global)
+                                        {
+                                            <span class="text-success fw-bold"><i class="bi bi-globe me-1"></i>Toàn trường</span>
+                                        }
+                                        else if (s.ScopeType == ScopeTypes.Faculty)
+                                        {
+                                            <span><i class="bi bi-building me-1"></i>Khoa: @(s.Faculty?.Name ?? s.FacultyId.ToString())</span>
+                                        }
+                                        else if (s.ScopeType == ScopeTypes.Major)
+                                        {
+                                            <span><i class="bi bi-journal-bookmark me-1"></i>Ngành: @(s.Major?.Name ?? s.MajorId.ToString())</span>
+                                        }
+                                        else if (s.ScopeType == ScopeTypes.Campaign)
+                                        {
+                                            <span><i class="bi bi-calendar-event me-1"></i>Đợt: @(s.Campaign?.Name ?? s.CampaignId.ToString())</span>
+                                        }
+                                    </td>
+                                    <td class="text-muted">@s.GrantedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-muted small py-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    @(isAdmin ? "Tài khoản Quản trị viên mặc định có quyền toàn hệ thống." : "Tài khoản chưa được cấp phạm vi quản lý. Vui lòng liên hệ quản trị viên nếu cần truy cập dữ liệu.")
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Quick Operations Navigation -->
+    <div class="card card-custom">
+        <div class="card-header-custom">
+            <i class="bi bi-grid-3x3-gap-fill me-2"></i>Thao tác nhanh
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3">
+                @if (isAdmin)
+                {
+                    <div class="col-md-4">
+                        <a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary w-100 p-3 text-start d-flex align-items-center">
+                            <i class="bi bi-people fs-2 me-3"></i>
+                            <div>
+                                <div class="fw-bold">Quản lý người dùng</div>
+                                <small class="text-muted">Thêm, sửa, gán vai trò & khóa tài khoản</small>
+                            </div>
+                        </a>
+                    </div>
+                }
+                @if (isManager)
+                {
+                    <div class="col-md-4">
+                        <a asp-controller="Campaigns" asp-action="Index" class="btn btn-outline-success w-100 p-3 text-start d-flex align-items-center">
+                            <i class="bi bi-calendar-check fs-2 me-3"></i>
+                            <div>
+                                <div class="fw-bold">Danh sách đợt đồ án & TT</div>
+                                <small class="text-muted">Xem, lọc và cập nhật trạng thái đợt</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a asp-controller="Campaigns" asp-action="Create" class="btn btn-outline-info w-100 p-3 text-start d-flex align-items-center">
+                            <i class="bi bi-plus-circle fs-2 me-3"></i>
+                            <div>
+                                <div class="fw-bold">Tạo đợt mới</div>
+                                <small class="text-muted">Khởi tạo đợt thực tập / đồ án mới</small>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var role in userRoles)
+            {
+                var (title, description, icon) = role switch
+                {
+                    AppRoles.Student => ("Thực tập & đồ án của bạn", "Chức năng đăng ký đợt, nộp báo cáo và xem kết quả dành cho sinh viên chưa được triển khai trong phiên bản hiện tại.", "bi-mortarboard"),
+                    AppRoles.Lecturer => ("Hướng dẫn & đánh giá", "Chức năng xem sinh viên được phân công, theo dõi tiến độ và chấm đồ án dành cho giảng viên chưa được triển khai trong phiên bản hiện tại.", "bi-person-workspace"),
+                    AppRoles.Company => ("Tiếp nhận sinh viên thực tập", "Chức năng tiếp nhận sinh viên và đánh giá thực tập dành cho doanh nghiệp chưa được triển khai trong phiên bản hiện tại.", "bi-building"),
+                    _ => ("Thông tin tài khoản", "Tài khoản chưa có chức năng sử dụng trong phiên bản hiện tại. Vui lòng liên hệ quản trị viên để được hỗ trợ.", "bi-person-badge")
+                };
+                <div class="col-12">
+                    <div class="card card-custom p-4">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3">
+                                <i class="bi @icon fs-3" aria-hidden="true"></i>
+                            </div>
+                            <div>
+                                <span class="badge bg-light text-secondary border mb-2">Chưa triển khai</span>
+                                <h5 class="fw-bold mb-2">@title</h5>
+                                <p class="text-secondary mb-0">@description</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (!userRoles.Any())
+            {
+                <div class="col-12">
+                    <div class="card card-custom p-4">
+                        <h5 class="fw-bold">Tài khoản chưa được gán vai trò</h5>
+                        <p class="text-secondary mb-0">Vui lòng liên hệ quản trị viên để được cấp quyền sử dụng phù hợp.</p>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

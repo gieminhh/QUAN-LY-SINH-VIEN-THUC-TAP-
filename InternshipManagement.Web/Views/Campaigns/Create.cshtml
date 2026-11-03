@@ -1,0 +1,112 @@
+@model InternshipManagement.Web.ViewModels.Campaigns.CampaignCreateEditViewModel
+
+@{
+    ViewData["Title"] = "Tạo đợt thực tập / đồ án mới";
+}
+
+<div class="page-container" style="max-width: 860px;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-plus-circle me-2"></i>Tạo đợt thực tập / đồ án mới
+            </h4>
+            <div class="text-muted small">Khởi tạo kế hoạch đào tạo thực tập doanh nghiệp hoặc đồ án tốt nghiệp</div>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Danh sách đợt
+        </a>
+    </div>
+
+    <div class="card card-custom">
+        <div class="card-header-custom">
+            Thông tin chi tiết đợt đào tạo
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Code" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="Code" class="form-control form-control-sm font-monospace" placeholder="Ví dụ: DA_CNTT_2026_HK1">
+                        <span asp-validation-for="Code" class="text-danger small"></span>
+                        <small class="text-muted">Mã định danh duy nhất của đợt.</small>
+                    </div>
+
+                    <div class="col-md-8">
+                        <label asp-for="Name" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="Name" class="form-control form-control-sm" placeholder="Ví dụ: Đồ án tốt nghiệp Kỹ sư CNTT Khóa 63 - HK1 2026-2027">
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Kind" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <select asp-for="Kind" class="form-select form-select-sm" asp-items="Model.KindOptions"></select>
+                        <span asp-validation-for="Kind" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="TrainingSystem" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="TrainingSystem" class="form-control form-control-sm"
+                               value="@(Model.TrainingSystem == "CHINH_QUY" ? "Chính quy" : Model.TrainingSystem)" placeholder="Ví dụ: Chính quy">
+                        <span asp-validation-for="TrainingSystem" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <label asp-for="TermId" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <select asp-for="TermId" class="form-select form-select-sm" asp-items="Model.TermOptions">
+                            <option value="">-- Chọn học kỳ & năm học --</option>
+                        </select>
+                        <span asp-validation-for="TermId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="MajorId" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <select asp-for="MajorId" class="form-select form-select-sm" asp-items="Model.MajorOptions">
+                            <option value="">-- Chọn ngành đào tạo --</option>
+                        </select>
+                        <small class="form-text d-md-none" data-selected-label-for="MajorId"></small>
+                        <small class="form-text d-block">Chỉ hiển thị ngành đang hoạt động trong phạm vi quản lý của bạn.</small>
+                        @if (!Model.MajorOptions.Any())
+                        {
+                            <div class="alert alert-warning small mt-2 mb-0" role="alert">Bạn chưa được cấp quyền tạo đợt cho ngành nào. Vui lòng liên hệ quản trị viên.</div>
+                        }
+                        <span asp-validation-for="MajorId" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="StartDate" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="StartDate" class="form-control form-control-sm" type="date">
+                        <span asp-validation-for="StartDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EndDate" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
+                        <input asp-for="EndDate" class="form-control form-control-sm" type="date">
+                        <span asp-validation-for="EndDate" class="text-danger small"></span>
+                        <small class="text-muted">Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.</small>
+                    </div>
+                </div>
+
+                <div class="alert alert-light border small text-muted mb-4">
+                    <i class="bi bi-info-circle me-1 text-primary"></i> Đợt mới tạo sẽ mặc định ở trạng thái <strong>Bản nháp</strong>. Sau khi hoàn tất kiểm tra, bạn có thể chuyển trạng thái sang <strong>Đang mở</strong> để sinh viên và giảng viên tham gia.
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-sm btn-primary px-4" disabled="@(!Model.MajorOptions.Any())">
+                        <i class="bi bi-save me-1"></i> Lưu đợt đào tạo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
