@@ -18,6 +18,14 @@
 
 File có lệnh `DROP TABLE IF EXISTS`, vì vậy chỉ nhập vào database trống dành cho bản demo. File không có `USE` hoặc `CREATE DATABASE`, database đích do người nhập chọn.
 
+## Nâng cấp hồ sơ sinh viên và quota giảng viên
+
+Với database đang sử dụng, chọn đúng schema rồi chạy `upgrade_student_profiles_and_lecturer_quotas.sql` **một lần** trước khi chạy phiên bản ứng dụng mới. Script thêm trường hồ sơ vào `AspNetUsers` và tạo các bảng quota, phân công, yêu cầu/duyệt ngoại lệ. Không chạy script này nhiều lần trên cùng database.
+
+CV được lưu riêng trong `InternshipManagement.Web/App_Data/CVs`, không nằm trong vùng static files; người dùng chỉ tải được CV của mình, quản trị viên có thể tải CV để hỗ trợ quản lý. Hãy sao lưu thư mục này cùng database.
+
+Người dùng có vai trò sinh viên hoặc giảng viên cập nhật hồ sơ tại **Hồ sơ cá nhân**. Quản trị viên/cán bộ quản lý đợt đặt quota theo từng đợt và phân công sinh viên. Khi đủ quota, hệ thống không phân công ngay mà tạo yêu cầu ngoại lệ chờ cán bộ có phạm vi quản lý đợt duyệt; trạng thái, lý do, người duyệt và thời điểm duyệt được lưu trong `lecturer_campaign_assignments`.
+
 ## Tài khoản trong bản SQL
 
 - `admin` / `Admin@123`: quản trị viên.

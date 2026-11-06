@@ -19,6 +19,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Term> Terms => Set<Term>();
     public DbSet<Campaign> Campaigns => Set<Campaign>();
     public DbSet<UserRoleScope> UserRoleScopes => Set<UserRoleScope>();
+    public DbSet<LecturerCampaignQuota> LecturerCampaignQuotas => Set<LecturerCampaignQuota>();
+    public DbSet<LecturerCampaignAssignment> LecturerCampaignAssignments => Set<LecturerCampaignAssignment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -31,6 +33,16 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             b.Property(u => u.FullName).HasMaxLength(180).IsRequired();
             b.Property(u => u.IsActive).HasDefaultValue(true);
             b.Property(u => u.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+            b.Property(u => u.ClassName).HasColumnName("class_name");
+            b.Property(u => u.MajorId).HasColumnName("major_id");
+            b.Property(u => u.Skills).HasColumnName("skills");
+            b.Property(u => u.Interests).HasColumnName("interests");
+            b.Property(u => u.CvStoredFileName).HasColumnName("cv_stored_file_name");
+            b.Property(u => u.LecturerSpecialty).HasColumnName("lecturer_specialty");
+            b.HasOne(u => u.Major)
+             .WithMany()
+             .HasForeignKey(u => u.MajorId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<IdentityRole>(b =>
@@ -156,6 +168,43 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             b.HasOne(s => s.GrantedByUser)
              .WithMany(u => u.GrantedRoleScopes)
              .HasForeignKey(s => s.GrantedByUserId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<LecturerCampaignQuota>(b =>
+        {
+            b.ToTable("lecturer_campaign_quotas");
+            b.HasIndex(q => new { q.CampaignId, q.LecturerUserId }).IsUnique();
+            b.HasOne(q => q.Campaign)
+             .WithMany()
+             .HasForeignKey(q => q.CampaignId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(q => q.Lecturer)
+             .WithMany(u => u.LecturerCampaignQuotas)
+             .HasForeignKey(q => q.LecturerUserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<LecturerCampaignAssignment>(b =>
+        {
+            b.ToTable("lecturer_campaign_assignments");
+            b.HasIndex(a => new { a.CampaignId, a.StudentUserId, a.Status });
+            b.HasIndex(a => new { a.CampaignId, a.LecturerUserId, a.Status });
+            b.HasOne(a => a.Campaign)
+             .WithMany()
+             .HasForeignKey(a => a.CampaignId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(a => a.Lecturer)
+             .WithMany()
+             .HasForeignKey(a => a.LecturerUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne(a => a.Student)
+             .WithMany()
+             .HasForeignKey(a => a.StudentUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne(a => a.ReviewedByUser)
+             .WithMany()
+             .HasForeignKey(a => a.ReviewedByUserId)
              .OnDelete(DeleteBehavior.SetNull);
         });
     }

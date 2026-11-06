@@ -1,0 +1,135 @@
+
+@model InternshipManagement.Web.ViewModels.Users.ImportUsersViewModel
+
+@{
+    ViewData["Title"] = "Xem trước dữ liệu Excel";
+    var validCount = Model.Rows.Count(r => r.IsValid);
+    var invalidCount = Model.Rows.Count(r => !r.IsValid);
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-file-earmark-excel me-2"></i>
+                Xem trước dữ liệu tài khoản
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="alert alert-success mb-0">
+                        <strong>@validCount</strong> tài khoản hợp lệ
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-danger mb-0">
+                        <strong>@invalidCount</strong> dòng có lỗi
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Dòng Excel</th>
+                            <th>Tên đăng nhập</th>
+                            <th>Email</th>
+                            <th>Họ tên</th>
+                            <th>Số điện thoại</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model.Rows)
+                        {
+                            <tr>
+                                <td>@item.RowNumber</td>
+                                <td>@item.UserName</td>
+                                <td>@item.Email</td>
+                                <td>@item.FullName</td>
+                                <td>@item.PhoneNumber</td>
+                                <td>@item.Role</td>
+                                <td>
+                                    @if (item.IsValid)
+                                    {
+                                        <span class="badge bg-success">
+                                            Hợp lệ
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            Lỗi
+                                        </span>
+                                        <div class="text-danger small mt-1">
+                                            @item.ErrorMessage
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+    <a asp-action="ImportExcel"
+       class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Chọn file khác
+    </a>
+
+    @if (validCount > 0)
+    {
+        <form asp-action="ConfirmImport"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+            @for (int i = 0; i < Model.Rows.Count; i++)
+            {
+                <input type="hidden"
+                       name="Rows[@i].RowNumber"
+                       value="@Model.Rows[i].RowNumber" />
+
+                <input type="hidden"
+                       name="Rows[@i].UserName"
+                       value="@Model.Rows[i].UserName" />
+
+                <input type="hidden"
+                       name="Rows[@i].Email"
+                       value="@Model.Rows[i].Email" />
+
+                <input type="hidden"
+                       name="Rows[@i].FullName"
+                       value="@Model.Rows[i].FullName" />
+
+                <input type="hidden"
+                       name="Rows[@i].PhoneNumber"
+                       value="@Model.Rows[i].PhoneNumber" />
+
+                <input type="hidden"
+                       name="Rows[@i].Role"
+                       value="@Model.Rows[i].Role" />
+            }
+
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle me-1"></i>
+                Xác nhận nhập @validCount tài khoản
+            </button>
+        </form>
+    }
+</div>
+
+            <div class="alert alert-info mt-3 mb-0">
+                Hiện tại đây chỉ là bước xem trước dữ liệu.
+                Chưa có tài khoản nào được tạo.
+            </div>
+        </div>
+    </div>
+</div>

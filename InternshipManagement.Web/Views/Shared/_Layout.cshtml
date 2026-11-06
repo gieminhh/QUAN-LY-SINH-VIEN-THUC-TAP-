@@ -23,6 +23,7 @@
         "AcademicYears",
         "Terms"
     }.Contains(currentController);
+    var isLecturer = userRoles.Contains(AppRoles.Lecturer);
 }
 
 <!DOCTYPE html>
@@ -192,6 +193,12 @@
                                 Đợt thực tập / Đồ án
                             </a>
                         </li>
+                        <li><a class="dropdown-item" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-calendar-check"></i> Đợt thực tập / Đồ án</a></li>
+                        <li><a class="dropdown-item" asp-controller="Profiles" asp-action="Manage"><i class="bi bi-person-workspace"></i> Hồ sơ & quota giảng viên</a></li>
+                    }
+                    @if (isStudent || isLecturer)
+                    {
+                        <li><a class="dropdown-item" asp-controller="Profiles" asp-action="Index"><i class="bi bi-person-vcard"></i> Hồ sơ cá nhân</a></li>
                     }
 
                     @if (isAdmin || isTrainingManager)
@@ -314,6 +321,26 @@
                                    asp-action="Index">
                                     <i class="bi bi-calendar-event"></i>
                                     Quản lý đợt
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="Profiles"
+                                   asp-action="Manage">
+                                    <i class="bi bi-person-workspace"></i>
+                                    Quota giảng viên
+                                </a>
+                            </li>
+                        }
+
+                        @if (isStudent || isLecturer)
+                        {
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="Profiles"
+                                   asp-action="Index">
+                                    <i class="bi bi-person-vcard"></i>
+                                    Hồ sơ cá nhân
                                 </a>
                             </li>
                         }
@@ -476,22 +503,18 @@
                 @if (isAdmin || isTrainingManager)
                 {
                     <li class="menu-item @(isCatalogController ? "open" : "")">
-
                         <a href="#"
                            class="menu-link @(isCatalogController ? "active" : "")">
-
                             <span class="menu-link-content">
                                 <i class="bi bi-building menu-icon text-primary"></i>
                                 <span class="menu-label fw-semibold">
                                     Danh mục đào tạo
                                 </span>
                             </span>
-
                             <i class="bi bi-chevron-down menu-chevron"></i>
                         </a>
 
                         <ul class="submenu">
-
                             <li class="submenu-item">
                                 <a asp-controller="Faculties"
                                    asp-action="Index"
@@ -523,8 +546,37 @@
                                     Quản lý học kỳ
                                 </a>
                             </li>
-
                         </ul>
+                    </li>
+                }
+
+                <!-- Hồ sơ cá nhân -->
+                @if (isStudent || isLecturer)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="Profiles"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "Profiles" && currentAction == "Index" ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-person-vcard menu-icon text-primary"></i>
+                                <span class="menu-label">Hồ sơ cá nhân</span>
+                            </span>
+                        </a>
+                    </li>
+                }
+
+                <!-- Quota giảng viên -->
+                @if (isManager)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="Profiles"
+                           asp-action="Manage"
+                           class="menu-link @(currentController == "Profiles" && currentAction == "Manage" ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-person-workspace menu-icon text-success"></i>
+                                <span class="menu-label">Quota giảng viên</span>
+                            </span>
+                        </a>
                     </li>
                 }
 
