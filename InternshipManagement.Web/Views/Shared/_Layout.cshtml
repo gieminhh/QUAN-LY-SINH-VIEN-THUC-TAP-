@@ -3,10 +3,26 @@
 
 @{
     var currentUser = await UserManager.GetUserAsync(User);
-    var userRoles = currentUser != null ? (await UserManager.GetRolesAsync(currentUser)).ToList() : new List<string>();
+    var userRoles = currentUser != null
+        ? (await UserManager.GetRolesAsync(currentUser)).ToList()
+        : new List<string>();
+
     var isAdmin = userRoles.Contains(AppRoles.Admin);
-    var isManager = isAdmin || userRoles.Contains(AppRoles.TrainingManager) || userRoles.Contains(AppRoles.FacultyManager);
+    var isTrainingManager = userRoles.Contains(AppRoles.TrainingManager);
+    var isFacultyManager = userRoles.Contains(AppRoles.FacultyManager);
+    var isManager = isAdmin || isTrainingManager || isFacultyManager;
     var isStudent = userRoles.Contains(AppRoles.Student);
+
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+
+    var isCatalogController = new[]
+    {
+        "Faculties",
+        "Majors",
+        "AcademicYears",
+        "Terms"
+    }.Contains(currentController);
     var isLecturer = userRoles.Contains(AppRoles.Lecturer);
 }
 
@@ -20,25 +36,28 @@
 
     <!-- Bootstrap 5.3.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <!-- Bootstrap Icons 1.11.3 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Custom Stylesheet from Cloned Portal -->
+
+    <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="~/css/style.css" asp-append-version="true">
-    
+
     <style>
-        /* Enhancements for Dynamic Tables & Forms inside Main Area */
         .page-container {
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px 24px;
         }
+
         .card-custom {
             border: 1px solid #e2e8f0;
             border-radius: 6px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             background: #ffffff;
         }
+
         .card-header-custom {
             background-color: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
@@ -46,69 +65,134 @@
             padding: 10px 16px;
             color: #1e40af;
         }
-        .badge-draft { background-color: #64748b; color: #fff; }
-        .badge-open { background-color: #16a34a; color: #fff; }
-        .badge-closed { background-color: #ea580c; color: #fff; }
-        .badge-archived { background-color: #475569; color: #fff; }
+
+        .badge-draft {
+            background-color: #64748b;
+            color: #fff;
+        }
+
+        .badge-open {
+            background-color: #16a34a;
+            color: #fff;
+        }
+
+        .badge-closed {
+            background-color: #ea580c;
+            color: #fff;
+        }
+
+        .badge-archived {
+            background-color: #475569;
+            color: #fff;
+        }
+
         .btn-usmart {
             background-color: #397ac3;
             border-color: #397ac3;
             color: #ffffff;
         }
+
         .btn-usmart:hover {
             background-color: #2d68a8;
             border-color: #2d68a8;
             color: #ffffff;
         }
     </style>
+
     @await RenderSectionAsync("Styles", required: false)
 </head>
+
 <body>
 
-    <!-- ================= TOP NAVBAR (32px Header) ================= -->
+    <!-- ================= TOP NAVBAR ================= -->
     <header class="top-navbar">
         <div class="nav-left">
-            <!-- Hamburger Menu Button -->
-            <button class="hamburger-btn" id="sidebarToggle" aria-controls="appSidebar" aria-label="Ẩn/hiện thanh điều hướng" title="Ẩn/hiện thanh điều hướng">
+
+            <button class="hamburger-btn" id="sidebarToggle"
+                    aria-controls="appSidebar"
+                    aria-label="Ẩn/hiện thanh điều hướng"
+                    title="Ẩn/hiện thanh điều hướng">
                 <i class="bi bi-list"></i>
             </button>
 
-            <!-- University Brand & USMART System -->
             <a asp-controller="Home" asp-action="Index" class="brand-section">
-                <img src="~/assets/logo_dhv.png" alt="Logo Trường Đại học Vinh" class="brand-logo">
+                <img src="~/assets/logo_dhv.png"
+                     alt="Logo Trường Đại học Vinh"
+                     class="brand-logo">
+
                 <div class="brand-text">
                     <span class="school-name">TRƯỜNG ĐẠI HỌC VINH</span>
                     <span class="system-name">HỆ THỐNG USMART</span>
                 </div>
             </a>
 
-            <!-- Divider & Academic Semester -->
             <div class="nav-divider"></div>
             <div class="semester-badge">2026-2027/Học kỳ 1</div>
         </div>
 
-        <!-- Right Section: Search, Tools, User Profile -->
+        <!-- Right Section -->
         <div class="nav-right">
+
             @if (isManager)
             {
-                <form class="search-container" asp-controller="Campaigns" asp-action="Index" method="get" role="search">
+                <form class="search-container"
+                      asp-controller="Campaigns"
+                      asp-action="Index"
+                      method="get"
+                      role="search">
+
                     <div class="search-input-group">
-                        <input type="search" name="search" class="form-control" placeholder="Tìm đợt đào tạo…" aria-label="Tìm đợt đào tạo">
-                        <button type="submit" class="search-btn" title="Tìm kiếm" aria-label="Tìm kiếm"><i class="bi bi-search"></i></button>
+                        <input type="search"
+                               name="search"
+                               class="form-control"
+                               placeholder="Tìm đợt đào tạo…"
+                               aria-label="Tìm đợt đào tạo">
+
+                        <button type="submit"
+                                class="search-btn"
+                                title="Tìm kiếm"
+                                aria-label="Tìm kiếm">
+                            <i class="bi bi-search"></i>
+                        </button>
                     </div>
                 </form>
             }
 
-            <!-- App Grid Icon -->
+            <!-- App Grid -->
             <div class="dropdown">
-                <a href="#" class="nav-icon-btn" data-bs-toggle="dropdown" aria-expanded="false" title="Danh mục phân hệ">
+                <a href="#"
+                   class="nav-icon-btn"
+                   data-bs-toggle="dropdown"
+                   aria-expanded="false"
+                   title="Danh mục phân hệ">
+
                     <i class="bi bi-grid-fill"></i>
                 </a>
+
                 <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li><h6 class="dropdown-header">Phân hệ USMART</h6></li>
-                    <li><a class="dropdown-item active" asp-controller="Home" asp-action="Index"><i class="bi bi-mortarboard"></i> Cổng Quản lý Đồ án & Thực tập</a></li>
+                    <li>
+                        <h6 class="dropdown-header">Phân hệ USMART</h6>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item active"
+                           asp-controller="Home"
+                           asp-action="Index">
+                            <i class="bi bi-mortarboard"></i>
+                            Cổng Quản lý Đồ án & Thực tập
+                        </a>
+                    </li>
+
                     @if (isManager)
                     {
+                        <li>
+                            <a class="dropdown-item"
+                               asp-controller="Campaigns"
+                               asp-action="Index">
+                                <i class="bi bi-calendar-check"></i>
+                                Đợt thực tập / Đồ án
+                            </a>
+                        </li>
                         <li><a class="dropdown-item" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-calendar-check"></i> Đợt thực tập / Đồ án</a></li>
                         <li><a class="dropdown-item" asp-controller="Profiles" asp-action="Manage"><i class="bi bi-person-workspace"></i> Hồ sơ & quota giảng viên</a></li>
                     }
@@ -116,62 +200,180 @@
                     {
                         <li><a class="dropdown-item" asp-controller="Profiles" asp-action="Index"><i class="bi bi-person-vcard"></i> Hồ sơ cá nhân</a></li>
                     }
+
+                    @if (isAdmin || isTrainingManager)
+                    {
+                        <li>
+                            <a class="dropdown-item"
+                               asp-controller="Faculties"
+                               asp-action="Index">
+                                <i class="bi bi-building"></i>
+                                Danh mục đào tạo
+                            </a>
+                        </li>
+                    }
+
                     @if (isAdmin)
                     {
-                        <li><a class="dropdown-item" asp-controller="Users" asp-action="Index"><i class="bi bi-people"></i> Quản lý người dùng</a></li>
+                        <li>
+                            <a class="dropdown-item"
+                               asp-controller="Users"
+                               asp-action="Index">
+                                <i class="bi bi-people"></i>
+                                Quản lý người dùng
+                            </a>
+                        </li>
                     }
                 </ul>
             </div>
 
-            <!-- Notification Bell -->
+            <!-- Notification -->
             <div class="dropdown">
-                <a href="#" class="nav-icon-btn" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo">
+                <a href="#"
+                   class="nav-icon-btn"
+                   data-bs-toggle="dropdown"
+                   aria-expanded="false"
+                   title="Thông báo">
+
                     <i class="bi bi-bell-fill"></i>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow" style="width: 280px;">
-                    <li><h6 class="dropdown-header">Thông báo hệ thống</h6></li>
-                    <li><p class="px-3 py-2 mb-0 small text-muted">Chưa có thông báo mới.</p></li>
+
+                <ul class="dropdown-menu dropdown-menu-end shadow"
+                    style="width: 280px;">
+
+                    <li>
+                        <h6 class="dropdown-header">Thông báo hệ thống</h6>
+                    </li>
+
+                    <li>
+                        <p class="px-3 py-2 mb-0 small text-muted">
+                            Chưa có thông báo mới.
+                        </p>
+                    </li>
                 </ul>
             </div>
 
-            <!-- User Profile Area -->
+            <!-- User Profile -->
             @if (SignInManager.IsSignedIn(User))
             {
                 <div class="dropdown">
-                    <button type="button" class="user-profile" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Tài khoản của tôi">
-                        <span class="user-name">@(currentUser?.FullName?.ToUpper() ?? User.Identity?.Name?.ToUpper())</span>
+                    <button type="button"
+                            class="user-profile"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            aria-label="Tài khoản của tôi">
+
+                        <span class="user-name">
+                            @(currentUser?.FullName?.ToUpper()
+                                ?? User.Identity?.Name?.ToUpper())
+                        </span>
+
                         <i class="bi bi-person-circle user-avatar-icon"></i>
                     </button>
+
                     <ul class="dropdown-menu dropdown-menu-end shadow">
                         <li>
                             <div class="px-3 py-2 border-bottom">
-                                <div class="fw-bold">@currentUser?.FullName</div>
-                                <small class="text-muted">Tên đăng nhập: @User.Identity?.Name</small><br>
+                                <div class="fw-bold">
+                                    @currentUser?.FullName
+                                </div>
+
+                                <small class="text-muted">
+                                    Tên đăng nhập: @User.Identity?.Name
+                                </small>
+                                <br>
+
                                 <small class="text-primary fw-semibold">
-                                    Vai trò: @(userRoles.Any() ? string.Join(", ", userRoles.Select(AppRoles.GetDisplayName)) : "Chưa gán vai trò")
+                                    Vai trò:
+                                    @(userRoles.Any()
+                                        ? string.Join(", ", userRoles.Select(AppRoles.GetDisplayName))
+                                        : "Chưa gán vai trò")
                                 </small>
                             </div>
                         </li>
-                        <li><a class="dropdown-item" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2"></i> Bảng điều khiển</a></li>
+
+                        <li>
+                            <a class="dropdown-item"
+                               asp-controller="Home"
+                               asp-action="Index">
+                                <i class="bi bi-speedometer2"></i>
+                                Bảng điều khiển
+                            </a>
+                        </li>
+
                         @if (isAdmin)
                         {
-                            <li><a class="dropdown-item" asp-controller="Users" asp-action="Index"><i class="bi bi-people"></i> Quản lý tài khoản</a></li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="Users"
+                                   asp-action="Index">
+                                    <i class="bi bi-people"></i>
+                                    Quản lý tài khoản
+                                </a>
+                            </li>
                         }
+
                         @if (isManager)
                         {
-                            <li><a class="dropdown-item" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-calendar-event"></i> Quản lý đợt</a></li>
-                            <li><a class="dropdown-item" asp-controller="Profiles" asp-action="Manage"><i class="bi bi-person-workspace"></i> Quota giảng viên</a></li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="Campaigns"
+                                   asp-action="Index">
+                                    <i class="bi bi-calendar-event"></i>
+                                    Quản lý đợt
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="Profiles"
+                                   asp-action="Manage">
+                                    <i class="bi bi-person-workspace"></i>
+                                    Quota giảng viên
+                                </a>
+                            </li>
                         }
+
                         @if (isStudent || isLecturer)
                         {
-                            <li><a class="dropdown-item" asp-controller="Profiles" asp-action="Index"><i class="bi bi-person-vcard"></i> Hồ sơ cá nhân</a></li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="Profiles"
+                                   asp-action="Index">
+                                    <i class="bi bi-person-vcard"></i>
+                                    Hồ sơ cá nhân
+                                </a>
+                            </li>
                         }
-                        <li><hr class="dropdown-divider"></li>
+
+                        @if (isAdmin || isTrainingManager)
+                        {
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="Faculties"
+                                   asp-action="Index">
+                                    <i class="bi bi-building"></i>
+                                    Danh mục đào tạo
+                                </a>
+                            </li>
+                        }
+
                         <li>
-                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <li>
+                            <form asp-controller="Account"
+                                  asp-action="Logout"
+                                  method="post"
+                                  class="d-inline">
+
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="dropdown-item text-danger border-0 bg-transparent">
-                                    <i class="bi bi-box-arrow-right text-danger"></i> Đăng xuất
+
+                                <button type="submit"
+                                        class="dropdown-item text-danger border-0 bg-transparent">
+
+                                    <i class="bi bi-box-arrow-right text-danger"></i>
+                                    Đăng xuất
                                 </button>
                             </form>
                         </li>
@@ -180,8 +382,13 @@
             }
             else
             {
-                <a asp-controller="Account" asp-action="Login" class="btn btn-sm btn-light py-0 px-2 fw-semibold" style="font-size: 10px;">
-                    <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                <a asp-controller="Account"
+                   asp-action="Login"
+                   class="btn btn-sm btn-light py-0 px-2 fw-semibold"
+                   style="font-size: 10px;">
+
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    Đăng nhập
                 </a>
             }
         </div>
@@ -195,17 +402,20 @@
 
         <!-- ================= LEFT SIDEBAR ================= -->
         <aside class="app-sidebar" id="appSidebar">
-            <!-- Sidebar Header -->
+
             <div class="sidebar-header">
                 <i class="bi bi-grid-fill"></i>
                 <span>CỔNG QUẢN LÝ ĐÀO TẠO</span>
             </div>
 
-            <!-- Dynamic Role-Based Menu Items -->
             <ul class="sidebar-menu">
-                <!-- 1. Trang chủ / Dashboard -->
+
+                <!-- Trang chủ -->
                 <li class="menu-item">
-                    <a asp-controller="Home" asp-action="Index" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                    <a asp-controller="Home"
+                       asp-action="Index"
+                       class="menu-link @(currentController == "Home" ? "active" : "")">
+
                         <span class="menu-link-content">
                             <i class="bi bi-house-door menu-icon"></i>
                             <span class="menu-label">Trang chủ hệ thống</span>
@@ -213,25 +423,37 @@
                     </a>
                 </li>
 
+                <!-- Admin: Quản lý người dùng -->
                 @if (isAdmin)
                 {
-                    <!-- Admin: Quản lý tài khoản (US-02) -->
-                    <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "open" : "")">
-                        <a href="#" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                    <li class="menu-item @(currentController == "Users" ? "open" : "")">
+
+                        <a href="#"
+                           class="menu-link @(currentController == "Users" ? "active" : "")">
+
                             <span class="menu-link-content">
                                 <i class="bi bi-people-fill menu-icon text-primary"></i>
-                                <span class="menu-label fw-semibold">Quản lý người dùng</span>
+                                <span class="menu-label fw-semibold">
+                                    Quản lý người dùng
+                                </span>
                             </span>
+
                             <i class="bi bi-chevron-down menu-chevron"></i>
                         </a>
+
                         <ul class="submenu">
                             <li class="submenu-item">
-                                <a asp-controller="Users" asp-action="Index" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                                <a asp-controller="Users"
+                                   asp-action="Index"
+                                   class="submenu-link @(currentController == "Users" && currentAction == "Index" ? "active" : "")">
                                     Danh sách tài khoản
                                 </a>
                             </li>
+
                             <li class="submenu-item">
-                                <a asp-controller="Users" asp-action="Create" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" && ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                                <a asp-controller="Users"
+                                   asp-action="Create"
+                                   class="submenu-link @(currentController == "Users" && currentAction == "Create" ? "active" : "")">
                                     Thêm tài khoản mới
                                 </a>
                             </li>
@@ -239,25 +461,37 @@
                     </li>
                 }
 
+                <!-- Manager: Quản lý đợt thực tập / đồ án -->
                 @if (isManager)
                 {
-                    <!-- Manager: Quản lý đợt thực tập / đồ án (US-05) -->
-                    <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "open" : "")">
-                        <a href="#" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "active" : "")">
+                    <li class="menu-item @(currentController == "Campaigns" ? "open" : "")">
+
+                        <a href="#"
+                           class="menu-link @(currentController == "Campaigns" ? "active" : "")">
+
                             <span class="menu-link-content">
                                 <i class="bi bi-calendar2-range-fill menu-icon text-success"></i>
-                                <span class="menu-label fw-semibold">Quản lý đợt ĐA & TT</span>
+                                <span class="menu-label fw-semibold">
+                                    Quản lý đợt ĐA & TT
+                                </span>
                             </span>
+
                             <i class="bi bi-chevron-down menu-chevron"></i>
                         </a>
+
                         <ul class="submenu">
                             <li class="submenu-item">
-                                <a asp-controller="Campaigns" asp-action="Index" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "active" : "")">
+                                <a asp-controller="Campaigns"
+                                   asp-action="Index"
+                                   class="submenu-link @(currentController == "Campaigns" && currentAction == "Index" ? "active" : "")">
                                     Danh sách các đợt
                                 </a>
                             </li>
+
                             <li class="submenu-item">
-                                <a asp-controller="Campaigns" asp-action="Create" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" && ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "active" : "")">
+                                <a asp-controller="Campaigns"
+                                   asp-action="Create"
+                                   class="submenu-link @(currentController == "Campaigns" && currentAction == "Create" ? "active" : "")">
                                     Tạo đợt mới
                                 </a>
                             </li>
@@ -265,10 +499,64 @@
                     </li>
                 }
 
+                <!-- Quản lý danh mục đào tạo -->
+                @if (isAdmin || isTrainingManager)
+                {
+                    <li class="menu-item @(isCatalogController ? "open" : "")">
+                        <a href="#"
+                           class="menu-link @(isCatalogController ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-building menu-icon text-primary"></i>
+                                <span class="menu-label fw-semibold">
+                                    Danh mục đào tạo
+                                </span>
+                            </span>
+                            <i class="bi bi-chevron-down menu-chevron"></i>
+                        </a>
+
+                        <ul class="submenu">
+                            <li class="submenu-item">
+                                <a asp-controller="Faculties"
+                                   asp-action="Index"
+                                   class="submenu-link @(currentController == "Faculties" ? "active" : "")">
+                                    Quản lý khoa
+                                </a>
+                            </li>
+
+                            <li class="submenu-item">
+                                <a asp-controller="Majors"
+                                   asp-action="Index"
+                                   class="submenu-link @(currentController == "Majors" ? "active" : "")">
+                                    Quản lý ngành
+                                </a>
+                            </li>
+
+                            <li class="submenu-item">
+                                <a asp-controller="AcademicYears"
+                                   asp-action="Index"
+                                   class="submenu-link @(currentController == "AcademicYears" ? "active" : "")">
+                                    Quản lý năm học
+                                </a>
+                            </li>
+
+                            <li class="submenu-item">
+                                <a asp-controller="Terms"
+                                   asp-action="Index"
+                                   class="submenu-link @(currentController == "Terms" ? "active" : "")">
+                                    Quản lý học kỳ
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+
+                <!-- Hồ sơ cá nhân -->
                 @if (isStudent || isLecturer)
                 {
                     <li class="menu-item">
-                        <a asp-controller="Profiles" asp-action="Index" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profiles" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                        <a asp-controller="Profiles"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "Profiles" && currentAction == "Index" ? "active" : "")">
                             <span class="menu-link-content">
                                 <i class="bi bi-person-vcard menu-icon text-primary"></i>
                                 <span class="menu-label">Hồ sơ cá nhân</span>
@@ -276,10 +564,14 @@
                         </a>
                     </li>
                 }
+
+                <!-- Quota giảng viên -->
                 @if (isManager)
                 {
                     <li class="menu-item">
-                        <a asp-controller="Profiles" asp-action="Manage" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profiles" && ViewContext.RouteData.Values["action"]?.ToString() == "Manage" ? "active" : "")">
+                        <a asp-controller="Profiles"
+                           asp-action="Manage"
+                           class="menu-link @(currentController == "Profiles" && currentAction == "Manage" ? "active" : "")">
                             <span class="menu-link-content">
                                 <i class="bi bi-person-workspace menu-icon text-success"></i>
                                 <span class="menu-label">Quota giảng viên</span>
@@ -288,82 +580,140 @@
                     </li>
                 }
 
-                <!-- Các mục menu tiện ích từ giao diện portal gốc -->
+                <!-- Các mục tiện ích từ portal gốc -->
+                <li class="menu-item">
+                    <span class="menu-link menu-unavailable" aria-disabled="true">
+                        <span class="menu-link-content">
+                            <i class="bi bi-person-vcard menu-icon"></i>
+                            <span class="menu-label">
+                                Hồ sơ người học
+                                <small>Chưa triển khai</small>
+                            </span>
+                        </span>
+                    </span>
+                </li>
+
                 <li class="menu-item">
                     <span class="menu-link menu-unavailable" aria-disabled="true">
                         <span class="menu-link-content">
                             <i class="bi bi-envelope-fill menu-icon"></i>
-                            <span class="menu-label">Thông báo học vụ<small>Chưa triển khai</small></span>
+                            <span class="menu-label">
+                                Thông báo học vụ
+                                <small>Chưa triển khai</small>
+                            </span>
                         </span>
                     </span>
                 </li>
+
                 <li class="menu-item">
                     <span class="menu-link menu-unavailable" aria-disabled="true">
                         <span class="menu-link-content">
                             <i class="bi bi-calendar3 menu-icon"></i>
-                            <span class="menu-label">Thời khóa biểu<small>Chưa triển khai</small></span>
+                            <span class="menu-label">
+                                Thời khóa biểu
+                                <small>Chưa triển khai</small>
+                            </span>
                         </span>
                     </span>
                 </li>
+
                 <li class="menu-item">
                     <span class="menu-link menu-unavailable" aria-disabled="true">
                         <span class="menu-link-content">
                             <i class="bi bi-clock-history menu-icon"></i>
-                            <span class="menu-label">Xem lịch thi<small>Chưa triển khai</small></span>
+                            <span class="menu-label">
+                                Xem lịch thi
+                                <small>Chưa triển khai</small>
+                            </span>
                         </span>
                     </span>
                 </li>
+
                 <li class="menu-item">
                     <span class="menu-link menu-unavailable" aria-disabled="true">
                         <span class="menu-link-content">
                             <i class="bi bi-briefcase menu-icon"></i>
-                            <span class="menu-label">Công việc sau tốt nghiệp<small>Chưa triển khai</small></span>
+                            <span class="menu-label">
+                                Công việc sau tốt nghiệp
+                                <small>Chưa triển khai</small>
+                            </span>
                         </span>
                     </span>
                 </li>
+
             </ul>
 
-            <p id="sidebarSearchEmpty" class="sidebar-empty" hidden>Không tìm thấy chức năng phù hợp.</p>
+            <p id="sidebarSearchEmpty" class="sidebar-empty" hidden>
+                Không tìm thấy chức năng phù hợp.
+            </p>
 
-            <!-- Sidebar Footer (Search Function) -->
+            <!-- Sidebar Search -->
             <div class="sidebar-footer">
                 <div class="sidebar-search-box">
-                    <input type="text" class="sidebar-search-input" id="sidebarSearchInput" aria-label="Tìm kiếm chức năng" placeholder="Tìm kiếm chức năng">
+                    <input type="text"
+                           class="sidebar-search-input"
+                           id="sidebarSearchInput"
+                           aria-label="Tìm kiếm chức năng"
+                           placeholder="Tìm kiếm chức năng">
+
                     <i class="bi bi-search sidebar-search-icon"></i>
                 </div>
             </div>
         </aside>
 
         <!-- ================= MAIN CONTENT AREA ================= -->
-        <main class="main-content" style="padding-top: 0; align-items: stretch; justify-content: flex-start;">
+        <main class="main-content"
+              style="padding-top: 0; align-items: stretch; justify-content: flex-start;">
+
             <div class="w-100 p-3">
+
                 <!-- Success Alert -->
                 @if (TempData["SuccessMessage"] != null)
                 {
-                    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-                        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm"
+                         role="alert">
+
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        @TempData["SuccessMessage"]
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="alert"
+                                aria-label="Close">
+                        </button>
                     </div>
                 }
 
                 <!-- Error Alert -->
                 @if (TempData["ErrorMessage"] != null)
                 {
-                    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <div class="alert alert-danger alert-dismissible fade show shadow-sm"
+                         role="alert">
+
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        @TempData["ErrorMessage"]
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="alert"
+                                aria-label="Close">
+                        </button>
                     </div>
                 }
 
                 @RenderBody()
+
             </div>
         </main>
     </div>
 
-    <!-- Bootstrap 5.3.3 JS Bundle -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <!-- Custom Application Script -->
     <script src="~/js/script.js" asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>
