@@ -1,0 +1,87 @@
+@model InternshipManagement.Web.ViewModels.Profiles.ProfileEditViewModel
+
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+}
+
+<div class="page-container" style="max-width: 900px;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="fw-bold text-primary mb-1"><i class="bi bi-person-vcard me-2"></i>Hồ sơ cá nhân</h4>
+            <div class="text-muted small">Cập nhật thông tin phục vụ kết nối sinh viên và giảng viên</div>
+        </div>
+    </div>
+
+    <div class="card card-custom">
+        <div class="card-body p-4">
+            <form asp-action="Index" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+                @if (Model.IsStudent)
+                {
+                    <h5 class="fw-semibold text-primary mb-3">Thông tin sinh viên</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="ClassName" class="form-label"></label>
+                            <input asp-for="ClassName" class="form-control" placeholder="Ví dụ: 64KTPM1">
+                            <span asp-validation-for="ClassName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="MajorId" class="form-label"></label>
+                            <select asp-for="MajorId" asp-items="Model.MajorOptions" class="form-select">
+                                <option value="">-- Chọn ngành --</option>
+                            </select>
+                            <span asp-validation-for="MajorId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Skills" class="form-label"></label>
+                            <textarea asp-for="Skills" class="form-control" rows="3" placeholder="Ví dụ: C#, SQL, giao tiếp..."></textarea>
+                            <span asp-validation-for="Skills" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Interests" class="form-label"></label>
+                            <textarea asp-for="Interests" class="form-control" rows="3" placeholder="Lĩnh vực hoặc chủ đề bạn quan tâm"></textarea>
+                            <span asp-validation-for="Interests" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="CvFile" class="form-label"></label>
+                            <input asp-for="CvFile" type="file" class="form-control" accept=".pdf,application/pdf">
+                            <span asp-validation-for="CvFile" class="text-danger small"></span>
+                            @if (!string.IsNullOrWhiteSpace(Model.ExistingCvFileName))
+                            {
+                                <div class="mt-2 d-flex align-items-center gap-3">
+                                    <a asp-action="DownloadCv" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="link-primary">
+                                        <i class="bi bi-file-earmark-pdf me-1"></i>Tải CV của tôi
+                                    </a>
+                                    <button type="submit" form="removeCvForm" class="btn btn-sm btn-outline-danger">Xóa CV</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (Model.IsLecturer)
+                {
+                    <h5 class="fw-semibold text-primary mb-3">Thông tin giảng viên</h5>
+                    <div class="mb-4">
+                        <label asp-for="LecturerSpecialty" class="form-label"></label>
+                        <textarea asp-for="LecturerSpecialty" class="form-control" rows="4" placeholder="Lĩnh vực chuyên môn, hướng nghiên cứu..."></textarea>
+                        <span asp-validation-for="LecturerSpecialty" class="text-danger small"></span>
+                    </div>
+                }
+
+                <div class="d-flex justify-content-end border-top pt-3">
+                    <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i>Lưu hồ sơ</button>
+                </div>
+            </form>
+
+            @if (Model.IsStudent && !string.IsNullOrWhiteSpace(Model.ExistingCvFileName))
+            {
+                <form id="removeCvForm" asp-action="RemoveCv" method="post">
+                    @Html.AntiForgeryToken()
+                </form>
+            }
+        </div>
+    </div>
+</div>
