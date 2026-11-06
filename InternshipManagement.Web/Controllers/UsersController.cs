@@ -7,6 +7,7 @@ using InternshipManagement.Web.Data;
 using InternshipManagement.Web.Models;
 using InternshipManagement.Web.Services;
 using InternshipManagement.Web.ViewModels.Users;
+using System.Security.Cryptography;
 
 namespace InternshipManagement.Web.Controllers;
 
