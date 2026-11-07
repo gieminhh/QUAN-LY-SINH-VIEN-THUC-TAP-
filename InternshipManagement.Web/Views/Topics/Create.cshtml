@@ -1,0 +1,111 @@
+@model InternshipManagement.Web.ViewModels.TopicCreateEditViewModel
+@{
+    ViewData["Title"] = "Đăng ký đề tài mới";
+}
+
+<div class="page-container topic-form">
+    <div class="mb-4">
+        <a asp-action="Index" class="text-decoration-none text-muted small">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách đề tài
+        </a>
+        <h4 class="fw-bold text-primary mt-2">
+            <i class="bi bi-plus-circle me-2"></i>ĐĂNG KÝ ĐỀ TÀI ĐỒ ÁN / THỰC TẬP
+        </h4>
+        <div class="text-muted small">Tạo đề tài mới và gửi đến cán bộ khoa xét duyệt</div>
+    </div>
+
+    <div class="card card-custom p-4">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3 py-2 small" role="alert"></div>
+
+            <h5 class="form-section-title">1. Thông tin đề tài</h5>
+            <p class="text-muted small">Các trường có dấu <span class="text-danger">*</span> là bắt buộc.</p>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="CampaignId" class="form-label fw-semibold"></label> <span class="text-danger" aria-hidden="true">*</span>
+                    <select asp-for="CampaignId" class="form-select" asp-items="Model.CampaignOptions">
+                        <option value="">-- Chọn đợt thực tập / đồ án --</option>
+                    </select>
+                    <span asp-validation-for="CampaignId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Code" class="form-label fw-semibold"></label> <span class="text-danger" aria-hidden="true">*</span>
+                    <input asp-for="Code" class="form-control" placeholder="Ví dụ: DT_CNTT_01" />
+                    <span asp-validation-for="Code" class="text-danger small"></span>
+                    <div class="form-text small">Mã đề tài không được trùng lặp trong cùng một đợt.</div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label fw-semibold"></label> <span class="text-danger" aria-hidden="true">*</span>
+                <input asp-for="Title" class="form-control" placeholder="Nhập tên đề tài đầy đủ..." />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="ResearchField" class="form-label fw-semibold"></label>
+                    <input asp-for="ResearchField" class="form-control" placeholder="Ví dụ: Công nghệ Web, Trí tuệ nhân tạo, IoT..." />
+                    <span asp-validation-for="ResearchField" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="MaxStudents" class="form-label fw-semibold"></label> <span class="text-danger" aria-hidden="true">*</span>
+                    <input asp-for="MaxStudents" type="number" min="1" max="10" class="form-control" />
+                    <span asp-validation-for="MaxStudents" class="text-danger small"></span>
+                    <div class="form-text small">Số lượng sinh viên tối đa được phép đăng ký thực hiện đề tài này.</div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <h5 class="form-section-title mt-4">2. Nội dung đề xuất</h5>
+                <label asp-for="Description" class="form-label fw-semibold"></label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Tóm tắt nội dung và bối cảnh của đề tài..."></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Objectives" class="form-label fw-semibold"></label>
+                <textarea asp-for="Objectives" class="form-control" rows="3" placeholder="Mục tiêu cần đạt được sau khi hoàn thành đề tài..."></textarea>
+                <span asp-validation-for="Objectives" class="text-danger small"></span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="KnowledgeRequirements" class="form-label fw-semibold"></label>
+                    <textarea asp-for="KnowledgeRequirements" class="form-control" rows="3" placeholder="Yêu cầu kiến thức tiên quyết đối với sinh viên thực hiện..."></textarea>
+                    <span asp-validation-for="KnowledgeRequirements" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Technologies" class="form-label fw-semibold"></label>
+                    <textarea asp-for="Technologies" class="form-control" rows="3" placeholder="Các công nghệ dự kiến sử dụng (C#, ASP.NET, MySQL, Docker...)..."></textarea>
+                    <span asp-validation-for="Technologies" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h5 class="form-section-title mt-4">3. Tài liệu đính kèm</h5>
+                <label asp-for="DocumentFile" class="form-label fw-semibold"></label>
+                <input asp-for="DocumentFile" type="file" class="form-control" accept=".pdf,.doc,.docx,.zip,.rar" />
+                <span asp-validation-for="DocumentFile" class="text-danger small"></span>
+                <div class="form-text small">Tệp đính kèm mô tả đề cương chi tiết (PDF, Word, ZIP, RAR). Dung lượng tối đa 10MB.</div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center border-top pt-4">
+                <a asp-action="Index" class="btn btn-light px-4">Hủy bỏ</a>
+                <div class="d-flex gap-2">
+                    <button type="submit" name="SubmitImmediately" value="false" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-save me-1"></i> Lưu bản nháp
+                    </button>
+                    <button type="submit" name="SubmitImmediately" value="true" class="btn btn-usmart px-4">
+                        <i class="bi bi-send me-1"></i> Gửi xét duyệt ngay
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

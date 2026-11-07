@@ -24,7 +24,7 @@ public class UserScopeService : IUserScopeService
             .Include(s => s.Major)
             .Include(s => s.Campaign)
             .Include(s => s.GrantedByUser)
-            .Where(s => s.UserId == userId)
+            .Where(s => s.UserId == userId && _context.UserRoles.Any(ur => ur.UserId == s.UserId && ur.RoleId == s.RoleId))
             .OrderByDescending(s => s.GrantedAt)
             .ToListAsync();
     }
@@ -38,7 +38,7 @@ public class UserScopeService : IUserScopeService
             return true;
 
         var query = _context.UserRoleScopes
-            .Where(s => s.UserId == userId && s.ScopeType == ScopeTypes.Global);
+            .Where(s => s.UserId == userId && s.ScopeType == ScopeTypes.Global && _context.UserRoles.Any(ur => ur.UserId == s.UserId && ur.RoleId == s.RoleId) && _context.Roles.Any(r => r.Id == s.RoleId && (r.Name == AppRoles.Admin || r.Name == AppRoles.TrainingManager || r.Name == AppRoles.FacultyManager)));
 
         if (!string.IsNullOrEmpty(roleName))
         {
@@ -60,7 +60,7 @@ public class UserScopeService : IUserScopeService
             return query;
 
         var scopes = await _context.UserRoleScopes
-            .Where(s => s.UserId == userId)
+            .Where(s => s.UserId == userId && _context.UserRoles.Any(ur => ur.UserId == s.UserId && ur.RoleId == s.RoleId) && _context.Roles.Any(r => r.Id == s.RoleId && (r.Name == AppRoles.Admin || r.Name == AppRoles.TrainingManager || r.Name == AppRoles.FacultyManager)))
             .ToListAsync();
 
         var facultyIds = scopes.Where(s => s.ScopeType == ScopeTypes.Faculty && s.FacultyId.HasValue)
@@ -84,7 +84,7 @@ public class UserScopeService : IUserScopeService
         if (campaign == null) return false;
 
         var scopes = await _context.UserRoleScopes
-            .Where(s => s.UserId == userId)
+            .Where(s => s.UserId == userId && _context.UserRoles.Any(ur => ur.UserId == s.UserId && ur.RoleId == s.RoleId) && _context.Roles.Any(r => r.Id == s.RoleId && (r.Name == AppRoles.Admin || r.Name == AppRoles.TrainingManager || r.Name == AppRoles.FacultyManager)))
             .ToListAsync();
 
         return scopes.Any(s =>
@@ -101,7 +101,7 @@ public class UserScopeService : IUserScopeService
             return query;
 
         var scopes = await _context.UserRoleScopes
-            .Where(s => s.UserId == userId)
+            .Where(s => s.UserId == userId && _context.UserRoles.Any(ur => ur.UserId == s.UserId && ur.RoleId == s.RoleId) && _context.Roles.Any(r => r.Id == s.RoleId && (r.Name == AppRoles.Admin || r.Name == AppRoles.TrainingManager || r.Name == AppRoles.FacultyManager)))
             .ToListAsync();
 
         if (!scopes.Any())

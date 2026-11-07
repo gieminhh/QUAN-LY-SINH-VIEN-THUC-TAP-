@@ -1,0 +1,39 @@
+name: Build and acceptance checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pci-only-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore InternshipManagement.slnx
+      - name: Prepare disposable seed database
+        env:
+          MYSQL_PWD: ci-only-password
+        run: |
+          mysql -h127.0.0.1 -uroot -e "CREATE DATABASE ql_thuctap_doan CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+          mysql -h127.0.0.1 -uroot ql_thuctap_doan < database/ql_thuctap_doan_demo.sql
+          mysql -h127.0.0.1 -uroot ql_thuctap_doan < database/migrations/001_sprint2_profiles_topics.sql
+      - name: Run isolated regression and backlog checks
+        env:
+          ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=ql_thuctap_doan;Uid=root;Pwd=ci-only-password;CharSet=utf8mb4;
+          MYSQL_EXE: /usr/bin/mysql
+          CB_KINHTE_PASSWORD: KinhTe@123
+        run: python3 tools/verify_backlog.py

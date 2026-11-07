@@ -1,0 +1,108 @@
+@model InternshipManagement.Web.ViewModels.StudentProfileEditViewModel
+@{
+    ViewData["Title"] = "Cập nhật hồ sơ sinh viên";
+}
+
+<div class="page-container">
+    <div class="mb-4">
+        <a asp-action="Index" class="text-decoration-none text-muted small">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại hồ sơ
+        </a>
+        <h4 class="fw-bold text-primary mt-2">
+            <i class="bi bi-pencil-square me-2"></i>CẬP NHẬT HỒ SƠ & TẢI LÊN CV
+        </h4>
+        <div class="text-muted small">Chỉnh sửa kỹ năng chuyên môn, hướng nghiên cứu quan tâm và tệp tin CV</div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Thông tin cố định chỉ đọc -->
+        <div class="col-lg-4">
+            <div class="card card-custom p-4 bg-light">
+                <h6 class="fw-bold text-secondary border-bottom pb-2 mb-3">
+                    <i class="bi bi-shield-lock me-2"></i>Thông tin học vụ chính thức
+                </h6>
+                <div class="small mb-3">
+                    <div class="text-muted">Họ và tên:</div>
+                    <div class="fw-bold text-dark">@Model.FullName</div>
+                </div>
+                <div class="small mb-3">
+                    <div class="text-muted">Mã sinh viên:</div>
+                    <div class="fw-bold text-primary">@Model.StudentCode</div>
+                </div>
+                <div class="small mb-3">
+                    <div class="text-muted">Lớp học:</div>
+                    <div class="fw-semibold text-dark">@Model.ClassName</div>
+                </div>
+                <div class="small mb-3">
+                    <div class="text-muted">Ngành đào tạo:</div>
+                    <div class="fw-semibold text-dark">@Model.MajorName</div>
+                </div>
+                <div class="small mb-3">
+                    <div class="text-muted">Điểm GPA chính thức:</div>
+                    <div class="fw-bold text-success">
+                        Thang 4: @(Model.LatestGpa4?.ToString("F2") ?? "--") | Thang 10: @(Model.LatestGpa10?.ToString("F2") ?? "--")
+                    </div>
+                </div>
+                <div class="alert alert-warning small mb-0 p-2">
+                    <i class="bi bi-exclamation-circle me-1"></i>
+                    Các thông tin học vụ chính thức (Mã SV, Lớp, Ngành, GPA) được quản lý bởi Nhà trường và không thể tự ý sửa đổi.
+                </div>
+            </div>
+        </div>
+
+        <!-- Form chỉnh sửa phần được phép -->
+        <div class="col-lg-8">
+            <div class="card card-custom p-4">
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="mb-3">
+                        <label asp-for="Skills" class="form-label fw-semibold"></label>
+                        <textarea asp-for="Skills" class="form-control" rows="4" placeholder="Ví dụ: C#, ASP.NET Core, Java, Python, React, SQL Server, Docker, Git..."></textarea>
+                        <span asp-validation-for="Skills" class="text-danger small"></span>
+                        <div class="form-text small">Mô tả các ngôn ngữ lập trình, framework, cơ sở dữ liệu và công cụ bạn đã nắm vững.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Interests" class="form-label fw-semibold"></label>
+                        <textarea asp-for="Interests" class="form-control" rows="4" placeholder="Ví dụ: Phát triển Web Full-stack, Xây dựng ứng dụng di động, Hệ thống IoT, Xử lý ngôn ngữ tự nhiên..."></textarea>
+                        <span asp-validation-for="Interests" class="text-danger small"></span>
+                        <div class="form-text small">Nêu rõ các lĩnh vực hoặc hướng nghiên cứu đề tài bạn mong muốn được thực hiện.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="CvFile" class="form-label fw-semibold"></label>
+                        <input asp-for="CvFile" type="file" class="form-control" accept=".pdf,.doc,.docx" />
+                        <span asp-validation-for="CvFile" class="text-danger small"></span>
+                        <div class="form-text small">
+                            Chấp nhận định dạng: <strong>.pdf, .doc, .docx</strong>. Dung lượng tối đa: <strong>10MB</strong>.
+                        </div>
+
+                        @if (Model.CurrentCvAttachment != null)
+                        {
+                            <div class="mt-2 p-2 border rounded bg-light small d-flex align-items-center justify-content-between">
+                                <div>
+                                    <i class="bi bi-file-earmark-check text-success me-1"></i>
+                                    Tệp CV hiện tại: <strong>@Model.CurrentCvAttachment.OriginalFileName</strong>
+                                </div>
+                                <span class="badge bg-secondary">Đã tải lên</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a asp-action="Index" class="btn btn-light px-4">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-usmart px-4">
+                            <i class="bi bi-save me-1"></i> Lưu thông tin hồ sơ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

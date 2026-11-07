@@ -132,4 +132,43 @@ public class AccountController : Controller
         Response.StatusCode = StatusCodes.Status403Forbidden;
         return View();
     }
+    [Authorize, HttpGet]
+    public IActionResult ChangePassword() => View(new ChangePasswordViewModel());
+    [Authorize, HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model) {
+        if (!ModelState.IsValid) return View(model);
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+        if (!result.Succeeded) { foreach (var e in result.Errors) ModelState.AddModelError("",e.Description); return View(model); }
+        await _signInManager.RefreshSignInAsync(user);
+        TempData["SuccessMessage"]="Đã đổi mật khẩu."; return RedirectToAction("Index","Home");
+    }
+    [AllowAnonymous,HttpGet]
+    public IActionResult ForgotPassword() => View(new ForgotPasswordViewModel());
+    [AllowAnonymous,HttpPost,ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model, [FromServices] Services.PasswordRecoveryMailer mailer) {
+        if (!ModelState.IsValid) return View(model);
+        var user = await _userManager.FindByEmailAsync(model.Email.Trim());
+        if (user != null && user.IsActive && user.EmailConfirmed) {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            try { await mailer.SendAsync(user.Email!, token); }
+            catch (Exception e) { _logger.LogError(e,"Không gửi được email khôi phục"); ModelState.AddModelError("","Chưa gửi được yêu cầu. Vui lòng thử lại sau.");return View(model); }
+        }
+        return View("RecoverySent");
+    }
+    [AllowAnonymous,HttpGet]
+    public IActionResult ResetPassword(string email,string token) => View(new ResetPasswordViewModel {Email=email,Token=token});
+    [AllowAnonymous,HttpPost,ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model) {
+        if (!ModelState.IsValid) return View(model);
+        var user=await _userManager.FindByEmailAsync(model.Email);
+        var result=user == null || !user.IsActive ? IdentityResult.Failed(new IdentityError {Description="Liên kết không hợp lệ hoặc đã hết hạn."}) : await _userManager.ResetPasswordAsync(user,model.Token,model.NewPassword);
+        if (!result.Succeeded) { ModelState.AddModelError("","Liên kết không hợp lệ, đã dùng hoặc đã hết hạn.");return View(model); }
+        await _userManager.ResetAccessFailedCountAsync(user!);
+        await _userManager.SetLockoutEndDateAsync(user!,null);
+        TempData["SuccessMessage"]="Đặt lại mật khẩu thành công. Vui lòng đăng nhập.";
+        return RedirectToAction(nameof(Login));
+    }
+
 }

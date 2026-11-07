@@ -26,3 +26,6 @@ __pycache__/
 **/login_preview.png
 *.log
 *.bak
+
+# Uploaded CVs and topic documents
+**/App_Data/

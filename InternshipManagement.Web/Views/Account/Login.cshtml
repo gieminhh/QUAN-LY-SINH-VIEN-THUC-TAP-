@@ -86,7 +86,7 @@
         <img src="~/assets/logo_dhv.png" alt="Logo Trường Đại học Vinh" class="login-logo">
         <h5 class="fw-bold mb-1 text-uppercase" style="font-size: 15px; letter-spacing: 0.5px;">TRƯỜNG ĐẠI HỌC VINH</h5>
         <div style="font-size: 12px; opacity: 0.95;">HỆ THỐNG QUẢN LÝ THỰC TẬP VÀ ĐỒ ÁN</div>
-        <small class="badge bg-light text-primary mt-2">Phân hệ USMART 2026-2027</small>
+        <small class="badge bg-light text-primary mt-2">Phân hệ USMART 2026-2027 · Sprint 2</small>
     </div>
 
     <div class="login-body">
@@ -118,7 +118,7 @@
                     <input asp-for="RememberMe" class="form-check-input">
                     <label asp-for="RememberMe" class="form-check-label small text-muted"></label>
                 </div>
-                <a href="#" class="small text-decoration-none text-primary" onclick="alert('Vui lòng liên hệ Quản trị viên để được cấp lại mật khẩu.')">Quên mật khẩu?</a>
+                <a asp-action="ForgotPassword" class="small">Quên mật khẩu?</a>
             </div>
 
             <button type="submit" class="btn btn-vinhuni w-100 mb-2">
@@ -127,7 +127,7 @@
         </form>
 
         <div class="test-accounts-box">
-            <div class="fw-bold text-dark mb-1"><i class="bi bi-info-circle me-1 text-primary"></i> Tài khoản thử nghiệm Sprint 1:</div>
+            <div class="fw-bold text-dark mb-1"><i class="bi bi-info-circle me-1 text-primary"></i> Tài khoản thử nghiệm:</div>
             <div>• <strong>Admin:</strong> <code>admin</code> / <code>Admin@123</code> (Quản trị toàn quyền)</div>
             <div>• <strong>Sinh viên:</strong> <code>student</code> / <code>Student@123</code> (Kiểm thử quyền hạn)</div>
         </div>

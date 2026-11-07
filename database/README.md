@@ -1,5 +1,7 @@
 # Khôi phục CSDL MySQL
 
+> Bản SQL nền bên dưới có 13 bảng Sprint 1. Với bản local mới, nhập thêm `migrations/001_sprint2_profiles_topics.sql` rồi `migrations/002_backlog_sprint1_2.sql` vào cùng database, tổng cộng 28 bảng. Xem [hướng dẫn nâng cấp](../docs/BACKLOG_LOCAL.md).
+
 `ql_thuctap_doan_demo.sql` chứa đủ cấu trúc 13 bảng và dữ liệu demo được xuất ngày 03/11/2026: tài khoản, vai trò, phạm vi, khoa, ngành, năm học, học kỳ và đợt đào tạo.
 
 ## Nhập bằng MySQL Workbench

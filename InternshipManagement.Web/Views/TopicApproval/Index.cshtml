@@ -1,0 +1,136 @@
+@model InternshipManagement.Web.ViewModels.TopicApprovalListViewModel
+@{
+    ViewData["Title"] = "Xét duyệt đề tài đồ án & thực tập";
+}
+
+<div class="page-container sprint2-page">
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-check2-square me-2"></i>XÉT DUYỆT ĐỀ TÀI ĐỒ ÁN & THỰC TẬP
+            </h4>
+            <div class="text-muted small">Phê duyệt, yêu cầu chỉnh sửa hoặc từ chối đề tài trong phạm vi khoa / ngành quản lý</div>
+        </div>
+        <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+            <i class="bi bi-hourglass-split me-1"></i> Có @Model.TotalItems đề tài theo bộ lọc
+        </span>
+    </div>
+
+    <!-- Bộ lọc theo đợt, trạng thái, ngành -->
+    <div class="card card-custom mb-4 p-3 bg-light">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control" placeholder="Tìm theo mã, tên đề tài, GV..." value="@Model.SearchQuery" />
+            </div>
+            <div class="col-md-3">
+                <select name="campaignId" class="form-select" asp-items="Model.CampaignOptions">
+                    <option value="">-- Tất cả các đợt trong phạm vi --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="majorId" class="form-select" asp-items="Model.MajorOptions">
+                    <option value="">-- Tất cả ngành --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select" asp-items="Model.StatusOptions"></select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i> Lọc
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary" title="Đặt lại bộ lọc" aria-label="Đặt lại bộ lọc">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bảng danh sách đề tài cần xét duyệt -->
+    <div class="card card-custom">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list-check me-2"></i>Danh sách đề tài (@Model.TotalItems)</span>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Topics.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 110px;">Mã đề tài</th>
+                                <th>Tên đề tài</th>
+                                <th>Giảng viên</th>
+                                <th>Đợt thực tập / Đồ án</th>
+                                <th class="text-center" style="width: 90px;">Số SV</th>
+                                <th class="text-center" style="width: 140px;">Trạng thái</th>
+                                <th style="width: 110px;">Ngày gửi</th>
+                                <th class="text-end" style="width: 140px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var topic in Model.Topics)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-primary">@topic.Code</td>
+                                    <td>
+                                        <a asp-action="Review" asp-route-id="@topic.Id" class="text-decoration-none fw-semibold text-dark">
+                                            @topic.Title
+                                        </a>
+                                        @if (!string.IsNullOrEmpty(topic.ResearchField))
+                                        {
+                                            <div class="text-muted" style="font-size: 12px;">
+                                                <i class="bi bi-tag me-1"></i>@topic.ResearchField
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">@(topic.LecturerProfile?.User?.FullName ?? "Giảng viên")</div>
+                                        <div class="text-muted" style="font-size: 12px;">@(topic.LecturerProfile?.DepartmentName ?? topic.LecturerProfile?.LecturerCode)</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">@topic.Campaign?.Code</div>
+                                        <div class="text-muted" style="font-size: 12px;">@topic.Campaign?.Major?.Name</div>
+                                    </td>
+                                    <td class="text-center fw-bold">@topic.MaxStudents</td>
+                                    <td class="text-center">
+                                        <span class="@InternshipManagement.Web.Models.TopicStatuses.GetBadgeClass(topic.Status)">
+                                            @InternshipManagement.Web.Models.TopicStatuses.GetDisplayName(topic.Status)
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">@topic.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                                    <td class="text-end">
+                                        <a asp-action="Review" asp-route-id="@topic.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil-square me-1"></i> Xem & Duyệt
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="p-3 d-flex justify-content-center border-top">
+                        <ul class="pagination pagination-sm mb-0">
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(Model.Page == i ? "active" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-campaignId="@Model.CampaignId" asp-route-status="@Model.Status" asp-route-majorId="@Model.MajorId" asp-route-search="@Model.SearchQuery">@i</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="p-5 text-center text-muted">
+                    <i class="bi bi-clipboard-check fs-1 d-block mb-2 text-secondary"></i>
+                    Không có đề tài nào cần xét duyệt trong danh mục này.
+                </div>
+            }
+        </div>
+    </div>
+</div>

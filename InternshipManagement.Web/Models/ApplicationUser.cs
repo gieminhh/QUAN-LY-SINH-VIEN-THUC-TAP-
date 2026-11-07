@@ -17,4 +17,8 @@ public class ApplicationUser : IdentityUser
     public virtual ICollection<UserRoleScope> RoleScopes { get; set; } = new List<UserRoleScope>();
     public virtual ICollection<Campaign> CreatedCampaigns { get; set; } = new List<Campaign>();
     public virtual ICollection<UserRoleScope> GrantedRoleScopes { get; set; } = new List<UserRoleScope>();
+
+    // Sprint 2 Navigations
+    public virtual StudentProfile? StudentProfile { get; set; }
+    public virtual LecturerProfile? LecturerProfile { get; set; }
 }

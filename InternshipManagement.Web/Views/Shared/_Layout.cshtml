@@ -6,6 +6,7 @@
     var userRoles = currentUser != null ? (await UserManager.GetRolesAsync(currentUser)).ToList() : new List<string>();
     var isAdmin = userRoles.Contains(AppRoles.Admin);
     var isManager = isAdmin || userRoles.Contains(AppRoles.TrainingManager) || userRoles.Contains(AppRoles.FacultyManager);
+    var isLecturer = userRoles.Contains(AppRoles.Lecturer);
     var isStudent = userRoles.Contains(AppRoles.Student);
 }
 
@@ -28,7 +29,7 @@
         /* Enhancements for Dynamic Tables & Forms inside Main Area */
         .page-container {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1240px;
             margin: 0 auto;
             padding: 20px 24px;
         }
@@ -42,7 +43,7 @@
             background-color: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
             font-weight: 600;
-            padding: 10px 16px;
+            padding: 12px 18px;
             color: #1e40af;
         }
         .badge-draft { background-color: #64748b; color: #fff; }
@@ -68,7 +69,7 @@
     <header class="top-navbar">
         <div class="nav-left">
             <!-- Hamburger Menu Button -->
-            <button class="hamburger-btn" id="sidebarToggle" aria-controls="appSidebar" aria-label="Ẩn/hiện thanh điều hướng" title="Ẩn/hiện thanh điều hướng">
+            <button class="hamburger-btn" id="sidebarToggle" title="Ẩn/hiện thanh điều hướng">
                 <i class="bi bi-list"></i>
             </button>
 
@@ -88,15 +89,30 @@
 
         <!-- Right Section: Search, Tools, User Profile -->
         <div class="nav-right">
-            @if (isManager)
-            {
-                <form class="search-container" asp-controller="Campaigns" asp-action="Index" method="get" role="search">
-                    <div class="search-input-group">
-                        <input type="search" name="search" class="form-control" placeholder="Tìm đợt đào tạo…" aria-label="Tìm đợt đào tạo">
-                        <button type="submit" class="search-btn" title="Tìm kiếm" aria-label="Tìm kiếm"><i class="bi bi-search"></i></button>
+            <!-- Search Input Group -->
+            <div class="search-container">
+                <div class="search-input-group">
+                    <input type="text" class="form-control" id="topSearchInput" placeholder="Nhập từ khóa">
+                    <button class="search-btn" id="topSearchBtn" title="Tìm kiếm">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <div class="dropdown">
+                        <button class="advanced-filter-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span>Tính năng cao</span>
+                            <i class="bi bi-caret-down-fill" style="font-size: 7px;"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li><h6 class="dropdown-header">Tìm kiếm chuyên sâu</h6></li>
+                            <li><a class="dropdown-item" asp-controller="Topics" asp-action="Approved"><i class="bi bi-journal-check"></i> Tra cứu đề tài đã duyệt</a></li>
+                            <li><a class="dropdown-item" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-journal-text"></i> Tra cứu đợt đồ án & TT</a></li>
+                            @if (isAdmin)
+                            {
+                                <li><a class="dropdown-item" asp-controller="Users" asp-action="Index"><i class="bi bi-people"></i> Tra cứu tài khoản</a></li>
+                            }
+                        </ul>
                     </div>
-                </form>
-            }
+                </div>
+            </div>
 
             <!-- App Grid Icon -->
             <div class="dropdown">
@@ -106,13 +122,15 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow">
                     <li><h6 class="dropdown-header">Phân hệ USMART</h6></li>
                     <li><a class="dropdown-item active" asp-controller="Home" asp-action="Index"><i class="bi bi-mortarboard"></i> Cổng Quản lý Đồ án & Thực tập</a></li>
+                    <li><a class="dropdown-item" asp-controller="Topics" asp-action="Approved"><i class="bi bi-journal-check"></i> Đề tài được phê duyệt</a></li>
+                    @if (isLecturer || isAdmin)
+                    {
+                        <li><a class="dropdown-item" asp-controller="Topics" asp-action="Index"><i class="bi bi-journal-bookmark"></i> Quản lý đề tài của tôi</a></li>
+                    }
                     @if (isManager)
                     {
-                        <li><a class="dropdown-item" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-calendar-check"></i> Đợt thực tập / Đồ án</a></li>
-                    }
-                    @if (isAdmin)
-                    {
-                        <li><a class="dropdown-item" asp-controller="Users" asp-action="Index"><i class="bi bi-people"></i> Quản lý người dùng</a></li>
+                        <li><a class="dropdown-item" asp-controller="TopicApproval" asp-action="Index"><i class="bi bi-check-circle"></i> Xét duyệt đề tài</a></li>
+                        <li><a class="dropdown-item" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-calendar-check"></i> Quản lý đợt ĐA & TT</a></li>
                     }
                 </ul>
             </div>
@@ -123,8 +141,13 @@
                     <i class="bi bi-bell-fill"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow" style="width: 280px;">
-                    <li><h6 class="dropdown-header">Thông báo hệ thống</h6></li>
-                    <li><p class="px-3 py-2 mb-0 small text-muted">Chưa có thông báo mới.</p></li>
+                    <li><h6 class="dropdown-header d-flex justify-content-between align-items-center">
+                        <span>Thông báo hệ thống</span>
+                        <span class="badge bg-primary">Sprint 2</span>
+                    </h6></li>
+                    <li><a class="dropdown-item text-wrap" href="#">
+                        <small class="text-primary fw-bold">[Đồ án 36]</small> Quy trình đăng ký và xét duyệt đề tài trực tuyến đã hoạt động.
+                    </a></li>
                 </ul>
             </div>
 
@@ -132,28 +155,40 @@
             @if (SignInManager.IsSignedIn(User))
             {
                 <div class="dropdown">
-                    <button type="button" class="user-profile" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Tài khoản của tôi">
+                    <div class="user-profile" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="user-name">@(currentUser?.FullName?.ToUpper() ?? User.Identity?.Name?.ToUpper())</span>
                         <i class="bi bi-person-circle user-avatar-icon"></i>
-                    </button>
+                    </div>
                     <ul class="dropdown-menu dropdown-menu-end shadow">
                         <li>
                             <div class="px-3 py-2 border-bottom">
                                 <div class="fw-bold">@currentUser?.FullName</div>
-                                <small class="text-muted">Tên đăng nhập: @User.Identity?.Name</small><br>
+                                <small class="text-muted">Username: @User.Identity?.Name</small><br>
                                 <small class="text-primary fw-semibold">
-                                    Vai trò: @(userRoles.Any() ? string.Join(", ", userRoles.Select(AppRoles.GetDisplayName)) : "Chưa gán vai trò")
+                                    Vai trò: @(userRoles.Any() ? string.Join(", ", userRoles) : "Chưa gán vai trò")
                                 </small>
                             </div>
                         </li>
                         <li><a class="dropdown-item" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2"></i> Bảng điều khiển</a></li>
-                        @if (isAdmin)
+                        @if (isStudent)
                         {
-                            <li><a class="dropdown-item" asp-controller="Users" asp-action="Index"><i class="bi bi-people"></i> Quản lý tài khoản</a></li>
+                            <li><a class="dropdown-item" asp-controller="StudentProfile" asp-action="Index"><i class="bi bi-person-vcard"></i> Hồ sơ sinh viên</a></li>
+                            <li><a class="dropdown-item" asp-controller="Topics" asp-action="Approved"><i class="bi bi-journal-check"></i> Đề tài được duyệt</a></li>
+                        }
+                        @if (isLecturer)
+                        {
+                            <li><a class="dropdown-item" asp-controller="LecturerProfile" asp-action="Index"><i class="bi bi-person-badge"></i> Hồ sơ giảng viên</a></li>
+                            <li><a class="dropdown-item" asp-controller="Topics" asp-action="Index"><i class="bi bi-journal-text"></i> Đề tài của tôi</a></li>
                         }
                         @if (isManager)
                         {
+                            <li><a class="dropdown-item" asp-controller="TopicApproval" asp-action="Index"><i class="bi bi-check2-circle"></i> Xét duyệt đề tài</a></li>
+                            <li><a class="dropdown-item" asp-controller="LecturerQuotas" asp-action="Index"><i class="bi bi-sliders"></i> Hạn mức giảng viên</a></li>
                             <li><a class="dropdown-item" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-calendar-event"></i> Quản lý đợt</a></li>
+                        }
+                        @if (isAdmin)
+                        {
+                            <li><a class="dropdown-item" asp-controller="Users" asp-action="Index"><i class="bi bi-people"></i> Quản lý tài khoản</a></li>
                         }
                         <li><hr class="dropdown-divider"></li>
                         <li>
@@ -202,6 +237,112 @@
                     </a>
                 </li>
 
+                <!-- Sinh viên: Hồ sơ cá nhân (US-07) & Đề tài được phê duyệt -->
+                @if (isStudent)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="StudentProfile" asp-action="Index" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "StudentProfile" ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-person-vcard menu-icon text-primary"></i>
+                                <span class="menu-label fw-semibold">Hồ sơ cá nhân</span>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a asp-controller="Topics" asp-action="Approved" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Topics" && ViewContext.RouteData.Values["action"]?.ToString() == "Approved" ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-journal-check menu-icon text-success"></i>
+                                <span class="menu-label fw-semibold">Đề tài được phê duyệt</span>
+                            </span>
+                        </a>
+                    </li>
+                }
+
+                <!-- Giảng viên: Hồ sơ giảng viên (US-08) & Quản lý đề tài (US-10) -->
+                @if (isLecturer)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="LecturerProfile" asp-action="Index" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "LecturerProfile" ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-person-badge menu-icon text-primary"></i>
+                                <span class="menu-label fw-semibold">Hồ sơ giảng viên</span>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Topics" && ViewContext.RouteData.Values["action"]?.ToString() != "Approved" ? "open" : "")">
+                        <a href="#" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Topics" && ViewContext.RouteData.Values["action"]?.ToString() != "Approved" ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-journal-text menu-icon text-success"></i>
+                                <span class="menu-label fw-semibold">Quản lý đề tài</span>
+                            </span>
+                            <i class="bi bi-chevron-down menu-chevron"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li class="submenu-item">
+                                <a asp-controller="Topics" asp-action="Index" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Topics" ? "active" : "")">
+                                    Đề tài của tôi
+                                </a>
+                            </li>
+                            <li class="submenu-item">
+                                <a asp-controller="Topics" asp-action="Create" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")">
+                                    Đăng ký đề tài mới
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+
+                <!-- Cán bộ khoa / Đào tạo / Admin: Xét duyệt đề tài (US-11) & Hạn mức giảng viên (US-08) -->
+                @if (isManager)
+                {
+                    <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "TopicApproval" ? "open" : "")">
+                        <a href="#" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "TopicApproval" ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-check2-square menu-icon text-warning"></i>
+                                <span class="menu-label fw-semibold">Xét duyệt đề tài</span>
+                            </span>
+                            <i class="bi bi-chevron-down menu-chevron"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li class="submenu-item">
+                                <a asp-controller="TopicApproval" asp-action="Index" class="submenu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "TopicApproval" ? "active" : "")">
+                                    Danh sách đề tài xét duyệt
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="menu-item">
+                        <a asp-controller="LecturerQuotas" asp-action="Index" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "LecturerQuotas" ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-sliders menu-icon text-info"></i>
+                                <span class="menu-label fw-semibold">Hạn mức giảng viên</span>
+                            </span>
+                        </a>
+                    </li>
+                    <!-- Manager: Quản lý đợt thực tập / đồ án (US-05) -->
+                    <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "open" : "")">
+                        <a href="#" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-calendar2-range-fill menu-icon text-success"></i>
+                                <span class="menu-label fw-semibold">Quản lý đợt ĐA & TT</span>
+                            </span>
+                            <i class="bi bi-chevron-down menu-chevron"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li class="submenu-item">
+                                <a asp-controller="Campaigns" asp-action="Index" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "active" : "")">
+                                    Danh sách các đợt
+                                </a>
+                            </li>
+                            <li class="submenu-item">
+                                <a asp-controller="Campaigns" asp-action="Create" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")">
+                                    Tạo đợt mới
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+
                 @if (isAdmin)
                 {
                     <!-- Admin: Quản lý tài khoản (US-02) -->
@@ -220,7 +361,7 @@
                                 </a>
                             </li>
                             <li class="submenu-item">
-                                <a asp-controller="Users" asp-action="Create" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" && ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                                <a asp-controller="Users" asp-action="Create" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")">
                                     Thêm tài khoản mới
                                 </a>
                             </li>
@@ -228,73 +369,18 @@
                     </li>
                 }
 
-                @if (isManager)
+                <!-- Xem đề tài được phê duyệt công khai cho mọi người -->
+                @if (!isStudent)
                 {
-                    <!-- Manager: Quản lý đợt thực tập / đồ án (US-05) -->
-                    <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "open" : "")">
-                        <a href="#" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "active" : "")">
+                    <li class="menu-item">
+                        <a asp-controller="Topics" asp-action="Approved" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Topics" && ViewContext.RouteData.Values["action"]?.ToString() == "Approved" ? "active" : "")">
                             <span class="menu-link-content">
-                                <i class="bi bi-calendar2-range-fill menu-icon text-success"></i>
-                                <span class="menu-label fw-semibold">Quản lý đợt ĐA & TT</span>
+                                <i class="bi bi-journal-check menu-icon text-secondary"></i>
+                                <span class="menu-label">Đề tài đã phê duyệt</span>
                             </span>
-                            <i class="bi bi-chevron-down menu-chevron"></i>
                         </a>
-                        <ul class="submenu">
-                            <li class="submenu-item">
-                                <a asp-controller="Campaigns" asp-action="Index" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "active" : "")">
-                                    Danh sách các đợt
-                                </a>
-                            </li>
-                            <li class="submenu-item">
-                                <a asp-controller="Campaigns" asp-action="Create" class="submenu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" && ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "active" : "")">
-                                    Tạo đợt mới
-                                </a>
-                            </li>
-                        </ul>
                     </li>
                 }
-
-                <!-- Các mục menu tiện ích từ giao diện portal gốc -->
-                <li class="menu-item">
-                    <span class="menu-link menu-unavailable" aria-disabled="true">
-                        <span class="menu-link-content">
-                            <i class="bi bi-person-vcard menu-icon"></i>
-                            <span class="menu-label">Hồ sơ người học<small>Chưa triển khai</small></span>
-                        </span>
-                    </span>
-                </li>
-                <li class="menu-item">
-                    <span class="menu-link menu-unavailable" aria-disabled="true">
-                        <span class="menu-link-content">
-                            <i class="bi bi-envelope-fill menu-icon"></i>
-                            <span class="menu-label">Thông báo học vụ<small>Chưa triển khai</small></span>
-                        </span>
-                    </span>
-                </li>
-                <li class="menu-item">
-                    <span class="menu-link menu-unavailable" aria-disabled="true">
-                        <span class="menu-link-content">
-                            <i class="bi bi-calendar3 menu-icon"></i>
-                            <span class="menu-label">Thời khóa biểu<small>Chưa triển khai</small></span>
-                        </span>
-                    </span>
-                </li>
-                <li class="menu-item">
-                    <span class="menu-link menu-unavailable" aria-disabled="true">
-                        <span class="menu-link-content">
-                            <i class="bi bi-clock-history menu-icon"></i>
-                            <span class="menu-label">Xem lịch thi<small>Chưa triển khai</small></span>
-                        </span>
-                    </span>
-                </li>
-                <li class="menu-item">
-                    <span class="menu-link menu-unavailable" aria-disabled="true">
-                        <span class="menu-link-content">
-                            <i class="bi bi-briefcase menu-icon"></i>
-                            <span class="menu-label">Công việc sau tốt nghiệp<small>Chưa triển khai</small></span>
-                        </span>
-                    </span>
-                </li>
             </ul>
 
             <p id="sidebarSearchEmpty" class="sidebar-empty" hidden>Không tìm thấy chức năng phù hợp.</p>
@@ -329,6 +415,7 @@
                     </div>
                 }
 
+                <div class="d-flex flex-wrap gap-2 mb-3">@if(User.Identity?.IsAuthenticated==true){<a class="btn btn-sm btn-outline-secondary" href="/Account/ChangePassword">Đổi mật khẩu</a>}@if(isAdmin || isManager) {@if(isAdmin){<a class="btn btn-sm btn-outline-primary" href="/Catalog">Danh mục học vụ</a>}<a class="btn btn-sm btn-outline-primary" href="/CampaignRules">Lịch & điều kiện đợt</a><a class="btn btn-sm btn-outline-primary" href="/Companies">Doanh nghiệp</a><a class="btn btn-sm btn-outline-primary" href="/Assignments">Phân công</a>}@if(isAdmin){<a class="btn btn-sm btn-outline-primary" href="/UserImport">Nhập Excel</a>}@if(userRoles.Contains(AppRoles.Company)){<a class="btn btn-sm btn-outline-primary" href="/Companies/Register">Hồ sơ doanh nghiệp</a><a class="btn btn-sm btn-outline-primary" href="/Companies/Students">Sinh viên được giao</a>}</div>
                 @RenderBody()
             </div>
         </main>

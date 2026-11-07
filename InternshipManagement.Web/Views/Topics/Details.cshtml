@@ -1,0 +1,252 @@
+@model InternshipManagement.Web.ViewModels.TopicDetailsViewModel
+@{
+    ViewData["Title"] = "Chi tiết đề tài: " + Model.Topic.Code;
+    var topic = Model.Topic;
+}
+
+<div class="page-container sprint2-page">
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+            <a asp-action="Index" class="text-decoration-none text-muted small">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+            </a>
+            <h4 class="fw-bold text-primary mt-2 mb-1">
+                <i class="bi bi-journal-text me-2"></i>@topic.Code — @topic.Title
+            </h4>
+            <div class="text-muted small">
+                Đợt: <strong>@topic.Campaign?.Code - @topic.Campaign?.Name</strong> | 
+                Giảng viên hướng dẫn: <strong>@(topic.LecturerProfile?.User?.FullName ?? topic.LecturerProfile?.LecturerCode)</strong>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <span class="@InternshipManagement.Web.Models.TopicStatuses.GetBadgeClass(topic.Status) fs-6 px-3 py-2">
+                @InternshipManagement.Web.Models.TopicStatuses.GetDisplayName(topic.Status)
+            </span>
+
+            @if (Model.CanEdit)
+            {
+                <a asp-action="Edit" asp-route-id="@topic.Id" class="btn btn-warning">
+                    <i class="bi bi-pencil me-1"></i> Chỉnh sửa
+                </a>
+            }
+
+            @if (Model.CanSubmit)
+            {
+                <form asp-action="Submit" asp-route-id="@topic.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn gửi đề tài này để cán bộ khoa xét duyệt?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-send me-1"></i> Gửi xét duyệt
+                    </button>
+                </form>
+            }
+
+            @if (Model.CanReview)
+            {
+                <a asp-controller="TopicApproval" asp-action="Review" asp-route-id="@topic.Id" class="btn btn-primary">
+                    <i class="bi bi-check2-circle me-1"></i> Xét duyệt đề tài
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Alert nếu đề tài bị yêu cầu chỉnh sửa hoặc từ chối -->
+    @if (topic.Status == InternshipManagement.Web.Models.TopicStatuses.RevisionRequired)
+    {
+        var latestRevision = Model.Histories.FirstOrDefault(h => h.ToStatus == InternshipManagement.Web.Models.TopicStatuses.RevisionRequired);
+        <div class="alert alert-warning border-warning shadow-sm mb-4">
+            <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-exclamation-triangle-fill fs-3 text-warning"></i>
+                <div>
+                    <h6 class="alert-heading fw-bold mb-1">Cán bộ khoa yêu cầu chỉnh sửa đề tài</h6>
+                    <p class="mb-1 text-dark" style="white-space: pre-line;">@(latestRevision?.CommentText ?? "Vui lòng xem lại và cập nhật nội dung đề tài theo yêu cầu của hội đồng khoa.")</p>
+                    <small class="text-muted">Phản hồi lúc: @(latestRevision?.ActionAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "") bởi @(latestRevision?.ActorUser?.FullName ?? "Cán bộ xét duyệt")</small>
+                </div>
+            </div>
+        </div>
+    }
+    else if (topic.Status == InternshipManagement.Web.Models.TopicStatuses.Rejected)
+    {
+        var latestReject = Model.Histories.FirstOrDefault(h => h.ToStatus == InternshipManagement.Web.Models.TopicStatuses.Rejected);
+        <div class="alert alert-danger border-danger shadow-sm mb-4">
+            <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-x-circle-fill fs-3 text-danger"></i>
+                <div>
+                    <h6 class="alert-heading fw-bold mb-1">Đề tài đã bị từ chối phê duyệt</h6>
+                    <p class="mb-1 text-dark" style="white-space: pre-line;">@(latestReject?.CommentText ?? "Đề tài không đáp ứng yêu cầu của chương trình đào tạo.")</p>
+                    <small class="text-muted">Từ chối lúc: @(latestReject?.ActionAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "") bởi @(latestReject?.ActorUser?.FullName ?? "Cán bộ xét duyệt")</small>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Cột trái: Nội dung chi tiết đề tài -->
+        <div class="col-lg-8">
+            <div class="card card-custom p-4 mb-4">
+                <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                    <i class="bi bi-card-text me-2"></i>Nội dung đề tài
+                </h5>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-secondary">Mô tả tổng quan:</h6>
+                    <p class="text-dark" style="white-space: pre-line;">@(string.IsNullOrWhiteSpace(topic.Description) ? "Chưa có mô tả chi tiết." : topic.Description)</p>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-secondary">Mục tiêu đề tài:</h6>
+                    <p class="text-dark" style="white-space: pre-line;">@(string.IsNullOrWhiteSpace(topic.Objectives) ? "Chưa có thông tin mục tiêu." : topic.Objectives)</p>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-secondary">Yêu cầu kiến thức:</h6>
+                        <p class="text-dark" style="white-space: pre-line;">@(string.IsNullOrWhiteSpace(topic.KnowledgeRequirements) ? "Không có yêu cầu đặc biệt." : topic.KnowledgeRequirements)</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-secondary">Công nghệ sử dụng:</h6>
+                        <p class="text-dark" style="white-space: pre-line;">@(string.IsNullOrWhiteSpace(topic.Technologies) ? "Chưa chỉ định công nghệ." : topic.Technologies)</p>
+                    </div>
+                </div>
+
+                <!-- Tài liệu đính kèm -->
+                <div class="border-top pt-3">
+                    <h6 class="fw-bold text-secondary mb-2">Tài liệu đính kèm (Đề cương chi tiết):</h6>
+                    @if (Model.DocumentAttachment != null)
+                    {
+                        <div class="d-flex align-items-center justify-content-between p-3 border rounded bg-light">
+                            <div class="d-flex align-items-center gap-3">
+                                <i class="bi bi-file-earmark-arrow-down fs-3 text-primary"></i>
+                                <div>
+                                    <div class="fw-bold">@Model.DocumentAttachment.OriginalFileName</div>
+                                    <small class="text-muted">
+                                        Dung lượng: @((Model.DocumentAttachment.SizeBytes / 1024.0).ToString("N1")) KB | 
+                                        Tải lên: @Model.DocumentAttachment.UploadedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    </small>
+                                </div>
+                            </div>
+                            <a asp-action="DownloadDocument" asp-route-attachmentId="@Model.DocumentAttachment.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download me-1"></i> Tải về
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-0">Không có tài liệu đính kèm.</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Lịch sử xét duyệt đề tài (US-11) -->
+            <div class="card card-custom">
+                <div class="card-header-custom">
+                    <i class="bi bi-clock-history me-2"></i>Lịch sử xét duyệt & phản hồi
+                </div>
+                <div class="card-body p-3">
+                    @if (Model.Histories.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered small align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Thời gian</th>
+                                        <th>Người thực hiện</th>
+                                        <th>Hành động</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ý kiến nhận xét / Phản hồi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var h in Model.Histories)
+                                    {
+                                        <tr>
+                                            <td style="white-space: nowrap;">@h.ActionAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td class="fw-semibold">@(h.ActorUser?.FullName ?? h.ActorUserId)</td>
+                                            <td>
+                                                <span class="@InternshipManagement.Web.Models.TopicActionTypes.GetBadgeClass(h.ActionType)">
+                                                    @InternshipManagement.Web.Models.TopicActionTypes.GetDisplayName(h.ActionType)
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="@InternshipManagement.Web.Models.TopicStatuses.GetBadgeClass(h.ToStatus)">
+                                                    @InternshipManagement.Web.Models.TopicStatuses.GetDisplayName(h.ToStatus)
+                                                </span>
+                                            </td>
+                                            <td class="text-wrap" style="max-width: 300px;">
+                                                @(string.IsNullOrEmpty(h.CommentText) ? "--" : h.CommentText)
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small text-center mb-0 py-2">Chưa có lịch sử xét duyệt nào.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Thông tin tóm tắt & Giảng viên -->
+        <div class="col-lg-4">
+            <div class="card card-custom p-4 mb-4">
+                <h6 class="fw-bold text-secondary border-bottom pb-2 mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Thông tin tổng quan
+                </h6>
+                <div class="small mb-3">
+                    <div class="text-muted">Mã đề tài:</div>
+                    <div class="fw-bold text-primary fs-6">@topic.Code</div>
+                </div>
+                <div class="small mb-3">
+                    <div class="text-muted">Lĩnh vực nghiên cứu:</div>
+                    <div class="fw-semibold text-dark">@(topic.ResearchField ?? "Chưa phân loại")</div>
+                </div>
+                <div class="small mb-3">
+                    <div class="text-muted">Số lượng sinh viên tối đa:</div>
+                    <div class="fw-bold text-success fs-6">@topic.MaxStudents sinh viên</div>
+                </div>
+                <div class="small mb-3">
+                    <div class="text-muted">Ngày khởi tạo:</div>
+                    <div class="fw-semibold text-dark">@topic.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+                @if (topic.ApprovedAt.HasValue)
+                {
+                    <div class="small mb-3">
+                        <div class="text-muted">Ngày phê duyệt:</div>
+                        <div class="fw-bold text-success">@topic.ApprovedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                }
+            </div>
+
+            <div class="card card-custom p-4">
+                <h6 class="fw-bold text-secondary border-bottom pb-2 mb-3">
+                    <i class="bi bi-person-badge me-2"></i>Giảng viên hướng dẫn
+                </h6>
+                <div class="small mb-3">
+                    <div class="text-muted">Họ và tên:</div>
+                    <div class="fw-bold text-dark">@(topic.LecturerProfile?.User?.FullName ?? "--")</div>
+                </div>
+                <div class="small mb-3">
+                    <div class="text-muted">Mã giảng viên:</div>
+                    <div class="fw-semibold text-primary">@(topic.LecturerProfile?.LecturerCode ?? "--")</div>
+                </div>
+                <div class="small mb-3">
+                    <div class="text-muted">Khoa:</div>
+                    <div class="fw-semibold text-dark">@(topic.LecturerProfile?.Faculty?.Name ?? "--")</div>
+                </div>
+                <div class="small mb-3">
+                    <div class="text-muted">Bộ môn:</div>
+                    <div class="fw-semibold text-dark">@(topic.LecturerProfile?.DepartmentName ?? "Chưa cập nhật")</div>
+                </div>
+                <div class="small mb-0">
+                    <div class="text-muted">Học hàm / Học vị:</div>
+                    <div class="fw-semibold text-dark">
+                        @(topic.LecturerProfile?.AcademicTitle ?? "") @(topic.LecturerProfile?.AcademicDegree ?? "")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
