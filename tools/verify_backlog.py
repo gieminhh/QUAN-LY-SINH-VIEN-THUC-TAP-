@@ -46,7 +46,7 @@ try:
  sql("USE `"+name+"`; INSERT INTO campaign_windows(CampaignId,Stage,OpensAt,ClosesAt) SELECT id,'REGISTRATION','"+start+"','"+end+"' FROM campaigns WHERE status='OPEN' ON DUPLICATE KEY UPDATE OpensAt=VALUES(OpensAt),ClosesAt=VALUES(ClosesAt);")
  testenv=env.copy();testenv.update(TEST_BASE_URL="http://localhost:5065",TEST_DATABASE=name,TEST_CONTENT_ROOT=str(content),MYSQL_EXE=mysql,MYSQL_HOST=parts["Server"],MYSQL_PORT=parts.get("Port","3306"),MYSQL_USER=parts["Uid"])
  if "--clean-seed" in sys.argv:testenv["CB_KINHTE_PASSWORD"]="KinhTe@123"
- for script in (["tests/criteria_acceptance.py"] if "--criteria-only" in sys.argv else ["tests/backlog_acceptance.py"] if "--backlog-only" in sys.argv else ["run_acceptance_tests_sprint2.py","tests/backlog_acceptance.py","tests/criteria_acceptance.py"]):
+ for script in (["tests/team_integration_acceptance.py"] if "--team-only" in sys.argv else ["tests/criteria_acceptance.py"] if "--criteria-only" in sys.argv else ["tests/backlog_acceptance.py"] if "--backlog-only" in sys.argv else ["run_acceptance_tests_sprint2.py","tests/backlog_acceptance.py","tests/criteria_acceptance.py","tests/team_integration_acceptance.py"]):
   result=subprocess.run([sys.executable,str(root/script)],capture_output=True,env=testenv)
   print(result.stdout.decode("utf-8",errors="replace"));print(result.stderr.decode("utf-8",errors="replace"))
   if result.returncode:raise RuntimeError(script+" failed; test logs at "+str(work))

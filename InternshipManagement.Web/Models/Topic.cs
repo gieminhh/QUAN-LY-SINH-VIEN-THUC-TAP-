@@ -8,6 +8,7 @@ public static class TopicStatuses
     public const string Draft = "DRAFT";
     public const string Pending = "PENDING";
     public const string RevisionRequired = "REVISION_REQUIRED";
+    public const string RevisionRequested = RevisionRequired;
     public const string Approved = "APPROVED";
     public const string Rejected = "REJECTED";
 
@@ -87,6 +88,10 @@ public class Topic
 
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    // Compatibility with the initial topic proposal: one persisted requirements field.
+    [NotMapped]
+    public string? Requirements { get => KnowledgeRequirements; set => KnowledgeRequirements = value; }
 
     // Navigations
     [ForeignKey(nameof(CampaignId))]

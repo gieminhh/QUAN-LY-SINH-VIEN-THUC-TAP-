@@ -442,6 +442,39 @@ public class UsersController : Controller
         return RedirectToAction(nameof(ManageScopes), new { id = model.UserId });
     }
 
+
+[HttpGet]
+    public IActionResult ImportExcel() => View(new ImportUsersViewModel());
+
+    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(3_000_000)]
+    public async Task<IActionResult> PreviewExcel(ImportUsersViewModel model, [FromServices] UserImportWorkflow workflow)
+    {
+        var batch = await workflow.Preview(_userManager.GetUserId(User)!, model.ExcelFile, legacy: true);
+        if (batch.Model.Error != null) { ModelState.AddModelError("", batch.Model.Error); return View("ImportExcel", model); }
+        return View(ToImportModel(batch));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmImport(string ticket, [FromServices] UserImportWorkflow workflow)
+    {
+        var batch = await workflow.Confirm(_userManager.GetUserId(User)!, ticket);
+        if (batch == null) return BadRequest("Phiếu nhập không hợp lệ hoặc đã hết hạn.");
+        Response.Headers.CacheControl = "no-store";
+        return View("ImportResult", ToImportModel(batch));
+    }
+
+    static ImportUsersViewModel ToImportModel(UserImportWorkflow.Batch batch) => new()
+    {
+        Ticket = batch.Model.Ticket,
+        Rows = batch.Rows.Select(row => {
+            var result = batch.Model.Results.First(r => r.Row == row.Row);
+            return new ImportUserRowViewModel { RowNumber = row.Row, UserName = row.UserName, Email = row.Email,
+                FullName = row.FullName, PhoneNumber = row.PhoneNumber, Role = row.Role,
+                IsValid = result.Success, ErrorMessage = result.Message,
+                TemporaryPassword = batch.Model.Finished && batch.Passwords.TryGetValue(row.Row, out var password) ? password : null };
+        }).ToList()
+    };
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveScope(ulong scopeId, string userId)

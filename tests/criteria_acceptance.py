@@ -198,7 +198,7 @@ def csrf_roles_and_erd():
  refs=set(re.findall(r'^\s*(\w+)\s+[|o}{]+--[|o}{]+\s+(\w+)',doc,re.M))
  assert refs
  for left,right in refs:assert left.lower() in actual and right.lower() in actual,(left,right)
- assert len(actual)==28
+ assert len(actual)==29
 
 cases=[('#8 CV type/size/empty-file rejection preserves current profile and attachment',cv_type_size_and_atomicity),('#4 Account deactivation and lockout revoke sessions',auth_lifecycle),('#5 Multiple roles, revocation and Student-scope isolation',roles_and_csrf),('#4 Password mismatch, policy and old-session invalidation',password_validation),('#4 Invalid reset and generic unknown-email response',recovery_invalid_and_unknown),('#8 Academic tampering and #14 invalid/oversized/empty files',academic_tamper_and_file_limits),('#7 Invalid workbook and tampered import ticket',invalid_excel),('#11 Catalog dates and referenced-record protection',catalog_dates_and_references),('#12 Malformed policy/evidence must not silently change data',malformed_policy_and_evidence),('#12 Credits, prerequisites and eligible/ineligible filters',eligibility_filters),('#12/#14 Late submit/edit, revoked exception and closed campaign',deadlines_and_revocation),('#15 Reject reason, history and immutable approved/rejected state',approval_transitions),('#9 Concurrent assignments enforce one remaining quota',quota_race),('#10 Registration status/owner spoof, duplicate and rejected company',company_registration_integrity),('#2/#5 Role/CSRF boundaries and implemented ERD tables',csrf_roles_and_erd)]
 results=[]

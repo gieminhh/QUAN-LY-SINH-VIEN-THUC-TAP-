@@ -1,0 +1,214 @@
+@model InternshipManagement.Web.ViewModels.Profiles.LecturerManagementViewModel
+@using InternshipManagement.Web.Models
+
+@{
+    ViewData["Title"] = "Quota giảng viên";
+}
+
+<div class="page-container">
+    <div class="mb-3">
+        <h4 class="fw-bold text-primary mb-1"><i class="bi bi-person-workspace me-2"></i>Hồ sơ và quota giảng viên</h4>
+        <div class="text-muted small">Thiết lập số sinh viên tối đa theo từng đợt; yêu cầu vượt quota cần được duyệt.</div>
+    </div>
+
+    @if (Model.CampaignOptions.Count == 0)
+    {
+        <div class="alert alert-info">Bạn chưa được cấp phạm vi quản lý đợt nào.</div>
+    }
+    else
+    {
+        <form asp-action="Manage" method="get" class="card card-custom p-3 mb-4">
+            <label class="form-label fw-semibold" for="campaignId">Đợt đào tạo</label>
+            <div class="d-flex gap-2">
+                <select id="campaignId" name="campaignId" asp-items="Model.CampaignOptions" class="form-select"></select>
+                <button class="btn btn-outline-primary" type="submit">Xem</button>
+            </div>
+        </form>
+
+        <div class="card card-custom mb-4">
+            <div class="card-header-custom">Quota theo giảng viên</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Giảng viên</th><th>Chuyên môn</th><th>Đã phân công / quota</th><th>Thiết lập quota</th></tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Quotas.Count == 0)
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-4">Chưa có tài khoản giảng viên đang hoạt động.</td></tr>
+                    }
+                    @foreach (var quota in Model.Quotas)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@quota.LecturerName</td>
+                            <td>@(string.IsNullOrWhiteSpace(quota.Specialty) ? "Chưa cập nhật" : quota.Specialty)</td>
+                            <td><span class="@(quota.AssignedCount >= quota.Capacity ? "text-danger fw-semibold" : "")">@quota.AssignedCount / @quota.Capacity</span></td>
+                            <td>
+                                <form asp-action="SetQuota" method="post" class="d-flex gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="CampaignId" value="@Model.CampaignId">
+                                    <input type="hidden" name="LecturerUserId" value="@quota.LecturerUserId">
+                                    <input type="number" name="Capacity" value="@quota.Capacity" min="0" max="1000" class="form-control form-control-sm" style="max-width: 110px" aria-label="Quota">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Lưu</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card card-custom mb-4">
+            <div class="card-header-custom">Phân công sinh viên</div>
+            <div class="card-body">
+                @if (Model.LecturerOptions.Count == 0 || Model.StudentOptions.Count == 0)
+                {
+                    <div class="alert alert-warning mb-0">Cần có quota giảng viên và tài khoản sinh viên đang hoạt động để phân công.</div>
+                }
+                else
+                {
+                    <form asp-action="AddAssignment" method="post" class="row g-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="CampaignId" value="@Model.CampaignId">
+                        <div class="col-md-4">
+                            <label class="form-label">Giảng viên</label>
+                            <select name="LecturerUserId" asp-items="Model.LecturerOptions" class="form-select" required></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sinh viên</label>
+                            <select name="StudentUserId" asp-items="Model.StudentOptions" class="form-select" required></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Lý do xin vượt quota (nếu cần)</label>
+                            <input name="ExceptionReason" maxlength="1000" class="form-control" placeholder="Bắt buộc khi giảng viên đã đủ quota">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="MentorId">Người hướng dẫn doanh nghiệp (bắt buộc cho thực tập)</label>
+                            <select id="MentorId" name="MentorId" asp-items="Model.MentorOptions" class="form-select"><option value="">-- Không chọn --</option></select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Phân công / gửi xin duyệt</button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <div class="card card-custom mb-4">
+            <div class="card-header-custom">Hồ sơ sinh viên thuộc ngành của đợt</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Sinh viên</th><th>Lớp / ngành</th><th>Kỹ năng</th><th>Sở thích</th><th>CV</th></tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.StudentProfiles.Count == 0)
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-4">Chưa có sinh viên thuộc ngành này cập nhật hồ sơ.</td></tr>
+                    }
+                    @foreach (var student in Model.StudentProfiles)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@student.FullName</td>
+                            <td>@(string.IsNullOrWhiteSpace(student.ClassName) ? "Chưa cập nhật" : student.ClassName)<br><small class="text-muted">@student.MajorName</small></td>
+                            <td>@(string.IsNullOrWhiteSpace(student.Skills) ? "—" : student.Skills)</td>
+                            <td>@(string.IsNullOrWhiteSpace(student.Interests) ? "—" : student.Interests)</td>
+                            <td>
+                                @if (student.HasCv)
+                                {
+                                    <a asp-action="DownloadCv" asp-route-id="@student.UserId" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-file-earmark-pdf me-1"></i>Tải CV
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Chưa có</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card card-custom">
+            <div class="card-header-custom">Danh sách phân công và ngoại lệ</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Sinh viên</th><th>Giảng viên</th><th>Trạng thái</th><th>Lý do ngoại lệ / quyết định</th><th>Thao tác</th></tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Assignments.Count == 0)
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-4">Chưa có phân công.</td></tr>
+                    }
+                    @foreach (var assignment in Model.Assignments)
+                    {
+                        <tr>
+                            <td>@assignment.StudentName</td>
+                            <td>@assignment.LecturerName</td>
+                            <td>
+                                @switch (assignment.Status)
+                                {
+                                    case LecturerAssignmentStatuses.Assigned:
+                                        <span class="badge bg-success">Đã phân công</span>
+                                        break;
+                                    case LecturerAssignmentStatuses.PendingException:
+                                        <span class="badge bg-warning text-dark">Chờ duyệt ngoại lệ</span>
+                                        break;
+                                    case LecturerAssignmentStatuses.ApprovedException:
+                                        <span class="badge bg-primary">Đã duyệt ngoại lệ</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">Từ chối ngoại lệ</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(assignment.ExceptionReason))
+                                {
+                                    <div>@assignment.ExceptionReason</div>
+                                    @if (assignment.ReviewedAt.HasValue)
+                                    {
+                                        <small class="text-muted">@(assignment.ReviewedByName ?? "Quản lý") · @assignment.ReviewedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (Model.CanReviewExceptions && assignment.CanReview)
+                                {
+                                    <div class="d-flex gap-1">
+                                        <form asp-action="ReviewException" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@assignment.Id">
+                                            <input type="hidden" name="approve" value="true">
+                                            <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
+                                        </form>
+                                        <form asp-action="ReviewException" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@assignment.Id">
+                                            <input type="hidden" name="approve" value="false">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Từ chối</button>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

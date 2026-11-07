@@ -6,7 +6,9 @@
   <p>ASP.NET Core MVC · .NET 10 · Entity Framework Core · MySQL 8 · Bootstrap 5</p>
 </div>
 
-> **Cập nhật local theo backlog:** bổ sung mật khẩu, phân quyền hồ sơ/CV, Excel, danh mục học vụ, doanh nghiệp, lịch/điều kiện và kiểm soát quota. Xem [hướng dẫn và đối chiếu issue](docs/BACKLOG_LOCAL.md) và [ERD](docs/ERD.md). Cần nhập thêm hai script trong `database/migrations/` sau bản SQL nền trước khi chạy bản này. Cấu hình lịch đợt trước khi tạo/sửa/gửi đề tài.
+> **Cập nhật local theo backlog:** bổ sung mật khẩu, phân quyền hồ sơ/CV, Excel, danh mục học vụ, doanh nghiệp, lịch/điều kiện và kiểm soát quota. Xem [hướng dẫn và đối chiếu issue](docs/BACKLOG_LOCAL.md) và [ERD](docs/ERD.md). Cần chạy các script `database/migrations/*.sql` theo thứ tự `000` → `003` sau bản SQL nền trước khi chạy bản này. Cấu hình lịch đợt trước khi tạo/sửa/gửi đề tài.
+
+> **Tích hợp đóng góp nhóm:** giữ lịch sử PR #77–#80, bổ sung màn hình danh mục khoa/ngành/năm học/học kỳ, nhập Excel theo mẫu của nhóm, hồ sơ nhanh và duyệt ngoại lệ chỉ tiêu. Các màn hình trùng nghiệp vụ dùng chung dữ liệu/dịch vụ. Xem [phạm vi tích hợp, nâng cấp và kiểm thử](docs/TEAM_INTEGRATION.md).
 
 ---
 
@@ -28,7 +30,7 @@ Thực tập và đồ án là những hoạt động quan trọng trong quá tr
   - [US-08: Quản lý hồ sơ giảng viên & Hạn mức theo đợt](#us-08)
   - [US-10: Giảng viên đăng ký đề tài](#us-10)
   - [US-11: Cán bộ khoa xét duyệt đề tài](#us-11)
-- [4. Cơ sở dữ liệu MySQL (21 bảng)](#co-so-du-lieu)
+- [4. Cơ sở dữ liệu MySQL (29 bảng sau tích hợp)](#co-so-du-lieu)
 - [5. Kiến trúc bảo mật & Lưu trữ tài liệu](#bao-mat)
 - [6. Cài đặt và chạy dự án](#cai-dat)
 - [7. Danh sách tài khoản thử nghiệm](#tai-khoan)
@@ -94,7 +96,7 @@ Thực tập và đồ án là những hoạt động quan trọng trong quá tr
 ---
 
 <a id="co-so-du-lieu"></a>
-## 4. Cơ sở dữ liệu MySQL (21 bảng)
+## 4. Cơ sở dữ liệu MySQL (29 bảng sau tích hợp)
 
 Database: **`ql_thuctap_doan`** (MySQL 8, InnoDB, UTF-8 MB4).
 
@@ -128,7 +130,9 @@ erDiagram
     topics ||--o{ file_attachments : "đề cương đề tài"
 ```
 
-### Danh mục 21 bảng trong CSDL
+> Bản tích hợp có thêm 8 bảng: 7 bảng backlog trong migration `002` và bảng yêu cầu ngoại lệ trong `003`, tổng cộng 29. Danh sách bên dưới mô tả 21 bảng nền ban đầu; ERD hiện hành nằm tại [docs/ERD.md](docs/ERD.md).
+
+### Cấu trúc 21 bảng nền Sprint 1–2
 
 | STT | Tên bảng | Nhóm | Mô tả chức năng |
 | :---: | :--- | :--- | :--- |

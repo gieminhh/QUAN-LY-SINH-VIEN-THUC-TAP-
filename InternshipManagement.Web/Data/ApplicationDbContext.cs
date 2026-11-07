@@ -21,6 +21,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Campaign> Campaigns => Set<Campaign>();
     public DbSet<UserRoleScope> UserRoleScopes => Set<UserRoleScope>();
 
+    public DbSet<LecturerCampaignAssignment> LecturerCampaignAssignments => Set<LecturerCampaignAssignment>();
+
     // Sprint 2 DbSets
     public DbSet<StudentClass> StudentClasses => Set<StudentClass>();
     public DbSet<StudentProfile> StudentProfiles => Set<StudentProfile>();
@@ -326,6 +328,28 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
              .WithMany()
              .HasForeignKey(a => a.UploadedByUserId)
              .OnDelete(DeleteBehavior.Restrict);
+        });
+        builder.Entity<LecturerCampaignAssignment>(b =>
+        {
+            b.ToTable("lecturer_campaign_assignments");
+            b.HasIndex(a => new { a.CampaignId, a.StudentUserId, a.Status });
+            b.HasIndex(a => new { a.CampaignId, a.LecturerUserId, a.Status });
+            b.HasOne(a => a.Campaign)
+             .WithMany()
+             .HasForeignKey(a => a.CampaignId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(a => a.Lecturer)
+             .WithMany()
+             .HasForeignKey(a => a.LecturerUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne(a => a.Student)
+             .WithMany()
+             .HasForeignKey(a => a.StudentUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne(a => a.ReviewedByUser)
+             .WithMany()
+             .HasForeignKey(a => a.ReviewedByUserId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

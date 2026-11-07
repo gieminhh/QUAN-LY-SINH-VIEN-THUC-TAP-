@@ -1,0 +1,64 @@
+@model InternshipManagement.Web.ViewModels.Users.ImportUsersViewModel
+
+@{
+    ViewData["Title"] = "Nhập tài khoản từ Excel";
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-file-earmark-excel me-2"></i>
+                Nhập tài khoản từ Excel
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+            <form asp-action="PreviewExcel"
+                  asp-controller="Users"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label asp-for="ExcelFile" class="form-label">
+                        Chọn file Excel
+                    </label>
+
+                    <input asp-for="ExcelFile"
+                           type="file"
+                           class="form-control"
+                           accept=".xlsx" />
+
+                    <span asp-validation-for="ExcelFile"
+                          class="text-danger"></span>
+
+                    <small class="text-muted">
+                        File .xlsx tối đa 2 MB / 500 tài khoản, không dùng công thức. Mật khẩu được sinh ngẫu nhiên và hiển thị một lần sau khi nhập.
+                    </small>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Lưu ý:</strong>
+                    File Excel cần có các cột:
+                    UserName, Email, FullName, PhoneNumber, Role.
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-upload me-1"></i>
+                    Tải lên và xem trước
+                </button>
+
+                <a asp-action="Index" class="btn btn-secondary">
+                    Quay lại
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

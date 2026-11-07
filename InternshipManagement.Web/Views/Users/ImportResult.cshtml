@@ -1,0 +1,14 @@
+@model InternshipManagement.Web.ViewModels.Users.ImportUsersViewModel
+@{ ViewData["Title"] = "Kết quả nhập tài khoản"; }
+<div class="page-container">
+    <h4 class="fw-bold text-primary">Kết quả nhập tài khoản</h4>
+    <p>Thành công: @Model.Rows.Count(r => r.IsValid) / @Model.Rows.Count.</p>
+    <div class="alert alert-info">Mật khẩu tạm chỉ hiển thị trong lần này. Gửi riêng cho từng người dùng và yêu cầu đổi mật khẩu khi đăng nhập.</div>
+    <div class="table-responsive card p-3">
+        <table class="table align-middle"><thead><tr><th>Dòng</th><th>Tài khoản</th><th>Kết quả</th><th>Mật khẩu tạm</th></tr></thead>
+            <tbody>@foreach (var row in Model.Rows) {<tr><td>@row.RowNumber</td><td>@row.UserName</td><td class="@(row.IsValid ? "text-success" : "text-danger")">@row.ErrorMessage</td><td><code>@row.TemporaryPassword</code></td></tr>}</tbody>
+        </table>
+    </div>
+    <a asp-action="ImportExcel" class="btn btn-primary mt-3">Nhập file khác</a>
+    <a asp-action="Index" class="btn btn-outline-secondary mt-3">Danh sách tài khoản</a>
+</div>

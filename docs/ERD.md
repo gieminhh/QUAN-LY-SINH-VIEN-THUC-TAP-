@@ -147,6 +147,25 @@ erDiagram
 - Một sinh viên chỉ có một phân công trong một đợt. Thực tập bắt buộc có người hướng dẫn doanh nghiệp đã xác minh; giảng viên và sinh viên phải thuộc khoa/ngành hợp lệ.
 - Hạn mức đếm số **sinh viên đã phân công**, không đếm tổng chỉ tiêu đề xuất trên các đề tài. Phân công vượt quota phải được cán bộ xác nhận cùng lý do; không hạ quota dưới số đã phân công.
 
+## Yêu cầu vượt chỉ tiêu sau tích hợp nhóm
+
+```mermaid
+erDiagram
+ campaigns ||--o{ lecturer_campaign_assignments : records
+ AspNetUsers ||--o{ lecturer_campaign_assignments : participates
+ lecturer_campaign_assignments { ulong id PK
+ ulong campaign_id FK
+ string lecturer_user_id FK
+ string student_user_id FK
+ string status
+ string exception_reason
+ string reviewed_by_user_id FK
+ datetime reviewed_at
+ ulong company_mentor_id }
+```
+
+`lecturer_campaign_assignments` lưu yêu cầu và quyết định; chỉ `student_assignments` tính số sinh viên đã được phân công. Cả hai màn hình quản lý dùng cùng dịch vụ kiểm tra và giao dịch. Yêu cầu chờ duyệt không chiếm một phân công thực tế; duyệt thành công mới tạo phân công, có kiểm tra lại lịch/điều kiện/mentor.
+
 ## Thiết kế tổng thể cho các sprint tiếp theo — chưa triển khai
 
 ```mermaid

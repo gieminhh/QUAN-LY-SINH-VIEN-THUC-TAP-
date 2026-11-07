@@ -69,7 +69,7 @@
     <header class="top-navbar">
         <div class="nav-left">
             <!-- Hamburger Menu Button -->
-            <button class="hamburger-btn" id="sidebarToggle" title="Ẩn/hiện thanh điều hướng">
+            <button class="hamburger-btn" id="sidebarToggle" aria-controls="appSidebar" aria-label="Ẩn/hiện thanh điều hướng" title="Ẩn/hiện thanh điều hướng">
                 <i class="bi bi-list"></i>
             </button>
 
@@ -381,6 +381,21 @@
                         </a>
                     </li>
                 }
+                @if (isAdmin || userRoles.Contains(AppRoles.TrainingManager))
+                {
+                    <li class="menu-item"><a asp-controller="Faculties" asp-action="Index" class="menu-link"><span class="menu-link-content"><i class="bi bi-building menu-icon"></i><span class="menu-label">Danh mục khoa</span></span></a></li>
+                    <li class="menu-item"><a asp-controller="Majors" asp-action="Index" class="menu-link"><span class="menu-link-content"><i class="bi bi-diagram-3 menu-icon"></i><span class="menu-label">Danh mục ngành</span></span></a></li>
+                    <li class="menu-item"><a asp-controller="AcademicYears" asp-action="Index" class="menu-link"><span class="menu-link-content"><i class="bi bi-calendar3 menu-icon"></i><span class="menu-label">Năm học</span></span></a></li>
+                    <li class="menu-item"><a asp-controller="Terms" asp-action="Index" class="menu-link"><span class="menu-link-content"><i class="bi bi-calendar-week menu-icon"></i><span class="menu-label">Học kỳ</span></span></a></li>
+                }
+                @if (isManager)
+                {
+                    <li class="menu-item"><a asp-controller="Profiles" asp-action="Manage" class="menu-link"><span class="menu-link-content"><i class="bi bi-person-workspace menu-icon"></i><span class="menu-label">Hồ sơ & duyệt vượt chỉ tiêu</span></span></a></li>
+                }
+                @if (isStudent || isLecturer)
+                {
+                    <li class="menu-item"><a asp-controller="Profiles" asp-action="Index" class="menu-link"><span class="menu-link-content"><i class="bi bi-person-vcard menu-icon"></i><span class="menu-label">Cập nhật hồ sơ nhanh</span></span></a></li>
+                }
             </ul>
 
             <p id="sidebarSearchEmpty" class="sidebar-empty" hidden>Không tìm thấy chức năng phù hợp.</p>
@@ -415,7 +430,7 @@
                     </div>
                 }
 
-                <div class="d-flex flex-wrap gap-2 mb-3">@if(User.Identity?.IsAuthenticated==true){<a class="btn btn-sm btn-outline-secondary" href="/Account/ChangePassword">Đổi mật khẩu</a>}@if(isAdmin || isManager) {@if(isAdmin){<a class="btn btn-sm btn-outline-primary" href="/Catalog">Danh mục học vụ</a>}<a class="btn btn-sm btn-outline-primary" href="/CampaignRules">Lịch & điều kiện đợt</a><a class="btn btn-sm btn-outline-primary" href="/Companies">Doanh nghiệp</a><a class="btn btn-sm btn-outline-primary" href="/Assignments">Phân công</a>}@if(isAdmin){<a class="btn btn-sm btn-outline-primary" href="/UserImport">Nhập Excel</a>}@if(userRoles.Contains(AppRoles.Company)){<a class="btn btn-sm btn-outline-primary" href="/Companies/Register">Hồ sơ doanh nghiệp</a><a class="btn btn-sm btn-outline-primary" href="/Companies/Students">Sinh viên được giao</a>}</div>
+                <div class="d-flex flex-wrap gap-2 mb-3">@if(User.Identity?.IsAuthenticated==true){<a class="btn btn-sm btn-outline-secondary" href="/Account/ChangePassword">Đổi mật khẩu</a>}@if(isAdmin || isManager) {@if(isAdmin){<a class="btn btn-sm btn-outline-primary" href="/Catalog">Danh mục học vụ</a>}<a class="btn btn-sm btn-outline-primary" href="/CampaignRules">Lịch & điều kiện đợt</a><a class="btn btn-sm btn-outline-primary" href="/Companies">Doanh nghiệp</a><a class="btn btn-sm btn-outline-primary" href="/Assignments">Phân công</a>}@if(isAdmin){<a class="btn btn-sm btn-outline-primary" href="/Users/ImportExcel">Nhập Excel</a>}@if(userRoles.Contains(AppRoles.Company)){<a class="btn btn-sm btn-outline-primary" href="/Companies/Register">Hồ sơ doanh nghiệp</a><a class="btn btn-sm btn-outline-primary" href="/Companies/Students">Sinh viên được giao</a>}</div>
                 @RenderBody()
             </div>
         </main>

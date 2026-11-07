@@ -23,8 +23,9 @@ Phạm vi: issue #2–12 và hoàn thiện luồng đề tài hiện có #14–1
 Bản SQL `ql_thuctap_doan_demo.sql` là nền Sprint 1 (13 bảng), không phải bản xuất đầy đủ mới. Trên một bản sao CSDL, nhập theo thứ tự:
 
 1. `database/ql_thuctap_doan_demo.sql` nếu bắt đầu từ database trống.
-2. `database/migrations/001_sprint2_profiles_topics.sql` bổ sung 8 bảng Sprint 2.
-3. `database/migrations/002_backlog_sprint1_2.sql` bổ sung 7 bảng lịch/điều kiện/doanh nghiệp/phân công.
+2. Chạy `database/migrations/000_prepare_team_schema.sql` trước, để lưu bảng quota cũ nếu có.
+3. `database/migrations/001_sprint2_profiles_topics.sql` bổ sung 8 bảng Sprint 2.
+4. `database/migrations/002_backlog_sprint1_2.sql` bổ sung 7 bảng lịch/điều kiện/doanh nghiệp/phân công.
 
 Hai script nâng cấp dùng CREATE TABLE IF NOT EXISTS, không xóa dữ liệu cũ. Chọn đúng database đích trước khi nhập. Máy local đã được sao lưu riêng trong `InternshipManagement.Web/App_Data/Backups/` và áp dụng các bảng bổ sung. Không đưa backup, upload hoặc hộp thư thử nghiệm lên Git.
 
@@ -76,3 +77,5 @@ Kết quả máy đọc: [criteria-results-2026-11-05.json](verification/criteri
 Lỗi được tìm và sửa trong đợt test: sửa năm học làm học kỳ nằm ngoài khoảng; nhập dữ liệu không phải số làm mất ngưỡng GPA hoặc lưu tín chỉ thành 0; tranh quota đồng thời trả lỗi 500; CV chấp nhận loại ngoài PDF/DOC/DOCX hoặc tệp rỗng. Các trường hợp này đã có regression test.
 
 SMTP chỉ kiểm tra giao thư vào outbox local, chưa xác nhận hộp thư thật. Workflow chưa chạy trên GitHub vì chưa push. Chưa kiểm tra nghiệp vụ giảng viên phản biện hoặc sinh viên chọn đề tài vì chưa có các luồng đó. Không thay đổi issue/commit trên GitHub.
+
+Bản tích hợp nhóm chạy thêm `database/migrations/003_team_integration.sql`, tổng cộng 29 bảng. Xem [TEAM_INTEGRATION.md](TEAM_INTEGRATION.md) trước khi nâng cấp database đã dùng bản của các nhánh nhóm.

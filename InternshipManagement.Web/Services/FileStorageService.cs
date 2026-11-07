@@ -65,6 +65,14 @@ public class FileStorageService : IFileStorageService
     {
         // Prevent path traversal
         var normalizedKey = storageKey.Replace('\\', '/').TrimStart('/');
+        // Read former profile uploads through the same permission-checked download routes.
+        if (normalizedKey.StartsWith("legacy_cvs/", StringComparison.Ordinal))
+        {
+            var fileName = normalizedKey["legacy_cvs/".Length..];
+            if (fileName != Path.GetFileName(fileName) || fileName.Contains(':') || fileName is "" or "." or "..")
+                throw new UnauthorizedAccessException("Đường dẫn file không hợp lệ.");
+            return Path.Combine(_environment.ContentRootPath, "App_Data", "CVs", fileName);
+        }
         var fullPath = Path.GetFullPath(Path.Combine(_uploadBasePath, normalizedKey));
         if (!fullPath.StartsWith(Path.GetFullPath(_uploadBasePath) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
         {

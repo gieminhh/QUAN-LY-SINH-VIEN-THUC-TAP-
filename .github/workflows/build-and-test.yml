@@ -37,3 +37,8 @@ jobs:
           MYSQL_EXE: /usr/bin/mysql
           CB_KINHTE_PASSWORD: KinhTe@123
         run: python3 tools/verify_backlog.py
+      - name: Verify legacy team schema upgrade
+        env:
+          ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=ql_thuctap_doan;Uid=root;Pwd=ci-only-password;CharSet=utf8mb4;
+          MYSQL_EXE: /usr/bin/mysql
+        run: python3 tools/verify_team_upgrade.py

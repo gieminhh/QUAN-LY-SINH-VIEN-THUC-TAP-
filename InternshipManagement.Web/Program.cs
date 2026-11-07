@@ -73,6 +73,8 @@ builder.Services.AddScoped<IUserScopeService, UserScopeService>();
 builder.Services.AddScoped<PasswordRecoveryMailer>();
 builder.Services.AddScoped<ProfileAccessService>();
 builder.Services.AddScoped<CampaignRulesService>();
+builder.Services.AddScoped<StudentAssignmentService>();
+builder.Services.AddScoped<UserImportWorkflow>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IStudentProfileService, StudentProfileService>();
 builder.Services.AddScoped<ILecturerProfileService, LecturerProfileService>();

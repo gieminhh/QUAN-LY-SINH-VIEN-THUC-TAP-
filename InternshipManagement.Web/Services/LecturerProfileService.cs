@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using MySql.Data.MySqlClient;
 using InternshipManagement.Web.Data;
 using InternshipManagement.Web.Models;
 using InternshipManagement.Web.ViewModels;
@@ -159,6 +160,12 @@ public class LecturerProfileService : ILecturerProfileService
             }
         }
 
+        try
+        {
+        await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+        if (!await _context.Users.AnyAsync(u => u.Id == lecturer.UserId && u.IsActive) ||
+            !await _context.UserRoles.AnyAsync(ur => ur.UserId == lecturer.UserId && _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == AppRoles.Lecturer)))
+            return (false, "Tài khoản giảng viên không hoạt động hoặc không còn vai trò phù hợp.");
         var assignmentCount=await _context.StudentAssignments.CountAsync(a=>a.CampaignId==campaignId&&a.LecturerProfileId==lecturerProfileId);
         if(maxStudents<assignmentCount)return (false,"Hạn mức mới thấp hơn số sinh viên đã phân công.");
         var quota = await _context.LecturerCampaignQuotas
@@ -184,6 +191,13 @@ public class LecturerProfileService : ILecturerProfileService
         }
 
         await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
         return (true, null);
+        }
+        catch (Exception e) when (e.GetBaseException() is MySqlException { Number: 1213 or 1205 or 1062 })
+        {
+            _context.ChangeTracker.Clear();
+            return (false, "Dữ liệu hạn mức vừa thay đổi đồng thời. Vui lòng tải lại và thử lại.");
+        }
     }
 }
