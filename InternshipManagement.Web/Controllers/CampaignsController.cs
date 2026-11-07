@@ -275,6 +275,8 @@ public class CampaignsController : Controller
             return NotFound();
         }
 
+        if(campaign.Status==CampaignStatuses.Archived) return BadRequest("Không thể sửa đợt đã lưu trữ.");
+        if(!new[]{CampaignStatuses.Draft,CampaignStatuses.Open,CampaignStatuses.Closed,CampaignStatuses.Archived}.Contains(model.Status)) ModelState.AddModelError(nameof(model.Status),"Trạng thái không hợp lệ.");
         // Check duplicate code if changed
         if (model.Code != campaign.Code)
         {

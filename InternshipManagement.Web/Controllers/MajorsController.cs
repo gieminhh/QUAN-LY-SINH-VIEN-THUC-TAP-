@@ -271,8 +271,9 @@ public class MajorsController : Controller
     {
         var query = _context.Faculties
             .AsNoTracking()
-            .Where(f => f.IsActive);
+            .AsQueryable();
 
+        if (!currentFacultyId.HasValue) query = query.Where(f => f.IsActive);
         if (currentFacultyId.HasValue)
         {
             query = query.Where(f =>

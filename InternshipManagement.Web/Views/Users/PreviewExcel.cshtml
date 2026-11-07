@@ -84,39 +84,14 @@
         Chọn file khác
     </a>
 
-    @if (validCount > 0)
+    @if (Model.Ticket != null)
     {
         <form asp-action="ConfirmImport"
               method="post">
 
             @Html.AntiForgeryToken()
 
-            @for (int i = 0; i < Model.Rows.Count; i++)
-            {
-                <input type="hidden"
-                       name="Rows[@i].RowNumber"
-                       value="@Model.Rows[i].RowNumber" />
-
-                <input type="hidden"
-                       name="Rows[@i].UserName"
-                       value="@Model.Rows[i].UserName" />
-
-                <input type="hidden"
-                       name="Rows[@i].Email"
-                       value="@Model.Rows[i].Email" />
-
-                <input type="hidden"
-                       name="Rows[@i].FullName"
-                       value="@Model.Rows[i].FullName" />
-
-                <input type="hidden"
-                       name="Rows[@i].PhoneNumber"
-                       value="@Model.Rows[i].PhoneNumber" />
-
-                <input type="hidden"
-                       name="Rows[@i].Role"
-                       value="@Model.Rows[i].Role" />
-            }
+            <input type="hidden" name="ticket" value="@Model.Ticket" />
 
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-check-circle me-1"></i>

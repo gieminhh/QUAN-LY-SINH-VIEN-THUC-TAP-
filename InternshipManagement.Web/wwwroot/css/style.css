@@ -661,3 +661,31 @@ html, body { user-select: auto; font-size: 15px; }
   .page-container .table { min-width: 680px; }
   .page-container .d-flex.gap-2 { flex-wrap: wrap; }
 }
+
+/* Sprint 2: keep topic columns readable inside a horizontally scrollable region. */
+.sprint2-page .table-responsive { overflow-x: auto; }
+.sprint2-page .table-responsive > table { min-width: 960px; font-size: .9rem; }
+.sprint2-page .table-responsive th:nth-child(2),
+.sprint2-page .table-responsive td:nth-child(2) { min-width: 250px; }
+.sprint2-page .badge { font-size: .8rem; padding: .4em .65em; }
+.form-section-title { font-size: 1rem; color: #1768b5; border-bottom: 1px solid #dce5ef; padding-bottom: 12px; margin-bottom: 18px; }
+.topic-form { max-width: 1080px; margin-inline: auto; }
+@media (max-width: 768px) {
+  .topic-form .card.p-4 { padding: 18px !important; }
+  .topic-form form > .d-flex { flex-direction: column; align-items: stretch !important; gap: 12px; }
+  .topic-form form > .d-flex > .d-flex { flex-direction: column; }
+  .topic-form form > .d-flex .btn { width: 100%; min-height: 44px; }
+  .sprint2-page .table-responsive::before { content: "Vuốt ngang để xem đầy đủ thông tin →"; display: block; padding: 10px 12px; color: #52647a; font-size: 12px; }
+  .sprint2-page .btn-group .btn { min-width: 40px; min-height: 40px; }
+}
+
+/* Backlog administration forms share the existing portal visual language. */
+.backlog-page form > label { display: block; margin-top: 12px; margin-bottom: 6px; font-weight: 500; }
+.backlog-page .form-control, .backlog-page .form-select { min-height: 40px; }
+.backlog-page .card { margin-top: 16px; }
+.backlog-page nav { flex-wrap: wrap; }
+.backlog-page .btn { min-height: 38px; }
+@media(max-width:768px) {
+ .backlog-page form.row { row-gap: 12px; }
+ .backlog-page form.row .btn { width:100%; }
+}

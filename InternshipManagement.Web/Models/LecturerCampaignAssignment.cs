@@ -47,6 +47,9 @@ public class LecturerCampaignAssignment
     [Column("reviewed_at")]
     public DateTime? ReviewedAt { get; set; }
 
+    [Column("company_mentor_id")]
+    public ulong? CompanyMentorId { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -83,6 +83,10 @@
                             <label class="form-label">Lý do xin vượt quota (nếu cần)</label>
                             <input name="ExceptionReason" maxlength="1000" class="form-control" placeholder="Bắt buộc khi giảng viên đã đủ quota">
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="MentorId">Người hướng dẫn doanh nghiệp (bắt buộc cho thực tập)</label>
+                            <select id="MentorId" name="MentorId" asp-items="Model.MentorOptions" class="form-select"><option value="">-- Không chọn --</option></select>
+                        </div>
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Phân công / gửi xin duyệt</button>
                         </div>

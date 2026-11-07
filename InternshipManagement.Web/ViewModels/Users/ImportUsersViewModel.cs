@@ -8,6 +8,8 @@ public class ImportUsersViewModel
     [Required(ErrorMessage = "Vui lòng chọn file Excel.")]
     public IFormFile? ExcelFile { get; set; }
 
+    public string? Ticket { get; set; }
+
     public List<ImportUserRowViewModel> Rows { get; set; } = new();
 }
 

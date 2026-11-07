@@ -24,12 +24,12 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label asp-for="ClassName" class="form-label"></label>
-                            <input asp-for="ClassName" class="form-control" placeholder="Ví dụ: 64KTPM1">
+                            <input asp-for="ClassName" class="form-control" readonly>
                             <span asp-validation-for="ClassName" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
                             <label asp-for="MajorId" class="form-label"></label>
-                            <select asp-for="MajorId" asp-items="Model.MajorOptions" class="form-select">
+                            <select asp-for="MajorId" asp-items="Model.MajorOptions" class="form-select" disabled>
                                 <option value="">-- Chọn ngành --</option>
                             </select>
                             <span asp-validation-for="MajorId" class="text-danger small"></span>

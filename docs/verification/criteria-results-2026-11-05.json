@@ -1,0 +1,74 @@
+{
+  "date": "2026-11-05",
+  "environment": "isolated MySQL clone restored from repository SQL",
+  "baseline_sprint2_passed": 21,
+  "backlog_groups_passed": 8,
+  "extended_groups": [
+    {
+      "name": "#8 CV type/size/empty-file rejection preserves current profile and attachment",
+      "passed": true
+    },
+    {
+      "name": "#4 Account deactivation and lockout revoke sessions",
+      "passed": true
+    },
+    {
+      "name": "#5 Multiple roles, revocation and Student-scope isolation",
+      "passed": true
+    },
+    {
+      "name": "#4 Password mismatch, policy and old-session invalidation",
+      "passed": true
+    },
+    {
+      "name": "#4 Invalid reset and generic unknown-email response",
+      "passed": true
+    },
+    {
+      "name": "#8 Academic tampering and #14 invalid/oversized/empty files",
+      "passed": true
+    },
+    {
+      "name": "#7 Invalid workbook and tampered import ticket",
+      "passed": true
+    },
+    {
+      "name": "#11 Catalog dates and referenced-record protection",
+      "passed": true
+    },
+    {
+      "name": "#12 Malformed policy/evidence must not silently change data",
+      "passed": true
+    },
+    {
+      "name": "#12 Credits, prerequisites and eligible/ineligible filters",
+      "passed": true
+    },
+    {
+      "name": "#12/#14 Late submit/edit, revoked exception and closed campaign",
+      "passed": true
+    },
+    {
+      "name": "#15 Reject reason, history and immutable approved/rejected state",
+      "passed": true
+    },
+    {
+      "name": "#9 Concurrent assignments enforce one remaining quota",
+      "passed": true
+    },
+    {
+      "name": "#10 Registration status/owner spoof, duplicate and rejected company",
+      "passed": true
+    },
+    {
+      "name": "#2/#5 Role/CSRF boundaries and implemented ERD tables",
+      "passed": true
+    }
+  ],
+  "erd_diagrams_rendered": 4,
+  "not_verified": [
+    "SMTP delivery to real inbox",
+    "GitHub-hosted workflow execution",
+    "future reviewer and student topic-selection workflows"
+  ]
+}

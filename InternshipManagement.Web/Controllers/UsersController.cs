@@ -7,7 +7,6 @@ using InternshipManagement.Web.Data;
 using InternshipManagement.Web.Models;
 using InternshipManagement.Web.Services;
 using InternshipManagement.Web.ViewModels.Users;
-using System.Security.Cryptography;
 
 namespace InternshipManagement.Web.Controllers;
 
@@ -443,188 +442,39 @@ public class UsersController : Controller
         return RedirectToAction(nameof(ManageScopes), new { id = model.UserId });
     }
 
-        
-// Xác nhận nhập tài khoản từ Excel
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> ConfirmImport(ImportUsersViewModel model)
-{
-    if (model.Rows == null || !model.Rows.Any())
+
+[HttpGet]
+    public IActionResult ImportExcel() => View(new ImportUsersViewModel());
+
+    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(3_000_000)]
+    public async Task<IActionResult> PreviewExcel(ImportUsersViewModel model, [FromServices] UserImportWorkflow workflow)
     {
-        TempData["ErrorMessage"] = "Không có dữ liệu để nhập.";
-        return RedirectToAction(nameof(ImportExcel));
+        var batch = await workflow.Preview(_userManager.GetUserId(User)!, model.ExcelFile, legacy: true);
+        if (batch.Model.Error != null) { ModelState.AddModelError("", batch.Model.Error); return View("ImportExcel", model); }
+        return View(ToImportModel(batch));
     }
 
-    if (model.Rows.Count > 200)
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmImport(string ticket, [FromServices] UserImportWorkflow workflow)
     {
-        TempData["ErrorMessage"] = "Chỉ được nhập tối đa 200 tài khoản mỗi lần.";
-        return RedirectToAction(nameof(ImportExcel));
+        var batch = await workflow.Confirm(_userManager.GetUserId(User)!, ticket);
+        if (batch == null) return BadRequest("Phiếu nhập không hợp lệ hoặc đã hết hạn.");
+        Response.Headers.CacheControl = "no-store";
+        return View("ImportResult", ToImportModel(batch));
     }
 
-    var resultModel = new ImportUsersViewModel();
-
-    var userNames = new HashSet<string>(
-        StringComparer.OrdinalIgnoreCase);
-
-    var emails = new HashSet<string>(
-        StringComparer.OrdinalIgnoreCase);
-
-    foreach (var row in model.Rows)
+    static ImportUsersViewModel ToImportModel(UserImportWorkflow.Batch batch) => new()
     {
-        var errors = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(row.UserName))
-            errors.Add("Thiếu tên đăng nhập.");
-
-        if (string.IsNullOrWhiteSpace(row.Email) ||
-            !new EmailAddressAttribute().IsValid(row.Email))
-            errors.Add("Email không hợp lệ.");
-
-        if (string.IsNullOrWhiteSpace(row.FullName))
-            errors.Add("Thiếu họ tên.");
-
-        if (string.IsNullOrWhiteSpace(row.Role) ||
-            !await _roleManager.RoleExistsAsync(row.Role))
-            errors.Add("Vai trò không hợp lệ.");
-
-        if (!string.IsNullOrWhiteSpace(row.UserName))
-        {
-            if (!userNames.Add(row.UserName))
-                errors.Add("Tên đăng nhập bị trùng trong file.");
-
-            if (await _userManager.FindByNameAsync(row.UserName) != null)
-                errors.Add("Tên đăng nhập đã tồn tại.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(row.Email))
-        {
-            if (!emails.Add(row.Email))
-                errors.Add("Email bị trùng trong file.");
-
-            if (await _userManager.FindByEmailAsync(row.Email) != null)
-                errors.Add("Email đã tồn tại.");
-        }
-
-        if (errors.Any())
-        {
-            row.IsValid = false;
-            row.ErrorMessage = string.Join(" ", errors);
-            resultModel.Rows.Add(row);
-            continue;
-        }
-
-        var password = GenerateTemporaryPassword();
-
-        var user = new ApplicationUser
-        {
-            UserName = row.UserName.Trim(),
-            Email = row.Email.Trim(),
-            FullName = row.FullName.Trim(),
-            PhoneNumber = row.PhoneNumber?.Trim(),
-            EmailConfirmed = true,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        var createResult = await _userManager.CreateAsync(user, password);
-
-        if (!createResult.Succeeded)
-        {
-            row.IsValid = false;
-            row.ErrorMessage = string.Join(" ",
-                createResult.Errors.Select(e => e.Description));
-
-            resultModel.Rows.Add(row);
-            continue;
-        }
-
-        var roleResult = await _userManager.AddToRoleAsync(user, row.Role);
-
-        if (!roleResult.Succeeded)
-        {
-            await _userManager.DeleteAsync(user);
-
-            row.IsValid = false;
-            row.ErrorMessage = string.Join(" ",
-                roleResult.Errors.Select(e => e.Description));
-
-            resultModel.Rows.Add(row);
-            continue;
-        }
-
-        if (row.Role == AppRoles.Admin ||
-            row.Role == AppRoles.TrainingManager)
-        {
-            var role = await _roleManager.FindByNameAsync(row.Role);
-            var currentUserId = _userManager.GetUserId(User)!;
-
-            var scopeSuccess = role != null &&
-                await _scopeService.AssignScopeAsync(
-                    user.Id,
-                    role.Id,
-                    ScopeTypes.Global,
-                    null,
-                    null,
-                    null,
-                    currentUserId);
-
-            if (!scopeSuccess)
-            {
-                await _userManager.RemoveFromRoleAsync(user, row.Role);
-                await _userManager.DeleteAsync(user);
-
-                row.IsValid = false;
-                row.ErrorMessage = "Không thể gán phạm vi quyền.";
-
-                resultModel.Rows.Add(row);
-                continue;
-            }
-        }
-
-        row.IsValid = true;
-        row.ErrorMessage = "Tạo tài khoản thành công.";
-        row.TemporaryPassword = password;
-
-        resultModel.Rows.Add(row);
-    }
-
-    return View("ImportResult", resultModel);
-}
-
-// Sinh mật khẩu ngẫu nhiên
-private static string GenerateTemporaryPassword()
-{
-    const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-    const string lower = "abcdefghijkmnopqrstuvwxyz";
-    const string digits = "23456789";
-    const string special = "!@#$%*";
-
-    var all = upper + lower + digits + special;
-
-    var chars = new List<char>
-    {
-        upper[RandomNumberGenerator.GetInt32(upper.Length)],
-        lower[RandomNumberGenerator.GetInt32(lower.Length)],
-        digits[RandomNumberGenerator.GetInt32(digits.Length)],
-        special[RandomNumberGenerator.GetInt32(special.Length)]
+        Ticket = batch.Model.Ticket,
+        Rows = batch.Rows.Select(row => {
+            var result = batch.Model.Results.First(r => r.Row == row.Row);
+            return new ImportUserRowViewModel { RowNumber = row.Row, UserName = row.UserName, Email = row.Email,
+                FullName = row.FullName, PhoneNumber = row.PhoneNumber, Role = row.Role,
+                IsValid = result.Success, ErrorMessage = result.Message,
+                TemporaryPassword = batch.Model.Finished && batch.Passwords.TryGetValue(row.Row, out var password) ? password : null };
+        }).ToList()
     };
 
-    while (chars.Count < 16)
-    {
-        chars.Add(all[RandomNumberGenerator.GetInt32(all.Length)]);
-    }
-
-    // Trộn ngẫu nhiên các ký tự
-    for (int i = chars.Count - 1; i > 0; i--)
-    {
-        int j = RandomNumberGenerator.GetInt32(i + 1);
-        (chars[i], chars[j]) = (chars[j], chars[i]);
-    }
-
-    return new string(chars.ToArray());
-}
-
-    
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveScope(ulong scopeId, string userId)

@@ -14,6 +14,7 @@
         </div>
 
         <div class="card-body">
+            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
             <form asp-action="PreviewExcel"
                   asp-controller="Users"
                   method="post"
@@ -35,7 +36,7 @@
                           class="text-danger"></span>
 
                     <small class="text-muted">
-                        Chỉ hỗ trợ file Excel định dạng .xlsx.
+                        File .xlsx tối đa 2 MB / 500 tài khoản, không dùng công thức. Mật khẩu được sinh ngẫu nhiên và hiển thị một lần sau khi nhập.
                     </small>
                 </div>
 

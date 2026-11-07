@@ -13,6 +13,7 @@ public class LecturerManagementViewModel
     public List<SelectListItem> StudentOptions { get; set; } = new();
     public List<StudentProfileRowViewModel> StudentProfiles { get; set; } = new();
     public List<LecturerAssignmentRowViewModel> Assignments { get; set; } = new();
+    public List<SelectListItem> MentorOptions { get; set; } = new();
     public bool CanReviewExceptions { get; set; }
 }
 
@@ -71,6 +72,8 @@ public class AddLecturerAssignmentViewModel
 
     [Required]
     public string StudentUserId { get; set; } = string.Empty;
+
+    public ulong? MentorId { get; set; }
 
     [StringLength(1000, ErrorMessage = "Lý do ngoại lệ tối đa 1000 ký tự.")]
     public string? ExceptionReason { get; set; }

@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Authentication;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MySql.EntityFrameworkCore.Extensions;
@@ -6,6 +9,9 @@ using InternshipManagement.Web.Models;
 using InternshipManagement.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Support clean UTF-8 rendering for Vietnamese text across Razor views
+builder.Services.AddSingleton(HtmlEncoder.Create(UnicodeRanges.All));
 
 // Add Database Context with Oracle MySQL provider for EF Core 10
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
@@ -48,10 +54,32 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.Name = ".VinhUni.Internship.Auth";
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Events.OnValidatePrincipal = async context => {
+        var users=context.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+        var user=context.Principal==null?null:await users.GetUserAsync(context.Principal);
+        var claim=context.Principal?.FindFirst(users.Options.ClaimsIdentity.SecurityStampClaimType)?.Value;
+        if(user==null||!user.IsActive||await users.IsLockedOutAsync(user)||claim!=user.SecurityStamp) {
+            context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+            return;
+        }
+        var signIn=context.HttpContext.RequestServices.GetRequiredService<SignInManager<ApplicationUser>>();
+        context.ReplacePrincipal(await signIn.CreateUserPrincipalAsync(user));
+    };
 });
 
-// Register Domain Services
+// Register Domain Services (Sprint 1 & Sprint 2)
 builder.Services.AddScoped<IUserScopeService, UserScopeService>();
+builder.Services.AddScoped<PasswordRecoveryMailer>();
+builder.Services.AddScoped<ProfileAccessService>();
+builder.Services.AddScoped<CampaignRulesService>();
+builder.Services.AddScoped<StudentAssignmentService>();
+builder.Services.AddScoped<UserImportWorkflow>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+builder.Services.AddScoped<IStudentProfileService, StudentProfileService>();
+builder.Services.AddScoped<ILecturerProfileService, LecturerProfileService>();
+builder.Services.AddScoped<ITopicService, TopicService>();
+builder.Services.AddScoped<ITopicApprovalService, TopicApprovalService>();
 
 // Add Authorization Policies
 builder.Services.AddAuthorization(options =>
@@ -59,13 +87,17 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireAdmin", policy => policy.RequireRole(AppRoles.Admin));
     options.AddPolicy("RequireCampaignManager", policy => 
         policy.RequireRole(AppRoles.Admin, AppRoles.TrainingManager, AppRoles.FacultyManager));
+    options.AddPolicy("RequireLecturer", policy =>
+        policy.RequireRole(AppRoles.Admin, AppRoles.Lecturer));
+    options.AddPolicy("RequireStudent", policy =>
+        policy.RequireRole(AppRoles.Student));
 });
 
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Seed initial roles, data, and default admin account
+// Seed initial roles, data, and default accounts
 try
 {
     await DbInitializer.SeedAsync(app.Services);

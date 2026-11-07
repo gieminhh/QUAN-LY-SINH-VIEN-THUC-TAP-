@@ -1,4 +1,3 @@
-using System.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,164 +11,70 @@ using InternshipManagement.Web.ViewModels.Profiles;
 namespace InternshipManagement.Web.Controllers;
 
 [Authorize]
-public class ProfilesController : Controller
+public class ProfilesController(ApplicationDbContext context, UserManager<ApplicationUser> userManager,
+    IUserScopeService scopeService, IStudentProfileService studentProfiles, ILecturerProfileService lecturerProfiles,
+    IFileStorageService files, ProfileAccessService access, StudentAssignmentService assignments) : Controller
 {
-    private const long MaxCvSize = 5 * 1024 * 1024;
-    private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IUserScopeService _scopeService;
-    private readonly IWebHostEnvironment _environment;
-    private readonly ILogger<ProfilesController> _logger;
-
-    public ProfilesController(
-        ApplicationDbContext context,
-        UserManager<ApplicationUser> userManager,
-        IUserScopeService scopeService,
-        IWebHostEnvironment environment,
-        ILogger<ProfilesController> logger)
-    {
-        _context = context;
-        _userManager = userManager;
-        _scopeService = scopeService;
-        _environment = environment;
-        _logger = logger;
-    }
+    private readonly ApplicationDbContext _context = context;
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly IUserScopeService _scopeService = scopeService;
+    string Actor => _userManager.GetUserId(User)!;
 
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null)
-            return Challenge();
-
-        var model = await CreateProfileViewModelAsync(user);
-        if (!model.IsStudent && !model.IsLecturer)
-            return Forbid();
-
-        return View(model);
+        if (!User.IsInRole(AppRoles.Student) && !User.IsInRole(AppRoles.Lecturer)) return Forbid();
+        return View(await ProfileModel());
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Index(ProfileEditViewModel model)
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null)
-            return Challenge();
-
-        var roles = await _userManager.GetRolesAsync(user);
-        model.IsStudent = roles.Contains(AppRoles.Student);
-        model.IsLecturer = roles.Contains(AppRoles.Lecturer);
-        model.ExistingCvFileName = user.CvStoredFileName;
-        await PopulateMajorOptionsAsync(model);
-
-        if (!model.IsStudent && !model.IsLecturer)
-            return Forbid();
-
-        if (model.IsStudent && model.MajorId.HasValue &&
-            !await _context.Majors.AnyAsync(m => m.Id == model.MajorId && m.IsActive))
+        var current = await ProfileModel();
+        if (!current.IsStudent && !current.IsLecturer) return Forbid();
+        // Academic fields are supplied by staff, never accepted from a student's form.
+        ModelState.Remove(nameof(model.ClassName));
+        ModelState.Remove(nameof(model.MajorId));
+        if (current.IsStudent && model.CvFile != null)
         {
-            ModelState.AddModelError(nameof(model.MajorId), "Ngành đã chọn không tồn tại hoặc không còn hoạt động.");
-        }
-
-        string? newCvFileName = null;
-        if (model.CvFile != null)
-        {
-            if (model.CvFile.Length == 0 || model.CvFile.Length > MaxCvSize ||
-                !string.Equals(Path.GetExtension(model.CvFile.FileName), ".pdf", StringComparison.OrdinalIgnoreCase))
-            {
-                ModelState.AddModelError(nameof(model.CvFile), "CV phải là tệp PDF có dung lượng tối đa 5 MB.");
-            }
+            if (model.CvFile.Length is <= 0 or > 5 * 1024 * 1024 || !string.Equals(Path.GetExtension(model.CvFile.FileName), ".pdf", StringComparison.OrdinalIgnoreCase))
+                ModelState.AddModelError(nameof(model.CvFile), "CV phải là PDF có dung lượng tối đa 5 MB.");
             else
             {
                 await using var stream = model.CvFile.OpenReadStream();
                 var header = new byte[5];
-                var bytesRead = await stream.ReadAsync(header);
-                if (bytesRead != header.Length || !header.AsSpan().SequenceEqual("%PDF-"u8))
-                    ModelState.AddModelError(nameof(model.CvFile), "Tệp tải lên không có định dạng PDF hợp lệ.");
+                var length = await stream.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false);
+                if (length != 5 || !header.AsSpan().SequenceEqual("%PDF-"u8)) ModelState.AddModelError(nameof(model.CvFile), "Tệp tải lên không có định dạng PDF hợp lệ.");
             }
         }
-
+        if (ModelState.IsValid && current.IsStudent)
+        {
+            var result = await studentProfiles.UpdateProfileAsync(Actor, model.Skills?.Trim(), model.Interests?.Trim(), model.CvFile);
+            if (!result.Success) ModelState.AddModelError("", result.ErrorMessage!);
+        }
+        if (ModelState.IsValid && current.IsLecturer)
+        {
+            var profile = await _context.LecturerProfiles.FirstOrDefaultAsync(l => l.UserId == Actor);
+            if (profile == null) ModelState.AddModelError("", "Tài khoản chưa được liên kết hồ sơ giảng viên.");
+            else { profile.Expertise = model.LecturerSpecialty?.Trim(); profile.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
+        }
         if (!ModelState.IsValid)
-            return View(model);
-
-        if (model.IsStudent)
         {
-            user.ClassName = model.ClassName?.Trim();
-            user.MajorId = model.MajorId;
-            user.Skills = model.Skills?.Trim();
-            user.Interests = model.Interests?.Trim();
+            current.Skills = model.Skills; current.Interests = model.Interests; current.LecturerSpecialty = model.LecturerSpecialty;
+            return View(current);
         }
-
-        if (model.IsLecturer)
-            user.LecturerSpecialty = model.LecturerSpecialty?.Trim();
-
-        var oldCvFileName = user.CvStoredFileName;
-        if (model.CvFile != null)
-        {
-            newCvFileName = $"{Guid.NewGuid():N}.pdf";
-            try
-            {
-                var directory = GetCvDirectory();
-                Directory.CreateDirectory(directory);
-                var path = Path.Combine(directory, newCvFileName);
-                await using var destination = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
-                await model.CvFile.CopyToAsync(destination);
-                user.CvStoredFileName = newCvFileName;
-            }
-            catch (IOException ex)
-            {
-                _logger.LogError(ex, "Không thể lưu CV cho người dùng {UserId}.", user.Id);
-                ModelState.AddModelError(nameof(model.CvFile), "Không thể lưu CV lúc này. Vui lòng thử lại.");
-                return View(model);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                _logger.LogError(ex, "Không có quyền lưu CV cho người dùng {UserId}.", user.Id);
-                ModelState.AddModelError(nameof(model.CvFile), "Không thể lưu CV do lỗi quyền truy cập.");
-                return View(model);
-            }
-        }
-
-        var result = await _userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-        {
-            if (newCvFileName != null)
-                DeleteCvFile(newCvFileName);
-            foreach (var error in result.Errors)
-                ModelState.AddModelError(string.Empty, error.Description);
-            return View(model);
-        }
-
-        if (oldCvFileName != null && newCvFileName != null)
-            DeleteCvFile(oldCvFileName);
-
         TempData["SuccessMessage"] = "Đã cập nhật hồ sơ thành công.";
         return RedirectToAction(nameof(Index));
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Student)]
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveCv()
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null)
-            return Challenge();
-
-        var oldCvFileName = user.CvStoredFileName;
-        user.CvStoredFileName = null;
-        var result = await _userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-        {
-            _logger.LogError("Không thể cập nhật hồ sơ khi xóa CV của người dùng {UserId}: {Errors}",
-                user.Id, string.Join("; ", result.Errors.Select(e => e.Description)));
-            TempData["ErrorMessage"] = "Không thể xóa CV lúc này. Vui lòng thử lại.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        if (oldCvFileName != null)
-            DeleteCvFile(oldCvFileName);
-
+        var attachments = await _context.FileAttachments.Where(a => a.StudentProfile != null && a.StudentProfile.UserId == Actor && a.FileCategory == FileCategories.StudentCv).ToListAsync();
+        _context.FileAttachments.RemoveRange(attachments);
+        await _context.SaveChangesAsync();
+        foreach (var attachment in attachments) files.DeleteFile(attachment.StorageKey);
         TempData["SuccessMessage"] = "Đã xóa CV khỏi hồ sơ.";
         return RedirectToAction(nameof(Index));
     }
@@ -177,28 +82,27 @@ public class ProfilesController : Controller
     [HttpGet]
     public async Task<IActionResult> DownloadCv(string id)
     {
-        var user = await _userManager.FindByIdAsync(id);
-        if (user == null || string.IsNullOrWhiteSpace(user.CvStoredFileName))
-            return NotFound();
+        var profile = await studentProfiles.GetProfileByUserIdAsync(id);
+        if (profile == null) return NotFound();
+        if (!await access.StudentAsync(User, profile)) return Forbid();
+        var attachment = profile.Attachments.Where(a => a.FileCategory == FileCategories.StudentCv).OrderByDescending(a => a.UploadedAt).FirstOrDefault();
+        if (attachment == null || !files.FileExists(attachment.StorageKey)) return NotFound();
+        return PhysicalFile(files.GetFullPath(attachment.StorageKey), attachment.ContentType, attachment.OriginalFileName);
+    }
 
-        var currentUserId = _userManager.GetUserId(User);
-        var canDownload = user.Id == currentUserId || User.IsInRole(AppRoles.Admin);
-        if (!canDownload && user.MajorId.HasValue && currentUserId != null &&
-            (User.IsInRole(AppRoles.TrainingManager) || User.IsInRole(AppRoles.FacultyManager)))
+    async Task<ProfileEditViewModel> ProfileModel()
+    {
+        var student = await studentProfiles.GetProfileByUserIdAsync(Actor);
+        var lecturer = await _context.LecturerProfiles.FirstOrDefaultAsync(l => l.UserId == Actor);
+        return new ProfileEditViewModel
         {
-            var accessibleCampaigns = await _scopeService.FilterAccessibleCampaignsAsync(
-                currentUserId, _context.Campaigns);
-            canDownload = await accessibleCampaigns.AnyAsync(c => c.MajorId == user.MajorId);
-        }
-
-        if (!canDownload)
-            return Forbid();
-
-        var path = Path.Combine(GetCvDirectory(), user.CvStoredFileName);
-        if (!System.IO.File.Exists(path))
-            return NotFound();
-
-        return PhysicalFile(path, "application/pdf", "CV.pdf");
+            IsStudent = User.IsInRole(AppRoles.Student), IsLecturer = User.IsInRole(AppRoles.Lecturer),
+            ClassName = student?.Class?.Code, MajorId = student?.MajorId,
+            MajorOptions = student?.Major == null ? new() : new() { new SelectListItem(student.Major.Name, student.MajorId.ToString()) },
+            Skills = student?.Skills, Interests = student?.Interests,
+            ExistingCvFileName = student?.Attachments.Where(a => a.FileCategory == FileCategories.StudentCv).OrderByDescending(a => a.UploadedAt).FirstOrDefault()?.OriginalFileName,
+            LecturerSpecialty = lecturer?.Expertise
+        };
     }
 
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.TrainingManager},{AppRoles.FacultyManager}")]
@@ -220,25 +124,23 @@ public class ProfilesController : Controller
         if (selectedCampaign == null)
             return Forbid();
 
-        var lecturers = (await _userManager.GetUsersInRoleAsync(AppRoles.Lecturer))
+        var lecturerRoleUsers = (await _userManager.GetUsersInRoleAsync(AppRoles.Lecturer)).Select(u => u.Id).ToList();
+        var lecturers = (await _context.Users.Include(u => u.LecturerProfile).Where(u => lecturerRoleUsers.Contains(u.Id) && u.LecturerProfile != null && u.LecturerProfile.FacultyId == selectedCampaign.Major!.FacultyId).ToListAsync())
             .Where(u => u.IsActive)
             .OrderBy(u => u.FullName)
             .ToList();
-        var students = (await _userManager.GetUsersInRoleAsync(AppRoles.Student))
-            .Where(u => u.IsActive && u.MajorId == selectedCampaign.MajorId)
+        var studentRoleUsers = (await _userManager.GetUsersInRoleAsync(AppRoles.Student)).Select(u => u.Id).ToList();
+        var students = (await _context.Users.Include(u => u.StudentProfile!).ThenInclude(s => s.Class).Where(u => studentRoleUsers.Contains(u.Id) && u.StudentProfile != null).ToListAsync())
+            .Where(u => u.IsActive && u.StudentProfile!.MajorId == selectedCampaign.MajorId)
             .OrderBy(u => u.FullName)
             .ToList();
         var quotaRows = await _context.LecturerCampaignQuotas
             .Where(q => q.CampaignId == selectedCampaignId)
-            .ToDictionaryAsync(q => q.LecturerUserId);
-        var assignedCounts = await _context.LecturerCampaignAssignments
-            .Where(a => a.CampaignId == selectedCampaignId &&
-                (a.Status == LecturerAssignmentStatuses.Assigned ||
-                 a.Status == LecturerAssignmentStatuses.ApprovedException))
-            .GroupBy(a => a.LecturerUserId)
-            .Select(g => new { LecturerUserId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.LecturerUserId, g => g.Count);
-
+            .Include(q => q.LecturerProfile)
+            .ToDictionaryAsync(q => q.LecturerProfile!.UserId);
+        var counts = await _context.StudentAssignments.Where(a => a.CampaignId == selectedCampaignId)
+            .GroupBy(a => a.LecturerProfileId).Select(g => new { Id = g.Key, Count = g.Count() }).ToDictionaryAsync(x => x.Id, x => x.Count);
+        var assignedCounts = lecturers.ToDictionary(u => u.Id, u => counts.GetValueOrDefault(u.LecturerProfile!.Id));
         var assignments = await _context.LecturerCampaignAssignments
             .Where(a => a.CampaignId == selectedCampaignId)
             .Include(a => a.Lecturer)
@@ -247,6 +149,27 @@ public class ProfilesController : Controller
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
 
+        // Show assignments made before this merge or through the other screen too.
+        var actual = await (from a in _context.StudentAssignments
+            join student in _context.StudentProfiles.Include(p => p.User) on a.StudentProfileId equals student.Id
+            join lecturer in _context.LecturerProfiles.Include(p => p.User) on a.LecturerProfileId equals lecturer.Id
+            where a.CampaignId == selectedCampaignId
+            select new { Assignment = a, Student = student, Lecturer = lecturer }).ToListAsync();
+        foreach (var row in actual)
+        {
+            if (assignments.Any(a => a.StudentUserId == row.Student.UserId && a.LecturerUserId == row.Lecturer.UserId && (a.Status == LecturerAssignmentStatuses.Assigned || a.Status == LecturerAssignmentStatuses.ApprovedException))) continue;
+            assignments.Add(new LecturerCampaignAssignment { CampaignId = selectedCampaignId,
+                StudentUserId = row.Student.UserId, Student = row.Student.User,
+                LecturerUserId = row.Lecturer.UserId, Lecturer = row.Lecturer.User,
+                Status = string.IsNullOrWhiteSpace(row.Assignment.QuotaOverrideReason) ? LecturerAssignmentStatuses.Assigned : LecturerAssignmentStatuses.ApprovedException,
+                ExceptionReason = row.Assignment.QuotaOverrideReason,
+                ReviewedByUserId = row.Assignment.AssignedBy, ReviewedAt = row.Assignment.AssignedAt,
+                CreatedAt = row.Assignment.AssignedAt });
+        }
+
+        var cvUsers = await _context.FileAttachments.Where(a => a.FileCategory == FileCategories.StudentCv && a.StudentProfile != null)
+            .Select(a => a.StudentProfile!.UserId).ToListAsync();
+        var mentors = await _context.CompanyMentors.Where(m => _context.Companies.Any(c => c.Id == m.CompanyId && c.Status == "APPROVED" && c.MajorId == selectedCampaign.MajorId)).ToListAsync();
         return View(new LecturerManagementViewModel
         {
             CampaignId = selectedCampaignId,
@@ -263,9 +186,9 @@ public class ProfilesController : Controller
                 {
                     LecturerUserId = lecturer.Id,
                     LecturerName = lecturer.FullName,
-                    Specialty = lecturer.LecturerSpecialty ?? string.Empty,
+                    Specialty = lecturer.LecturerProfile!.Expertise ?? string.Empty,
                     QuotaId = quota?.Id,
-                    Capacity = quota?.Capacity ?? 0,
+                    Capacity = (int)(quota?.MaxStudents ?? 0),
                     AssignedCount = count
                 };
             }).ToList(),
@@ -282,11 +205,11 @@ public class ProfilesController : Controller
             {
                 UserId = s.Id,
                 FullName = s.FullName,
-                ClassName = s.ClassName ?? string.Empty,
+                ClassName = s.StudentProfile!.Class?.Code ?? string.Empty,
                 MajorName = selectedCampaign.Major?.Name ?? string.Empty,
-                Skills = s.Skills ?? string.Empty,
-                Interests = s.Interests ?? string.Empty,
-                HasCv = !string.IsNullOrWhiteSpace(s.CvStoredFileName)
+                Skills = s.StudentProfile!.Skills ?? string.Empty,
+                Interests = s.StudentProfile!.Interests ?? string.Empty,
+                HasCv = cvUsers.Contains(s.Id)
             }).ToList(),
             Assignments = assignments.Select(a => new LecturerAssignmentRowViewModel
             {
@@ -299,262 +222,47 @@ public class ProfilesController : Controller
                 ReviewedAt = a.ReviewedAt,
                 CanReview = a.Status == LecturerAssignmentStatuses.PendingException
             }).ToList(),
+            MentorOptions = mentors.Select(m => new SelectListItem(m.Name, m.Id.ToString())).ToList(),
             CanReviewExceptions = true
         });
     }
 
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.TrainingManager},{AppRoles.FacultyManager}")]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> SetQuota(SetLecturerQuotaViewModel model)
     {
-        if (!ModelState.IsValid)
-        {
-            TempData["ErrorMessage"] = "Dữ liệu quota không hợp lệ.";
-            return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
-        }
-
-        if (!await CanManageCampaignAsync(model.CampaignId))
-            return Forbid();
-        if (!await UserIsInRoleAsync(model.LecturerUserId, AppRoles.Lecturer))
-        {
-            TempData["ErrorMessage"] = "Tài khoản được chọn không có vai trò giảng viên.";
-            return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
-        }
-
-        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-        var quota = await _context.LecturerCampaignQuotas
-            .FromSqlInterpolated($"SELECT * FROM `lecturer_campaign_quotas` WHERE `campaign_id` = {model.CampaignId} AND `lecturer_user_id` = {model.LecturerUserId} FOR UPDATE")
-            .SingleOrDefaultAsync();
-        var assignedCount = await _context.LecturerCampaignAssignments.CountAsync(a =>
-            a.CampaignId == model.CampaignId &&
-            a.LecturerUserId == model.LecturerUserId &&
-            (a.Status == LecturerAssignmentStatuses.Assigned ||
-             a.Status == LecturerAssignmentStatuses.ApprovedException));
-
-        if (model.Capacity < assignedCount)
-        {
-            await transaction.RollbackAsync();
-            TempData["ErrorMessage"] = $"Không thể đặt quota thấp hơn số sinh viên đang được hướng dẫn ({assignedCount}).";
-            return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
-        }
-
-        if (quota == null)
-        {
-            quota = new LecturerCampaignQuota
-            {
-                CampaignId = model.CampaignId,
-                LecturerUserId = model.LecturerUserId
-            };
-            _context.LecturerCampaignQuotas.Add(quota);
-        }
-        quota.Capacity = model.Capacity;
-        quota.UpdatedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        TempData["SuccessMessage"] = "Đã lưu quota giảng viên cho đợt.";
+        if (!await _scopeService.CanManageCampaignAsync(Actor, model.CampaignId)) return Forbid();
+        var lecturer = await _context.LecturerProfiles.FirstOrDefaultAsync(l => l.UserId == model.LecturerUserId);
+        var result = !ModelState.IsValid || lecturer == null
+            ? (Success: false, ErrorMessage: (string?)"Thông tin quota không hợp lệ.")
+            : await lecturerProfiles.SetQuotaAsync(lecturer.Id, model.CampaignId, (uint)model.Capacity, Actor);
+        TempData[result.Success ? "SuccessMessage" : "ErrorMessage"] = result.Success ? "Đã lưu quota giảng viên cho đợt." : result.ErrorMessage;
         return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
     }
 
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.TrainingManager},{AppRoles.FacultyManager}")]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> AddAssignment(AddLecturerAssignmentViewModel model)
     {
-        if (!ModelState.IsValid)
-        {
-            TempData["ErrorMessage"] = "Thông tin phân công không hợp lệ.";
-            return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
-        }
-
-        if (!await CanManageCampaignAsync(model.CampaignId))
-            return Forbid();
-        if (!await UserIsInRoleAsync(model.LecturerUserId, AppRoles.Lecturer) ||
-            !await UserIsInRoleAsync(model.StudentUserId, AppRoles.Student))
-        {
-            TempData["ErrorMessage"] = "Chỉ có thể phân công tài khoản sinh viên cho giảng viên.";
-            return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
-        }
-        var campaignMajorId = await _context.Campaigns
-            .Where(c => c.Id == model.CampaignId)
-            .Select(c => (ulong?)c.MajorId)
-            .SingleOrDefaultAsync();
-        var studentMajorId = await _context.Users
-            .Where(u => u.Id == model.StudentUserId)
-            .Select(u => u.MajorId)
-            .SingleOrDefaultAsync();
-        if (campaignMajorId == null || studentMajorId != campaignMajorId)
-        {
-            TempData["ErrorMessage"] = "Chỉ có thể phân công sinh viên thuộc ngành của đợt; hãy cập nhật ngành trong hồ sơ sinh viên.";
-            return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
-        }
-
-        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-        var quota = await _context.LecturerCampaignQuotas
-            .FromSqlInterpolated($"SELECT * FROM `lecturer_campaign_quotas` WHERE `campaign_id` = {model.CampaignId} AND `lecturer_user_id` = {model.LecturerUserId} FOR UPDATE")
-            .SingleOrDefaultAsync();
-        if (quota == null)
-        {
-            await transaction.RollbackAsync();
-            TempData["ErrorMessage"] = "Giảng viên chưa được thiết lập quota cho đợt này.";
-            return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
-        }
-
-        var duplicate = await _context.LecturerCampaignAssignments.AnyAsync(a =>
-            a.CampaignId == model.CampaignId &&
-            a.StudentUserId == model.StudentUserId &&
-            a.Status != LecturerAssignmentStatuses.RejectedException);
-        if (duplicate)
-        {
-            await transaction.RollbackAsync();
-            TempData["ErrorMessage"] = "Sinh viên đã được phân công hoặc đang có yêu cầu ngoại lệ trong đợt này.";
-            return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
-        }
-
-        var assignedCount = await _context.LecturerCampaignAssignments.CountAsync(a =>
-            a.CampaignId == model.CampaignId &&
-            a.LecturerUserId == model.LecturerUserId &&
-            (a.Status == LecturerAssignmentStatuses.Assigned ||
-             a.Status == LecturerAssignmentStatuses.ApprovedException));
-        var isOverQuota = assignedCount >= quota.Capacity;
-        if (isOverQuota && string.IsNullOrWhiteSpace(model.ExceptionReason))
-        {
-            await transaction.RollbackAsync();
-            TempData["ErrorMessage"] = $"Giảng viên đã đạt quota ({quota.Capacity}). Cần nhập lý do để gửi ngoại lệ chờ duyệt.";
-            return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
-        }
-
-        _context.LecturerCampaignAssignments.Add(new LecturerCampaignAssignment
-        {
-            CampaignId = model.CampaignId,
-            LecturerUserId = model.LecturerUserId,
-            StudentUserId = model.StudentUserId,
-            Status = isOverQuota
-                ? LecturerAssignmentStatuses.PendingException
-                : LecturerAssignmentStatuses.Assigned,
-            ExceptionReason = isOverQuota ? model.ExceptionReason!.Trim() : null,
-            CreatedAt = DateTime.UtcNow
-        });
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        TempData["SuccessMessage"] = isOverQuota
-            ? "Đã gửi yêu cầu vượt quota để chờ duyệt; sinh viên chưa được tính là đã phân công."
-            : "Đã phân công sinh viên cho giảng viên.";
+        if (!await _scopeService.CanManageCampaignAsync(Actor, model.CampaignId)) return Forbid();
+        var student = await _context.StudentProfiles.FirstOrDefaultAsync(s => s.UserId == model.StudentUserId);
+        var lecturer = await _context.LecturerProfiles.FirstOrDefaultAsync(l => l.UserId == model.LecturerUserId);
+        var result = !ModelState.IsValid || student == null || lecturer == null
+            ? (Success: false, Message: "Thông tin phân công không hợp lệ hoặc tài khoản chưa có hồ sơ.")
+            : await assignments.AssignAsync(Actor, model.CampaignId, student.Id, lecturer.Id, model.MentorId, model.ExceptionReason, requestException: true);
+        TempData[result.Success ? "SuccessMessage" : "ErrorMessage"] = result.Message;
         return RedirectToAction(nameof(Manage), new { campaignId = model.CampaignId });
     }
 
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.TrainingManager},{AppRoles.FacultyManager}")]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> ReviewException(ulong id, bool approve)
     {
-        var assignment = await _context.LecturerCampaignAssignments.FindAsync(id);
-        if (assignment == null)
-            return NotFound();
-        if (!await CanManageCampaignAsync(assignment.CampaignId))
-            return Forbid();
-        if (assignment.Status != LecturerAssignmentStatuses.PendingException)
-        {
-            TempData["ErrorMessage"] = "Yêu cầu ngoại lệ này đã được xử lý.";
-            return RedirectToAction(nameof(Manage), new { campaignId = assignment.CampaignId });
-        }
-
-        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-        var quota = await _context.LecturerCampaignQuotas
-            .FromSqlInterpolated($"SELECT * FROM `lecturer_campaign_quotas` WHERE `campaign_id` = {assignment.CampaignId} AND `lecturer_user_id` = {assignment.LecturerUserId} FOR UPDATE")
-            .SingleOrDefaultAsync();
-        if (quota == null)
-        {
-            await transaction.RollbackAsync();
-            TempData["ErrorMessage"] = "Không tìm thấy quota của giảng viên; không thể duyệt ngoại lệ.";
-            return RedirectToAction(nameof(Manage), new { campaignId = assignment.CampaignId });
-        }
-
-        await _context.Entry(assignment).ReloadAsync();
-        if (assignment.Status != LecturerAssignmentStatuses.PendingException)
-        {
-            await transaction.RollbackAsync();
-            TempData["ErrorMessage"] = "Yêu cầu ngoại lệ đã được xử lý bởi người quản lý khác.";
-            return RedirectToAction(nameof(Manage), new { campaignId = assignment.CampaignId });
-        }
-
-        assignment.Status = approve
-            ? LecturerAssignmentStatuses.ApprovedException
-            : LecturerAssignmentStatuses.RejectedException;
-        assignment.ReviewedByUserId = _userManager.GetUserId(User);
-        assignment.ReviewedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        TempData["SuccessMessage"] = approve
-            ? "Đã duyệt ngoại lệ vượt quota; quyết định được lưu trong hồ sơ phân công."
-            : "Đã từ chối yêu cầu ngoại lệ.";
-        return RedirectToAction(nameof(Manage), new { campaignId = assignment.CampaignId });
-    }
-
-    private async Task<ProfileEditViewModel> CreateProfileViewModelAsync(ApplicationUser user)
-    {
-        var roles = await _userManager.GetRolesAsync(user);
-        var model = new ProfileEditViewModel
-        {
-            ClassName = user.ClassName,
-            MajorId = user.MajorId,
-            Skills = user.Skills,
-            Interests = user.Interests,
-            ExistingCvFileName = user.CvStoredFileName,
-            LecturerSpecialty = user.LecturerSpecialty,
-            IsStudent = roles.Contains(AppRoles.Student),
-            IsLecturer = roles.Contains(AppRoles.Lecturer)
-        };
-        await PopulateMajorOptionsAsync(model);
-        return model;
-    }
-
-    private async Task PopulateMajorOptionsAsync(ProfileEditViewModel model)
-    {
-        model.MajorOptions = await _context.Majors
-            .Where(m => m.IsActive)
-            .OrderBy(m => m.Name)
-            .Select(m => new SelectListItem
-            {
-                Value = m.Id.ToString(),
-                Text = $"{m.Name} ({m.Code})",
-                Selected = model.MajorId == m.Id
-            })
-            .ToListAsync();
-    }
-
-    private async Task<bool> CanManageCampaignAsync(ulong campaignId)
-    {
-        var userId = _userManager.GetUserId(User);
-        return userId != null && await _scopeService.CanManageCampaignAsync(userId, campaignId);
-    }
-
-    private async Task<bool> UserIsInRoleAsync(string userId, string role)
-    {
-        var user = await _userManager.FindByIdAsync(userId);
-        return user != null && user.IsActive && await _userManager.IsInRoleAsync(user, role);
-    }
-
-    private string GetCvDirectory() => Path.Combine(_environment.ContentRootPath, "App_Data", "CVs");
-
-    private void DeleteCvFile(string fileName)
-    {
-        var path = Path.Combine(GetCvDirectory(), fileName);
-        try
-        {
-            if (System.IO.File.Exists(path))
-                System.IO.File.Delete(path);
-        }
-        catch (IOException ex)
-        {
-            _logger.LogWarning(ex, "Không thể xóa CV cũ {CvFileName}.", fileName);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning(ex, "Không có quyền xóa CV cũ {CvFileName}.", fileName);
-        }
+        var request = await _context.LecturerCampaignAssignments.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+        if (request == null) return NotFound();
+        if (!await _scopeService.CanManageCampaignAsync(Actor, request.CampaignId)) return Forbid();
+        var result = await assignments.ReviewAsync(Actor, id, approve);
+        TempData[result.Success ? "SuccessMessage" : "ErrorMessage"] = result.Message;
+        return RedirectToAction(nameof(Manage), new { campaignId = request.CampaignId });
     }
 }

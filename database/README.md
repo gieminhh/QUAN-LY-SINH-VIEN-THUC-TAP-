@@ -1,5 +1,7 @@
 # Khôi phục CSDL MySQL
 
+> Bản SQL nền bên dưới có 13 bảng Sprint 1. Với bản tích hợp mới, chạy các file `migrations/*.sql` theo thứ tự tên từ `000` đến `003` vào cùng database, tổng cộng 29 bảng (không tính bảng lưu trữ cũ nếu có). Xem [hướng dẫn nâng cấp](../docs/BACKLOG_LOCAL.md).
+
 `ql_thuctap_doan_demo.sql` chứa đủ cấu trúc 13 bảng và dữ liệu demo được xuất ngày 03/11/2026: tài khoản, vai trò, phạm vi, khoa, ngành, năm học, học kỳ và đợt đào tạo.
 
 ## Nhập bằng MySQL Workbench
@@ -20,11 +22,20 @@ File có lệnh `DROP TABLE IF EXISTS`, vì vậy chỉ nhập vào database tr�
 
 ## Nâng cấp hồ sơ sinh viên và quota giảng viên
 
-Với database đang sử dụng, chọn đúng schema rồi chạy `upgrade_student_profiles_and_lecturer_quotas.sql` **một lần** trước khi chạy phiên bản ứng dụng mới. Script thêm trường hồ sơ vào `AspNetUsers` và tạo các bảng quota, phân công, yêu cầu/duyệt ngoại lệ. Không chạy script này nhiều lần trên cùng database.
+Sao lưu database và toàn bộ `InternshipManagement.Web/App_Data` trước khi nâng cấp. Chọn đúng schema rồi chạy lần lượt:
 
-CV được lưu riêng trong `InternshipManagement.Web/App_Data/CVs`, không nằm trong vùng static files; người dùng chỉ tải được CV của mình, quản trị viên có thể tải CV để hỗ trợ quản lý. Hãy sao lưu thư mục này cùng database.
+1. `migrations/000_prepare_team_schema.sql`
+2. `migrations/001_sprint2_profiles_topics.sql`
+3. `migrations/002_backlog_sprint1_2.sql`
+4. `migrations/003_team_integration.sql`
 
-Người dùng có vai trò sinh viên hoặc giảng viên cập nhật hồ sơ tại **Hồ sơ cá nhân**. Quản trị viên/cán bộ quản lý đợt đặt quota theo từng đợt và phân công sinh viên. Khi đủ quota, hệ thống không phân công ngay mà tạo yêu cầu ngoại lệ chờ cán bộ có phạm vi quản lý đợt duyệt; trạng thái, lý do, người duyệt và thời điểm duyệt được lưu trong `lecturer_campaign_assignments`.
+Bản SQL nền chỉ nhập vào database trống; không nhập đè bản nền lên database đang dùng. Các migration có thể chạy lại. `000` đổi tên bảng quota cũ dùng user ID thành `lecturer_campaign_quotas_legacy`; `003` chuyển dữ liệu sang hồ sơ/chỉ tiêu chuẩn hóa. Các cột hồ sơ cũ và bảng lưu trữ vẫn được giữ để đối chiếu. **Không chạy** `legacy/upgrade_student_profiles_and_lecturer_quotas.sql` với bản mới; đây là script lịch sử của nhánh nhóm.
+
+Nếu một giảng viên cũ có quota thuộc nhiều khoa hoặc chưa có quota, cán bộ phải liên kết hồ sơ/khoa trước khi chuyển phần còn lại; migration không tự chọn một khoa tùy ý. Phân công thực tập cũ thiếu mentor đã xác minh cũng cần đối soát, không tự coi là phân công hợp lệ. Sau nâng cấp xem [hướng dẫn tích hợp](../docs/TEAM_INTEGRATION.md) để kiểm tra dữ liệu còn trong bảng lưu trữ.
+
+CV mới lưu trong `App_Data/Uploads`. CV PDF cũ vẫn được đọc từ `App_Data/CVs` qua các đường dẫn tải có kiểm tra quyền; không được đặt hai thư mục này trong `wwwroot`. Kích thước tệp cũ trong metadata là 0 (chưa xác định), tệp vật lý vẫn được giữ nguyên.
+
+Hồ sơ nhanh tại `/Profiles` và hồ sơ chi tiết tại `/StudentProfile`, `/LecturerProfile` dùng cùng dữ liệu. `/Profiles/Manage` giữ quy trình gửi và duyệt vượt chỉ tiêu của nhóm; `/Assignments` hỗ trợ cán bộ có quyền phân công/phê duyệt trực tiếp với lý do. Cả hai dùng chung kiểm tra thời hạn, điều kiện, khoa/ngành, mentor và số phân công thực tế. Yêu cầu chờ duyệt chưa tạo `student_assignments`.
 
 ## Tài khoản trong bản SQL
 

@@ -1,0 +1,206 @@
+@model InternshipManagement.Web.ViewModels.LecturerProfileViewModel
+@{
+    ViewData["Title"] = "Hồ sơ chuyên môn giảng viên";
+}
+
+<div class="page-container sprint2-page">
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-person-badge me-2"></i>HỒ SƠ CHUYÊN MÔN GIẢNG VIÊN
+            </h4>
+            <div class="text-muted small">Thông tin học hàm, học vị, chuyên môn nghiên cứu và hạn mức hướng dẫn</div>
+        </div>
+        @if (Model.CanEdit)
+        {
+            <a asp-action="Edit" class="btn btn-usmart">
+                <i class="bi bi-pencil-square me-1"></i> Cập nhật hồ sơ chuyên môn
+            </a>
+        }
+    </div>
+
+    <div class="row g-4">
+        <!-- Cột trái: Thông tin cá nhân & Học hàm/Học vị -->
+        <div class="col-lg-4">
+            <div class="card card-custom mb-4">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle text-primary" style="font-size: 5rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1">@Model.FullName</h5>
+                    <div class="text-primary fw-semibold mb-2">Mã GV: @Model.LecturerCode</div>
+                    <span class="badge bg-primary px-3 py-2 mb-3">Giảng viên hướng dẫn</span>
+
+                    <div class="text-start border-top pt-3 small">
+                        <div class="mb-2">
+                            <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email:</span>
+                            <span class="fw-semibold">@Model.Email</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted"><i class="bi bi-building me-2"></i>Khoa:</span>
+                            <span class="fw-semibold">@Model.FacultyName</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted"><i class="bi bi-diagram-3 me-2"></i>Bộ môn:</span>
+                            <span class="fw-semibold">@(Model.DepartmentName ?? "Chưa cập nhật")</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted"><i class="bi bi-mortarboard me-2"></i>Học vị:</span>
+                            <span class="fw-semibold">@(Model.AcademicDegree ?? "Chưa cập nhật")</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted"><i class="bi bi-award me-2"></i>Học hàm:</span>
+                            <span class="fw-semibold">@(Model.AcademicTitle ?? "Chưa cập nhật")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hạn mức hướng dẫn theo đợt (US-08) -->
+            <div class="card card-custom">
+                <div class="card-header-custom">
+                    <i class="bi bi-sliders me-2"></i>Hạn mức hướng dẫn theo đợt
+                </div>
+                <div class="card-body p-3">
+                    @if (Model.Quotas.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered small align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Đợt đồ án / TT</th>
+                                        <th class="text-center">Số SV tối đa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var q in Model.Quotas)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">@q.Campaign?.Code</div>
+                                                <div class="text-muted" style="font-size: 12px;">@q.Campaign?.Name</div>
+                                            </td>
+                                            <td class="text-center fw-bold text-primary fs-6">
+                                                @q.MaxStudents
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-muted small mt-2">
+                            <i class="bi bi-info-circle me-1"></i> Hạn mức được phân bổ bởi Cán bộ quản lý đào tạo / Khoa.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light border small mb-0 text-center">
+                            Chưa có hạn mức hướng dẫn nào được phân bổ cho bạn trong các đợt hiện tại.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Chuyên môn & Hướng nghiên cứu -->
+        <div class="col-lg-8">
+            <div class="card card-custom mb-4">
+                <div class="card-header-custom d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-briefcase me-2"></i>Lĩnh vực chuyên môn</span>
+                    @if (Model.CanEdit)
+                    {
+                        <a asp-action="Edit" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 12px;">
+                            <i class="bi bi-pencil"></i> Chỉnh sửa
+                        </a>
+                    }
+                </div>
+                <div class="card-body p-4">
+                    @if (!string.IsNullOrWhiteSpace(Model.Expertise))
+                    {
+                        <p class="mb-0 text-dark" style="white-space: pre-line;">@Model.Expertise</p>
+                    }
+                    else
+                    {
+                        <div class="text-muted fst-italic">
+                            Chưa cập nhật thông tin chuyên môn. Vui lòng cập nhật để sinh viên và bộ môn thuận tiện theo dõi.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card card-custom mb-4">
+                <div class="card-header-custom d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-search me-2"></i>Hướng nghiên cứu & Định hướng đề tài</span>
+                    @if (Model.CanEdit)
+                    {
+                        <a asp-action="Edit" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 12px;">
+                            <i class="bi bi-pencil"></i> Chỉnh sửa
+                        </a>
+                    }
+                </div>
+                <div class="card-body p-4">
+                    @if (!string.IsNullOrWhiteSpace(Model.ResearchInterests))
+                    {
+                        <p class="mb-0 text-dark" style="white-space: pre-line;">@Model.ResearchInterests</p>
+                    }
+                    else
+                    {
+                        <div class="text-muted fst-italic">
+                            Chưa cập nhật hướng nghiên cứu đề tài.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Danh sách đề tài đã đăng gần đây -->
+            <div class="card card-custom">
+                <div class="card-header-custom d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-journal-text me-2"></i>Đề tài đã đăng ký gần đây</span>
+                    <a asp-controller="Topics" asp-action="Index" class="btn btn-sm btn-primary py-0 px-2" style="font-size: 12px;">
+                        <i class="bi bi-arrow-right"></i> Quản lý đề tài
+                    </a>
+                </div>
+                <div class="card-body p-3">
+                    @if (Model.Topics.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0 small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Mã đề tài</th>
+                                        <th>Tên đề tài</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ngày tạo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var t in Model.Topics.Take(5))
+                                    {
+                                        <tr>
+                                            <td class="fw-bold">
+                                                <a asp-controller="Topics" asp-action="Details" asp-route-id="@t.Id" class="text-decoration-none">
+                                                    @t.Code
+                                                </a>
+                                            </td>
+                                            <td>@t.Title</td>
+                                            <td>
+                                                <span class="@InternshipManagement.Web.Models.TopicStatuses.GetBadgeClass(t.Status)">
+                                                    @InternshipManagement.Web.Models.TopicStatuses.GetDisplayName(t.Status)
+                                                </span>
+                                            </td>
+                                            <td class="text-muted">@t.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-0 text-center py-2">Bạn chưa đăng ký đề tài nào.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

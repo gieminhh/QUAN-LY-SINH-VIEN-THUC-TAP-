@@ -24,6 +24,7 @@ public class AcademicYearsController : Controller
         int page = 1)
     {
         int pageSize = 10;
+        page = Math.Max(page, 1);
 
         var query = _context.AcademicYears
             .AsNoTracking()
@@ -167,6 +168,9 @@ public class AcademicYearsController : Controller
                 nameof(model.Code),
                 "Mã năm học đã được sử dụng.");
         }
+
+        if (await _context.Terms.AnyAsync(t => t.AcademicYearId == model.Id && (t.StartDate < model.StartDate || t.EndDate > model.EndDate)))
+            ModelState.AddModelError(nameof(model.EndDate), "Khoảng ngày năm học phải bao phủ tất cả học kỳ hiện có.");
 
         if (!ModelState.IsValid)
             return View(model);

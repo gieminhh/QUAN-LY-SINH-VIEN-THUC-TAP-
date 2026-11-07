@@ -1,0 +1,109 @@
+@model InternshipManagement.Web.ViewModels.LecturerQuotaListViewModel
+@{
+    ViewData["Title"] = "Quản lý hạn mức giảng viên theo đợt";
+}
+
+<div class="page-container sprint2-page">
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-sliders me-2"></i>QUẢN LÝ HẠN MỨC HƯỚNG DẪN GIẢNG VIÊN
+            </h4>
+            <div class="text-muted small">Thiết lập số lượng sinh viên tối đa mỗi giảng viên được phân công hướng dẫn theo từng đợt</div>
+        </div>
+    </div>
+
+    <!-- Chọn đợt thực tập / đồ án -->
+    <div class="card card-custom mb-4 p-3 bg-light">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-8">
+                <label class="form-label small fw-semibold text-muted mb-1">Chọn đợt thực tập / đồ án:</label>
+                <select name="campaignId" class="form-select" asp-items="Model.CampaignOptions" onchange="this.form.submit()"></select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-arrow-repeat me-1"></i> Tải dữ liệu đợt
+                </button>
+            </div>
+        </form>
+    </div>
+
+    @if (Model.Campaign != null)
+    {
+        <div class="card card-custom mb-4 p-3 bg-white border-start border-4 border-primary">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">@Model.Campaign.Name</h5>
+                    <div class="text-muted small">
+                        Mã đợt: <span class="badge bg-primary">@Model.Campaign.Code</span> | 
+                        Khoa / Ngành: <strong>@(Model.Campaign.Major?.Faculty?.Name) - @(Model.Campaign.Major?.Name)</strong> | 
+                        Trạng thái: <strong>@Model.Campaign.Status</strong>
+                    </div>
+                </div>
+                <div class="text-muted small">
+                    Thời gian: @Model.Campaign.StartDate.ToString("dd/MM/yyyy") — @Model.Campaign.EndDate.ToString("dd/MM/yyyy")
+                </div>
+            </div>
+        </div>
+
+        <!-- Bảng danh sách giảng viên & hạn mức -->
+        <div class="card card-custom">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-people me-2"></i>Danh sách giảng viên hướng dẫn (@Model.Lecturers.Count)</span>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.Lecturers.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 120px;">Mã GV</th>
+                                    <th>Họ và tên giảng viên</th>
+                                    <th>Bộ môn</th>
+                                    <th>Học vị</th>
+                                    <th class="text-center" style="width: 110px;">Đã đăng</th>
+                                    <th class="text-center" style="width: 110px;">Đã duyệt</th>
+                                    <th style="width: 220px;">Hạn mức tối đa (Sinh viên)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var l in Model.Lecturers)
+                                {
+                                    <tr>
+                                        <td class="fw-bold text-primary">@l.LecturerCode</td>
+                                        <td>
+                                            <div class="fw-bold text-dark">@l.FullName</div>
+                                            <div class="text-muted" style="font-size: 12px;">@l.FacultyName</div>
+                                        </td>
+                                        <td>@(l.DepartmentName ?? "--")</td>
+                                        <td>@(l.AcademicDegree ?? "--")</td>
+                                        <td class="text-center fw-semibold text-secondary">@l.TotalRegisteredTopics</td>
+                                        <td class="text-center fw-bold text-success">@l.ApprovedTopics</td>
+                                        <td>
+                                            <form asp-action="SetQuota" method="post" class="d-flex align-items-center gap-2">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="CampaignId" value="@Model.CampaignId" />
+                                                <input type="hidden" name="LecturerProfileId" value="@l.LecturerProfileId" />
+                                                <input type="number" name="MaxStudents" value="@l.MaxStudents" min="0" max="50" class="form-control form-control-sm text-center fw-bold" style="width: 80px;" />
+                                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Lưu hạn mức" aria-label="Lưu hạn mức">
+                                                    <i class="bi bi-check-lg"></i> Lưu
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-4 text-center text-muted">
+                        Không tìm thấy giảng viên nào thuộc khoa quản lý đợt này.
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
