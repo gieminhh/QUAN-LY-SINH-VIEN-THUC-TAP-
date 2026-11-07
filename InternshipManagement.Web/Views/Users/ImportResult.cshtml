@@ -1,0 +1,96 @@
+@model InternshipManagement.Web.ViewModels.Users.ImportUsersViewModel
+
+@{
+    ViewData["Title"] = "Kết quả nhập Excel";
+
+    var success = Model.Rows.Count(x => x.IsValid);
+    var failed = Model.Rows.Count - success;
+}
+
+<h2 class="mb-4">Kết quả nhập tài khoản từ Excel</h2>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body">
+                <h5 class="text-success">Thành công</h5>
+                <h3>@success tài khoản</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-danger">
+            <div class="card-body">
+                <h5 class="text-danger">Thất bại</h5>
+                <h3>@failed tài khoản</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-primary">
+            <div class="card-body">
+                <h5 class="text-primary">Tổng số dòng</h5>
+                <h3>@Model.Rows.Count tài khoản</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Kết quả</th>
+                <th>Thông báo</th>
+                <th>Mật khẩu tạm</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var row in Model.Rows)
+            {
+                <tr>
+                    <td>@row.UserName</td>
+                    <td>@row.Email</td>
+
+                    <td>
+                        @if (row.IsValid)
+                        {
+                            <span class="badge bg-success">Thành công</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Thất bại</span>
+                        }
+                    </td>
+
+                    <td>
+                        @if (!row.IsValid)
+                        {
+                            <span class="text-danger">@row.ErrorMessage</span>
+                        }
+                        else
+                        {
+                            <span class="text-success">Tạo tài khoản thành công</span>
+                        }
+                    </td>
+
+                    <td>@row.TemporaryPassword</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<a asp-action="ImportExcel" class="btn btn-primary">
+    <i class="bi bi-file-earmark-excel"></i>
+    Nhập file Excel khác
+</a>
+
+<a asp-action="Index" class="btn btn-secondary">
+    Quay lại danh sách
+</a>
