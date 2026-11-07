@@ -7,6 +7,7 @@ using InternshipManagement.Web.Data;
 using InternshipManagement.Web.Models;
 using InternshipManagement.Web.Services;
 using InternshipManagement.Web.ViewModels.Users;
+using ClosedXML.Excel;
 using System.Security.Cryptography;
 
 namespace InternshipManagement.Web.Controllers;
@@ -444,6 +445,164 @@ public class UsersController : Controller
     }
 
         
+// GET: Mở trang nhập Excel
+[HttpGet]
+public IActionResult ImportExcel()
+{
+    return View(new ImportUsersViewModel());
+}
+
+// POST: Đọc và kiểm tra file Excel
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> PreviewExcel(ImportUsersViewModel model)
+{
+    if (model.ExcelFile == null || model.ExcelFile.Length == 0)
+    {
+        ModelState.AddModelError("", "Vui lòng chọn file Excel.");
+        return View("ImportExcel", model);
+    }
+
+    if (!Path.GetExtension(model.ExcelFile.FileName)
+        .Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
+    {
+        ModelState.AddModelError("", "Chỉ hỗ trợ file .xlsx.");
+        return View("ImportExcel", model);
+    }
+
+    if (model.ExcelFile.Length > 5 * 1024 * 1024)
+    {
+        ModelState.AddModelError("", "File không được vượt quá 5MB.");
+        return View("ImportExcel", model);
+    }
+
+    try
+    {
+        using var stream = model.ExcelFile.OpenReadStream();
+        using var workbook = new XLWorkbook(stream);
+
+        var worksheet = workbook.Worksheets.FirstOrDefault();
+
+        if (worksheet == null)
+        {
+            ModelState.AddModelError("", "File Excel không có sheet.");
+            return View("ImportExcel", model);
+        }
+
+        var header = worksheet.Row(1);
+
+        var columns = new Dictionary<string, int>();
+
+        var lastHeaderColumn = header.LastCellUsed()?.Address.ColumnNumber ?? 0;
+        for (int col = 1; col <= lastHeaderColumn; col++)
+        {
+            var name = header.Cell(col).GetString().Trim();
+            columns[name] = col;
+        }
+
+        string[] requiredHeaders =
+        {
+            "UserName", "Email", "FullName", "Role"
+        };
+
+        foreach (var name in requiredHeaders)
+        {
+            if (!columns.ContainsKey(name))
+            {
+                ModelState.AddModelError("", $"Thiếu cột {name}.");
+            }
+        }
+
+        if (!ModelState.IsValid)
+            return View("ImportExcel", model);
+
+        var roles = await _roleManager.Roles
+            .Select(r => r.Name!)
+            .ToListAsync();
+
+        var usernames = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
+
+        var emails = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
+
+        var lastRow = worksheet.LastRowUsed()?.RowNumber() ?? 1;
+
+        for (int row = 2; row <= lastRow; row++)
+        {
+            var item = new ImportUserRowViewModel
+            {
+                RowNumber = row,
+                UserName = worksheet.Cell(row, columns["UserName"])
+                    .GetString().Trim(),
+                Email = worksheet.Cell(row, columns["Email"])
+                    .GetString().Trim(),
+                FullName = worksheet.Cell(row, columns["FullName"])
+                    .GetString().Trim(),
+                Role = worksheet.Cell(row, columns["Role"])
+                    .GetString().Trim()
+            };
+
+            if (columns.ContainsKey("PhoneNumber"))
+            {
+                item.PhoneNumber = worksheet
+                    .Cell(row, columns["PhoneNumber"])
+                    .GetString().Trim();
+            }
+
+            var errors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(item.UserName))
+                errors.Add("Thiếu username");
+
+            if (string.IsNullOrWhiteSpace(item.Email))
+                errors.Add("Thiếu email");
+
+            if (string.IsNullOrWhiteSpace(item.FullName))
+                errors.Add("Thiếu họ tên");
+
+            if (!new System.ComponentModel.DataAnnotations
+                .EmailAddressAttribute().IsValid(item.Email))
+                errors.Add("Email không hợp lệ");
+
+            if (!roles.Contains(item.Role))
+                errors.Add("Vai trò không tồn tại");
+
+            if (!usernames.Add(item.UserName))
+                errors.Add("Username bị trùng trong file");
+
+            if (!emails.Add(item.Email))
+                errors.Add("Email bị trùng trong file");
+
+            if (await _userManager.FindByNameAsync(item.UserName) != null)
+                errors.Add("Username đã tồn tại trong hệ thống");
+
+            if (await _userManager.FindByEmailAsync(item.Email) != null)
+                errors.Add("Email đã tồn tại trong hệ thống");
+
+            item.IsValid = errors.Count == 0;
+            item.ErrorMessage = string.Join("; ", errors);
+
+            model.Rows.Add(item);
+        }
+
+        if (model.Rows.Count == 0)
+        {
+            ModelState.AddModelError("", "File Excel không có dữ liệu.");
+            return View("ImportExcel", model);
+        }
+
+        return View("PreviewExcel", model);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Lỗi đọc file Excel.");
+        ModelState.AddModelError("", "Không thể đọc file Excel.");
+        return View("ImportExcel", model);
+    }
+}
+
+
 // Xác nhận nhập tài khoản từ Excel
 [HttpPost]
 [ValidateAntiForgeryToken]
