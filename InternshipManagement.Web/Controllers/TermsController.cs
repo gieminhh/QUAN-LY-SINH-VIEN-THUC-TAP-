@@ -171,6 +171,15 @@ public class TermsController : Controller
         TermCreateEditViewModel model,
         ulong? currentId = null)
     {
+            // Kiểm tra số học kỳ
+        if (model.TermNo < 1 || model.TermNo > 3)
+        {
+            ModelState.AddModelError(
+                nameof(model.TermNo),
+                "Số học kỳ chỉ được từ 1 đến 3.");
+        }
+
+        // Kiểm tra ngày tháng
         if (model.EndDate <= model.StartDate)
         {
             ModelState.AddModelError(
@@ -189,12 +198,24 @@ public class TermsController : Controller
         }
         else
         {
-            if (model.StartDate < academicYear.StartDate.Date ||
-                model.EndDate > academicYear.EndDate.Date)
+            if (model.TermNo == 3)
             {
-                ModelState.AddModelError(
-                    nameof(model.StartDate),
-                    "Thời gian học kỳ phải nằm trong thời gian của năm học.");
+                if (model.StartDate <= academicYear.EndDate.Date)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.StartDate),
+                        "Học kỳ hè phải bắt đầu sau khi năm học kết thúc.");
+                }
+            }
+            else
+            {
+                if (model.StartDate < academicYear.StartDate.Date ||
+                    model.EndDate > academicYear.EndDate.Date)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.StartDate),
+                        "Thời gian học kỳ phải nằm trong thời gian của năm học.");
+                }
             }
         }
 
@@ -210,7 +231,6 @@ public class TermsController : Controller
                 "Học kỳ này đã tồn tại trong năm học được chọn.");
         }
     }
-
     private async Task LoadAcademicYears(TermCreateEditViewModel model)
     {
         model.AcademicYears = await _context.AcademicYears
