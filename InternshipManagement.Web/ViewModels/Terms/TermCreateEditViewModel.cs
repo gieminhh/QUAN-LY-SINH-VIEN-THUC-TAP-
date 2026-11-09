@@ -14,7 +14,7 @@ public class TermCreateEditViewModel
     public ulong AcademicYearId { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn học kỳ.")]
-    [Range(1, 2, ErrorMessage = "Số học kỳ chỉ được là 1 hoặc 2.")]
+    [Range(1, 3, ErrorMessage = "Số học kỳ chỉ được từ 1 đến 3.")]
     [Display(Name = "Học kỳ")]
     public byte TermNo { get; set; }
 

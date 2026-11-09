@@ -189,7 +189,7 @@ public class CampaignsController : Controller
         {
             ModelState.AddModelError(nameof(model.Code), "Mã đợt này đã tồn tại trong hệ thống. Vui lòng chọn mã khác.");
         }
-
+        await ValidateCampaignPeriodAsync(model);
         if (!ModelState.IsValid)
         {
             await PopulateDropdowns(model);
@@ -292,6 +292,7 @@ public class CampaignsController : Controller
                 ModelState.AddModelError(nameof(model.MajorId), "Bạn không có quyền chuyển đợt sang ngành này.");
             }
         }
+        await ValidateCampaignPeriodAsync(model);
 
         if (!ModelState.IsValid)
         {
@@ -448,5 +449,36 @@ public class CampaignsController : Controller
             new() { Value = CampaignStatuses.Closed, Text = "Đã đóng" },
             new() { Value = CampaignStatuses.Archived, Text = "Lưu trữ" }
         };
+    }
+    private async Task ValidateCampaignPeriodAsync(CampaignCreateEditViewModel model)
+    {
+        var term = await _context.Terms
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == model.TermId);
+
+        if (term == null)
+        {
+            ModelState.AddModelError(
+                nameof(model.TermId),
+                "Học kỳ được chọn không tồn tại."
+            );
+            return;
+        }
+
+        if (model.StartDate.Date < term.StartDate.Date)
+        {
+            ModelState.AddModelError(
+                nameof(model.StartDate),
+                "Ngày bắt đầu đợt phải nằm trong thời gian học kỳ."
+            );
+        }
+
+        if (model.EndDate.Date > term.EndDate.Date)
+        {
+            ModelState.AddModelError(
+                nameof(model.EndDate),
+                "Ngày kết thúc đợt phải nằm trong thời gian học kỳ."
+            );
+        }
     }
 }
