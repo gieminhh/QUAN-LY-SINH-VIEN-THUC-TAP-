@@ -157,25 +157,9 @@ public class TopicApprovalService : ITopicApprovalService
             return (false, $"Chỉ có thể phê duyệt các đề tài đang ở trạng thái 'Chờ xét duyệt' (Hiện tại: {TopicStatuses.GetDisplayName(topic.Status)}).");
         }
 
-        var oldStatus = topic.Status;
-        topic.Status = TopicStatuses.Approved;
-        topic.ApprovedAt = DateTime.UtcNow;
-        topic.UpdatedAt = DateTime.UtcNow;
-
-        var history = new TopicApprovalHistory
-        {
-            TopicId = topic.Id,
-            ActorUserId = reviewerUserId,
-            ActionType = TopicActionTypes.Approve,
-            FromStatus = oldStatus,
-            ToStatus = TopicStatuses.Approved,
-            CommentText = string.IsNullOrWhiteSpace(comments) ? "Đã phê duyệt đề tài" : comments.Trim(),
-            ActionAt = DateTime.UtcNow
-        };
-
-        _context.TopicApprovalHistories.Add(history);
-        await _context.SaveChangesAsync();
-        return (true, null);
+        return await SaveDecisionAsync(
+            topic, reviewerUserId, TopicActionTypes.Approve, TopicStatuses.Approved,
+            string.IsNullOrWhiteSpace(comments) ? "Đã phê duyệt đề tài" : comments.Trim());
     }
 
     public async Task<(bool Success, string? ErrorMessage)> RequestRevisionAsync(ulong topicId, string reviewerUserId, string comments)
@@ -202,24 +186,9 @@ public class TopicApprovalService : ITopicApprovalService
             return (false, $"Chỉ có thể yêu cầu chỉnh sửa các đề tài đang ở trạng thái 'Chờ xét duyệt' (Hiện tại: {TopicStatuses.GetDisplayName(topic.Status)}).");
         }
 
-        var oldStatus = topic.Status;
-        topic.Status = TopicStatuses.RevisionRequired;
-        topic.UpdatedAt = DateTime.UtcNow;
-
-        var history = new TopicApprovalHistory
-        {
-            TopicId = topic.Id,
-            ActorUserId = reviewerUserId,
-            ActionType = TopicActionTypes.RequestRevision,
-            FromStatus = oldStatus,
-            ToStatus = TopicStatuses.RevisionRequired,
-            CommentText = comments.Trim(),
-            ActionAt = DateTime.UtcNow
-        };
-
-        _context.TopicApprovalHistories.Add(history);
-        await _context.SaveChangesAsync();
-        return (true, null);
+        return await SaveDecisionAsync(
+            topic, reviewerUserId, TopicActionTypes.RequestRevision, TopicStatuses.RevisionRequired,
+            comments.Trim());
     }
 
     public async Task<(bool Success, string? ErrorMessage)> RejectTopicAsync(ulong topicId, string reviewerUserId, string comments)
@@ -246,23 +215,44 @@ public class TopicApprovalService : ITopicApprovalService
             return (false, $"Chỉ có thể từ chối các đề tài đang ở trạng thái 'Chờ xét duyệt' (Hiện tại: {TopicStatuses.GetDisplayName(topic.Status)}).");
         }
 
-        var oldStatus = topic.Status;
-        topic.Status = TopicStatuses.Rejected;
-        topic.UpdatedAt = DateTime.UtcNow;
+        return await SaveDecisionAsync(
+            topic, reviewerUserId, TopicActionTypes.Reject, TopicStatuses.Rejected,
+            comments.Trim());
+    }
 
-        var history = new TopicApprovalHistory
+    private async Task<(bool Success, string? ErrorMessage)> SaveDecisionAsync(
+        Topic topic, string reviewerUserId, string action, string status, string comment)
+    {
+        var now = DateTime.UtcNow;
+        var approvedAt = status == TopicStatuses.Approved ? now : topic.ApprovedAt;
+
+        // Write the decision and its history together, only if this submission is still current.
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        var affected = await _context.Topics
+            .Where(t => t.Id == topic.Id && t.Status == TopicStatuses.Pending && t.UpdatedAt == topic.UpdatedAt)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(t => t.Status, status)
+                .SetProperty(t => t.ApprovedAt, approvedAt)
+                .SetProperty(t => t.UpdatedAt, now));
+
+        if (affected == 0)
+        {
+            return (false, "Đề tài đã thay đổi trong lúc xét duyệt. Vui lòng kiểm tra lại trước khi xử lý.");
+        }
+
+        _context.TopicApprovalHistories.Add(new TopicApprovalHistory
         {
             TopicId = topic.Id,
             ActorUserId = reviewerUserId,
-            ActionType = TopicActionTypes.Reject,
-            FromStatus = oldStatus,
-            ToStatus = TopicStatuses.Rejected,
-            CommentText = comments.Trim(),
-            ActionAt = DateTime.UtcNow
-        };
+            ActionType = action,
+            FromStatus = TopicStatuses.Pending,
+            ToStatus = status,
+            CommentText = comment,
+            ActionAt = now
+        });
 
-        _context.TopicApprovalHistories.Add(history);
         await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
         return (true, null);
     }
 }

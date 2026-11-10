@@ -160,7 +160,14 @@ def approval_transitions():
  post(faculty,'/TopicApproval/Approve/'+tid,{});assert sql('SELECT status FROM topics WHERE id='+tid)=='REJECTED'
  assert student.get('/Topics/Details/'+tid)[0]==403
  _,form,_=lecturer.get('/Topics/Create');_,_,url=lecturer.post('/Topics/Create',{'__RequestVerificationToken':token(form),'CampaignId':cp,'Code':code+'A','Title':'Approve test','MaxStudents':1,'SubmitImmediately':'true'})
- tid=url.rstrip('/').split('/')[-1];post(faculty,'/TopicApproval/Approve/'+tid,{'comments':'Đủ điều kiện'})
+ tid=url.rstrip('/').split('/')[-1]
+ second_reviewer=login('admin','Admin@123')
+ with ThreadPoolExecutor(2) as pool:
+  responses=list(pool.map(lambda reviewer: post(reviewer,'/TopicApproval/Approve/'+tid,{'comments':'Đủ điều kiện'}),[faculty,second_reviewer]))
+ assert all(response[0]<500 for response in responses),'concurrent approval returns a server error'
+ assert sql('SELECT status FROM topics WHERE id='+tid)=='APPROVED'
+ assert sql("SELECT COUNT(*) FROM topic_approval_history WHERE topic_id="+tid+" AND to_status='APPROVED'")=='1','concurrent approval records more than one decision'
+ assert student.get('/Topics/Details/'+tid)[0]==200
  post(lecturer,'/Topics/Edit/'+tid,dict(CampaignId=cp,Code=code+'A',Title='Tampered approved title',MaxStudents=1))
  assert sql('SELECT title FROM topics WHERE id='+tid)=='Approve test'
 
