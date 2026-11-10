@@ -1,0 +1,262 @@
+@model InternshipManagement.Web.ViewModels.Topics.TopicCreateEditViewModel
+
+@{
+    ViewData["Title"] = "Sửa đề tài";
+}
+
+<div class="page-container">
+    <!-- Tiêu đề -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-pencil-square me-2"></i>Sửa đề tài
+            </h4>
+            <div class="text-muted small">
+                Cập nhật thông tin và quản lý tệp đính kèm của đề tài.
+            </div>
+        </div>
+
+        <a asp-action="Details"
+           asp-route-id="@Model.Id"
+           class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại chi tiết
+        </a>
+    </div>
+
+    <!-- Tệp đính kèm hiện tại -->
+    <div class="card card-custom mb-3">
+        <div class="card-header-custom">
+            <i class="bi bi-paperclip me-2"></i>Tệp đính kèm hiện tại
+        </div>
+
+        <div class="card-body">
+            @if (Model.ExistingAttachments != null &&
+                 Model.ExistingAttachments.Any())
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var file in Model.ExistingAttachments)
+                    {
+                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark-text text-primary fs-4"></i>
+                                <div>
+                                    <div class="fw-semibold small">@file.OriginalFileName</div>
+                                    <div class="text-muted small">
+                                        @Math.Round(file.FileSize / 1024.0, 1) KB
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form asp-action="DeleteAttachment"
+                                  method="post"
+                                  onsubmit="return confirm('Bạn có chắc muốn xóa tệp này không?');">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden" name="id" value="@file.Id" />
+
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash me-1"></i>Xóa
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted small py-3">
+                    <i class="bi bi-paperclip fs-3 d-block mb-1"></i>
+                    Chưa có tệp đính kèm.
+                </div>
+            }
+        </div>
+    </div>
+
+    <form asp-action="Edit"
+          asp-route-id="@Model.Id"
+          method="post"
+          enctype="multipart/form-data">
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+        <input type="hidden" asp-for="Id" />
+
+        <!-- Thông tin cơ bản -->
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">
+                <i class="bi bi-info-circle me-2"></i>Thông tin cơ bản
+            </div>
+
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="CampaignId" class="form-label small fw-semibold"></label>
+                        <select asp-for="CampaignId"
+                                asp-items="Model.CampaignOptions"
+                                class="form-select form-select-sm">
+                        </select>
+                        <span asp-validation-for="CampaignId" class="text-danger small"></span>
+                        <small class="text-muted">
+                            Không thể chuyển đề tài sang đợt đào tạo khác tại đây.
+                        </small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Title" class="form-label small fw-semibold"></label>
+                        <input asp-for="Title" class="form-control form-control-sm" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label small fw-semibold"></label>
+                        <textarea asp-for="Description"
+                                  class="form-control form-control-sm"
+                                  rows="4"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Objectives" class="form-label small fw-semibold"></label>
+                        <textarea asp-for="Objectives"
+                                  class="form-control form-control-sm"
+                                  rows="3"></textarea>
+                        <span asp-validation-for="Objectives" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Specialty" class="form-label small fw-semibold"></label>
+                        <input asp-for="Specialty" class="form-control form-control-sm" />
+                        <span asp-validation-for="Specialty" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Technologies" class="form-label small fw-semibold"></label>
+                        <input asp-for="Technologies" class="form-control form-control-sm" />
+                        <span asp-validation-for="Technologies" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Requirements" class="form-label small fw-semibold"></label>
+                        <textarea asp-for="Requirements"
+                                  class="form-control form-control-sm"
+                                  rows="3"></textarea>
+                        <span asp-validation-for="Requirements" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hình thức và chỉ tiêu -->
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">
+                <i class="bi bi-people me-2"></i>Hình thức và chỉ tiêu đề tài
+            </div>
+
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="TopicType" class="form-label small fw-semibold"></label>
+                        <select asp-for="TopicType"
+                                asp-items="Model.TopicTypeOptions"
+                                class="form-select form-select-sm"
+                                id="topicType">
+                        </select>
+                        <span asp-validation-for="TopicType" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4" id="maxStudentsGroup">
+                        <label asp-for="MaxStudents" class="form-label small fw-semibold"></label>
+                        <input asp-for="MaxStudents"
+                               type="number"
+                               min="1"
+                               class="form-control form-control-sm" />
+                        <span asp-validation-for="MaxStudents" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4" id="maxGroupsGroup">
+                        <label asp-for="MaxGroups" class="form-label small fw-semibold"></label>
+                        <input asp-for="MaxGroups"
+                               type="number"
+                               min="1"
+                               class="form-control form-control-sm" />
+                        <span asp-validation-for="MaxGroups" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Status" class="form-label small fw-semibold"></label>
+                        <select asp-for="Status"
+                                asp-items="Model.StatusOptions"
+                                class="form-select form-select-sm">
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thêm tệp đính kèm -->
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">
+                <i class="bi bi-cloud-arrow-up me-2"></i>Thêm tệp đính kèm
+            </div>
+
+            <div class="card-body">
+                <label asp-for="Files" class="form-label small fw-semibold">
+                    Chọn tệp mới
+                </label>
+
+                <input asp-for="Files"
+                       type="file"
+                       class="form-control form-control-sm"
+                       multiple
+                       accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png" />
+
+                <span asp-validation-for="Files" class="text-danger small d-block"></span>
+
+                <small class="text-muted">
+                    Có thể chọn nhiều tệp. Hỗ trợ PDF, Word, PowerPoint, Excel và hình ảnh.
+                    Tối đa 10 MB mỗi tệp.
+                </small>
+            </div>
+        </div>
+
+        <!-- Nút thao tác -->
+        <div class="d-flex justify-content-end gap-2 mb-3">
+            <a asp-action="Details"
+               asp-route-id="@Model.Id"
+               class="btn btn-sm btn-outline-secondary">
+                Hủy
+            </a>
+
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-save me-1"></i>Lưu thay đổi
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const topicType = document.getElementById("topicType");
+        const maxStudentsGroup = document.getElementById("maxStudentsGroup");
+        const maxGroupsGroup = document.getElementById("maxGroupsGroup");
+
+        function updateTopicTypeFields() {
+            if (topicType.value === "INDIVIDUAL") {
+                maxStudentsGroup.style.display = "block";
+                maxGroupsGroup.style.display = "none";
+            } else {
+                maxStudentsGroup.style.display = "none";
+                maxGroupsGroup.style.display = "block";
+            }
+        }
+
+        topicType.addEventListener("change", updateTopicTypeFields);
+        updateTopicTypeFields();
+    </script>
+}

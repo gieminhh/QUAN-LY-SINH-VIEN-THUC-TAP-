@@ -21,6 +21,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<UserRoleScope> UserRoleScopes => Set<UserRoleScope>();
     public DbSet<LecturerCampaignQuota> LecturerCampaignQuotas => Set<LecturerCampaignQuota>();
     public DbSet<LecturerCampaignAssignment> LecturerCampaignAssignments => Set<LecturerCampaignAssignment>();
+    public DbSet<Topic> Topics => Set<Topic>();
+    public DbSet<TopicLecturer> TopicLecturers => Set<TopicLecturer>();
+    public DbSet<TopicAttachment> TopicAttachments => Set<TopicAttachment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -206,6 +209,69 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
              .WithMany()
              .HasForeignKey(a => a.ReviewedByUserId)
              .OnDelete(DeleteBehavior.SetNull);
+        });
+        // Topic
+        builder.Entity<Topic>(b =>
+        {
+            b.ToTable("topics");
+
+            b.HasIndex(t => new { t.CampaignId, t.Status });
+            b.HasIndex(t => t.CreatedByUserId);
+            b.HasIndex(t => t.SourceTopicId);
+
+            b.HasOne(t => t.Campaign)
+            .WithMany(c => c.Topics)
+            .HasForeignKey(t => t.CampaignId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(t => t.CreatedByUser)
+            .WithMany(u => u.CreatedTopics)
+            .HasForeignKey(t => t.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(t => t.SourceTopic)
+            .WithMany(t => t.DerivedTopics)
+            .HasForeignKey(t => t.SourceTopicId)
+            .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Topic Lecturer
+        builder.Entity<TopicLecturer>(b =>
+        {
+            b.ToTable("topic_lecturers");
+
+            b.HasIndex(t => new { t.TopicId, t.LecturerUserId })
+            .IsUnique();
+
+            b.HasIndex(t => new { t.TopicId, t.IsPrimary });
+
+            b.HasOne(t => t.Topic)
+            .WithMany(t => t.Lecturers)
+            .HasForeignKey(t => t.TopicId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(t => t.Lecturer)
+            .WithMany(u => u.TopicLectures)
+            .HasForeignKey(t => t.LecturerUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Topic Attachment
+        builder.Entity<TopicAttachment>(b =>
+        {
+            b.ToTable("topic_attachments");
+
+            b.HasIndex(a => a.TopicId);
+
+            b.HasOne(a => a.Topic)
+            .WithMany(t => t.Attachments)
+            .HasForeignKey(a => a.TopicId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(a => a.UploadedByUser)
+            .WithMany(u => u.UploadedTopicAttachments)
+            .HasForeignKey(a => a.UploadedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

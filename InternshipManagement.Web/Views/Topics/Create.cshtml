@@ -1,0 +1,201 @@
+@model InternshipManagement.Web.ViewModels.Topics.TopicCreateEditViewModel
+
+@{
+    ViewData["Title"] = "Tạo đề tài mới";
+}
+
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-plus-circle me-2"></i>Tạo đề tài mới
+            </h4>
+            <div class="text-muted small">
+                Nhập thông tin đề tài cho đợt đào tạo.
+            </div>
+        </div>
+
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại
+        </a>
+    </div>
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+        <!-- Thông tin cơ bản -->
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">
+                <i class="bi bi-info-circle me-2"></i>Thông tin cơ bản
+            </div>
+
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="CampaignId" class="form-label small fw-semibold"></label>
+                        <select asp-for="CampaignId"
+                                asp-items="Model.CampaignOptions"
+                                class="form-select form-select-sm">
+                            <option value="">-- Chọn đợt đào tạo --</option>
+                        </select>
+                        <span asp-validation-for="CampaignId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Title" class="form-label small fw-semibold"></label>
+                        <input asp-for="Title"
+                               class="form-control form-control-sm"
+                               placeholder="Nhập tên đề tài" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label small fw-semibold"></label>
+                        <textarea asp-for="Description"
+                                  class="form-control form-control-sm"
+                                  rows="4"
+                                  placeholder="Mô tả nội dung đề tài"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Objectives" class="form-label small fw-semibold"></label>
+                        <textarea asp-for="Objectives"
+                                  class="form-control form-control-sm"
+                                  rows="3"></textarea>
+                        <span asp-validation-for="Objectives" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Specialty" class="form-label small fw-semibold"></label>
+                        <input asp-for="Specialty" class="form-control form-control-sm" />
+                        <span asp-validation-for="Specialty" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Technologies" class="form-label small fw-semibold"></label>
+                        <input asp-for="Technologies" class="form-control form-control-sm" />
+                        <span asp-validation-for="Technologies" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Requirements" class="form-label small fw-semibold"></label>
+                        <textarea asp-for="Requirements"
+                                  class="form-control form-control-sm"
+                                  rows="3"></textarea>
+                        <span asp-validation-for="Requirements" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hình thức và chỉ tiêu -->
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">
+                <i class="bi bi-people me-2"></i>Hình thức và chỉ tiêu đề tài
+            </div>
+
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="TopicType" class="form-label small fw-semibold"></label>
+                        <select asp-for="TopicType"
+                                asp-items="Model.TopicTypeOptions"
+                                class="form-select form-select-sm"
+                                id="topicType">
+                        </select>
+                        <span asp-validation-for="TopicType" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4" id="maxStudentsGroup">
+                        <label asp-for="MaxStudents" class="form-label small fw-semibold"></label>
+                        <input asp-for="MaxStudents"
+                               type="number"
+                               min="1"
+                               class="form-control form-control-sm" />
+                        <span asp-validation-for="MaxStudents" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4" id="maxGroupsGroup">
+                        <label asp-for="MaxGroups" class="form-label small fw-semibold"></label>
+                        <input asp-for="MaxGroups"
+                               type="number"
+                               min="1"
+                               class="form-control form-control-sm" />
+                        <span asp-validation-for="MaxGroups" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Status" class="form-label small fw-semibold"></label>
+                        <select asp-for="Status"
+                                asp-items="Model.StatusOptions"
+                                class="form-select form-select-sm">
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tệp đính kèm -->
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">
+                <i class="bi bi-paperclip me-2"></i>Tệp đính kèm
+            </div>
+
+            <div class="card-body">
+                <label asp-for="Files" class="form-label small fw-semibold"></label>
+                <input asp-for="Files"
+                       type="file"
+                       multiple
+                       class="form-control form-control-sm"
+                       accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png" />
+                <small class="text-muted">
+                    Có thể chọn nhiều tệp. Hỗ trợ PDF, Word, PowerPoint, Excel và hình ảnh. Tối đa 10 MB mỗi tệp.
+                </small>
+                <span asp-validation-for="Files" class="text-danger small d-block"></span>
+            </div>
+        </div>
+
+        <!-- Nút thao tác -->
+        <div class="d-flex justify-content-end gap-2 mb-3">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                Hủy
+            </a>
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-check-circle me-1"></i>Tạo đề tài
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function toggleQuotaFields() {
+            const topicType = document.getElementById("topicType").value;
+
+            const studentsGroup = document.getElementById("maxStudentsGroup");
+            const groupsGroup = document.getElementById("maxGroupsGroup");
+
+            const maxStudents = document.getElementById("MaxStudents");
+            const maxGroups = document.getElementById("MaxGroups");
+
+            if (topicType === "INDIVIDUAL") {
+                studentsGroup.style.display = "block";
+                groupsGroup.style.display = "none";
+                maxGroups.value = "";
+            } else {
+                studentsGroup.style.display = "none";
+                groupsGroup.style.display = "block";
+                maxStudents.value = "";
+            }
+        }
+
+        document.getElementById("topicType").addEventListener("change", toggleQuotaFields);
+        toggleQuotaFields();
+    </script>
+}

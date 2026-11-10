@@ -1,0 +1,278 @@
+@model InternshipManagement.Web.ViewModels.Topics.TopicDetailsViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết đề tài";
+
+    var topicTypeName = Model.TopicType == "INDIVIDUAL"
+        ? "Đề tài cá nhân"
+        : "Đề tài nhóm";
+
+    var statusName = Model.Status switch
+    {
+        "PUBLISHED" => "Đang công khai",
+        "HIDDEN" => "Đang ẩn",
+        "CLOSED" => "Đã đóng",
+        _ => Model.Status
+    };
+}
+
+<div class="page-container">
+    <!-- Tiêu đề -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-journal-text me-2"></i>Chi tiết đề tài
+            </h4>
+            <div class="text-muted small">
+                Thông tin và nội dung chi tiết của đề tài.
+            </div>
+        </div>
+
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại
+        </a>
+    </div>
+
+    <!-- Thông báo -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Thông tin đề tài -->
+    <div class="card card-custom mb-3">
+        <div class="card-header-custom">
+            <i class="bi bi-info-circle me-2"></i>Thông tin đề tài
+        </div>
+
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                <h5 class="fw-bold mb-0">@Model.Title</h5>
+
+                @if (Model.Status == "PUBLISHED")
+                {
+                    <span class="badge bg-success">@statusName</span>
+                }
+                else if (Model.Status == "HIDDEN")
+                {
+                    <span class="badge bg-secondary">@statusName</span>
+                }
+                else
+                {
+                    <span class="badge bg-warning text-dark">@statusName</span>
+                }
+            </div>
+
+            <div class="row g-3 small">
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Đợt đào tạo</div>
+                    <div class="fw-semibold">@Model.CampaignName</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Loại đợt đào tạo</div>
+                    <div class="fw-semibold">@Model.CampaignKind</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Hình thức</div>
+                    <div class="fw-semibold">@topicTypeName</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">
+                        @(Model.TopicType == "INDIVIDUAL" ? "Số sinh viên tối đa" : "Số nhóm tối đa")
+                    </div>
+                    <div class="fw-semibold">
+                        @(Model.TopicType == "INDIVIDUAL"
+                            ? $"{Model.MaxStudents} sinh viên"
+                            : $"{Model.MaxGroups} nhóm")
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Người tạo</div>
+                    <div class="fw-semibold">@Model.CreatedByName</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Ngày tạo</div>
+                    <div>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Cập nhật lần cuối</div>
+                    <div>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nội dung đề tài -->
+    <div class="card card-custom mb-3">
+        <div class="card-header-custom">
+            <i class="bi bi-file-text me-2"></i>Nội dung đề tài
+        </div>
+
+        <div class="card-body small">
+            <div class="mb-3">
+                <div class="fw-semibold mb-1">Mô tả</div>
+                <div class="text-muted" style="white-space: pre-line">@Model.Description</div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Objectives))
+            {
+                <div class="mb-3">
+                    <div class="fw-semibold mb-1">Mục tiêu</div>
+                    <div class="text-muted" style="white-space: pre-line">@Model.Objectives</div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Specialty))
+            {
+                <div class="mb-3">
+                    <div class="fw-semibold mb-1">Chuyên ngành</div>
+                    <div class="text-muted">@Model.Specialty</div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Technologies))
+            {
+                <div class="mb-3">
+                    <div class="fw-semibold mb-1">Công nghệ sử dụng</div>
+                    <div class="text-muted">@Model.Technologies</div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Requirements))
+            {
+                <div class="mb-0">
+                    <div class="fw-semibold mb-1">Yêu cầu</div>
+                    <div class="text-muted" style="white-space: pre-line">@Model.Requirements</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Đề tài nguồn -->
+    @if (Model.SourceTopicId.HasValue)
+    {
+        <div class="alert alert-info small">
+            <i class="bi bi-info-circle me-2"></i>
+            Đề tài này được sao chép từ:
+            <strong>@Model.SourceTopicTitle</strong>
+        </div>
+    }
+
+    <!-- Tệp đính kèm -->
+    <div class="card card-custom mb-3">
+        <div class="card-header-custom">
+            <i class="bi bi-paperclip me-2"></i>Tệp đính kèm
+            <span class="text-muted small ms-1">(@Model.Attachments.Count tệp)</span>
+        </div>
+
+        <div class="card-body">
+            @if (Model.Attachments.Any())
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var file in Model.Attachments)
+                    {
+                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="bi bi-file-earmark-text text-primary fs-4"></i>
+                                <div>
+                                    <div class="fw-semibold small">@file.OriginalFileName</div>
+                                    <div class="text-muted small">
+                                        @Math.Round(file.FileSize / 1024.0, 1) KB
+                                        · Người tải lên: @file.UploadedByName
+                                        · @file.UploadedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a asp-action="DownloadAttachment"
+                               asp-route-id="@file.Id"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download me-1"></i>Tải xuống
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted small py-3">
+                    <i class="bi bi-paperclip fs-3 d-block mb-1"></i>
+                    Chưa có tệp đính kèm.
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Quản lý đề tài -->
+    @if (Model.CanEdit)
+    {
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">
+                <i class="bi bi-gear me-2"></i>Quản lý đề tài
+            </div>
+
+            <div class="card-body">
+                <div class="mb-3">
+                    <a asp-action="Edit"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-sm btn-primary">
+                        <i class="bi bi-pencil-square me-1"></i>Sửa đề tài
+                    </a>
+                </div>
+
+                <form asp-action="ChangeStatus"
+                      asp-route-id="@Model.Id"
+                      method="post"
+                      onsubmit="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái đề tài?');">
+
+                    @Html.AntiForgeryToken()
+
+                    <label class="form-label small fw-semibold">Thay đổi trạng thái</label>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <select name="status" class="form-select form-select-sm" style="max-width: 250px">
+                            <option value="PUBLISHED" selected="@(Model.Status == "PUBLISHED")">
+                                Đang công khai
+                            </option>
+                            <option value="HIDDEN" selected="@(Model.Status == "HIDDEN")">
+                                Đang ẩn
+                            </option>
+                            <option value="CLOSED" selected="@(Model.Status == "CLOSED")">
+                                Đã đóng
+                            </option>
+                        </select>
+
+                        <button type="submit" class="btn btn-sm btn-warning">
+                            <i class="bi bi-arrow-repeat me-1"></i>Cập nhật trạng thái
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+        </a>
+    </div>
+</div>
