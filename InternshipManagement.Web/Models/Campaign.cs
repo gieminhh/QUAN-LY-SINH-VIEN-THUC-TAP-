@@ -81,4 +81,5 @@ public class Campaign
     public virtual ApplicationUser? CreatedByUser { get; set; }
 
     public virtual ICollection<UserRoleScope> RoleScopes { get; set; } = new List<UserRoleScope>();
+    public virtual ICollection<Topic> Topics { get; set; } = new List<Topic>();
 }

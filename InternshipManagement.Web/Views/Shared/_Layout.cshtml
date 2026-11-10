@@ -499,6 +499,24 @@
                     </li>
                 }
 
+                <!-- Quản lý đề tài -->
+                @if (isAdmin || isLecturer)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="Topics"
+                        asp-action="Index"
+                        class="menu-link @(currentController == "Topics" ? "active" : "")">
+
+                            <span class="menu-link-content">
+                                <i class="bi bi-journal-text menu-icon text-primary"></i>
+                                <span class="menu-label fw-semibold">
+                                    Quản lý đề tài
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                }
+
                 <!-- Quản lý danh mục đào tạo -->
                 @if (isAdmin || isTrainingManager)
                 {
