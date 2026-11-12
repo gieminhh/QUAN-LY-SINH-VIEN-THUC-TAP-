@@ -280,56 +280,68 @@
         </div>
 
         <!-- Phân trang -->
-        @if (Model.TotalPages > 1)
-        {
-            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
-                <span class="small text-muted">
-                    Hiển thị @Model.Topics.Count / tổng số @Model.TotalCount đề tài
-                </span>
+        
+<!-- Phân trang -->
+@if (Model.TotalPages > 1)
+{
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+        <span class="small text-muted">
+            Hiển thị @Model.Topics.Count / tổng số @Model.TotalCount đề tài
+        </span>
 
-                <nav>
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
-                            <a class="page-link"
-                               asp-action="Index"
-                               asp-route-Search="@Model.Search"
-                               asp-route-CampaignFilter="@Model.CampaignFilter"
-                               asp-route-TypeFilter="@Model.TypeFilter"
-                               asp-route-StatusFilter="@Model.StatusFilter"
-                               asp-route-Page="@(Model.Page - 1)">
-                                Trước
-                            </a>
-                        </li>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-Search="@Model.Search"
+                       asp-route-CampaignFilter="@Model.CampaignFilter"
+                       asp-route-AcademicYearFilter="@Model.AcademicYearFilter"
+                       asp-route-FacultyFilter="@Model.FacultyFilter"
+                       asp-route-LecturerFilter="@Model.LecturerFilter"
+                       asp-route-TypeFilter="@Model.TypeFilter"
+                       asp-route-StatusFilter="@Model.StatusFilter"
+                       asp-route-Page="@(Model.Page - 1)">
+                        Trước
+                    </a>
+                </li>
 
-                        @for (int p = 1; p <= Model.TotalPages; p++)
-                        {
-                            <li class="page-item @(p == Model.Page ? "active" : "")">
-                                <a class="page-link"
-                                   asp-action="Index"
-                                   asp-route-Search="@Model.Search"
-                                   asp-route-CampaignFilter="@Model.CampaignFilter"
-                                   asp-route-TypeFilter="@Model.TypeFilter"
-                                   asp-route-StatusFilter="@Model.StatusFilter"
-                                   asp-route-Page="@p">
-                                    @p
-                                </a>
-                            </li>
-                        }
+                @for (int p = 1; p <= Model.TotalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-Search="@Model.Search"
+                           asp-route-CampaignFilter="@Model.CampaignFilter"
+                           asp-route-AcademicYearFilter="@Model.AcademicYearFilter"
+                           asp-route-FacultyFilter="@Model.FacultyFilter"
+                           asp-route-LecturerFilter="@Model.LecturerFilter"
+                           asp-route-TypeFilter="@Model.TypeFilter"
+                           asp-route-StatusFilter="@Model.StatusFilter"
+                           asp-route-Page="@p">
+                            @p
+                        </a>
+                    </li>
+                }
 
-                        <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
-                            <a class="page-link"
-                               asp-action="Index"
-                               asp-route-Search="@Model.Search"
-                               asp-route-CampaignFilter="@Model.CampaignFilter"
-                               asp-route-TypeFilter="@Model.TypeFilter"
-                               asp-route-StatusFilter="@Model.StatusFilter"
-                               asp-route-Page="@(Model.Page + 1)">
-                                Sau
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        }
+                <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-Search="@Model.Search"
+                       asp-route-CampaignFilter="@Model.CampaignFilter"
+                       asp-route-AcademicYearFilter="@Model.AcademicYearFilter"
+                       asp-route-FacultyFilter="@Model.FacultyFilter"
+                       asp-route-LecturerFilter="@Model.LecturerFilter"
+                       asp-route-TypeFilter="@Model.TypeFilter"
+                       asp-route-StatusFilter="@Model.StatusFilter"
+                       asp-route-Page="@(Model.Page + 1)">
+                        Sau
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}
+
     </div>
 </div>
