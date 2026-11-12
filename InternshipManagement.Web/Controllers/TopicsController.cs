@@ -30,8 +30,7 @@ public class TopicsController : Controller
         _logger = logger;
     }
 
-    // DANH SÁCH ĐỀ TÀI
-    [HttpGet]
+    
     public async Task<IActionResult> Index(TopicListViewModel model)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -54,78 +53,149 @@ public class TopicsController : Controller
             .Include(t => t.CreatedByUser)
             .Where(t => campaignIds.Contains(t.CampaignId));
 
-        // Tìm kiếm theo tên đề tài
+    // Tìm kiếm theo tên đề tài
         if (!string.IsNullOrWhiteSpace(model.Search))
         {
             var search = model.Search.Trim();
-
             query = query.Where(t => t.Title.Contains(search));
         }
 
-        // Lọc theo đợt đào tạo
+    // Lọc theo đợt đào tạo
         if (model.CampaignFilter.HasValue)
         {
             query = query.Where(t =>
                 t.CampaignId == model.CampaignFilter.Value);
         }
 
-        // Lọc theo hình thức đề tài
-        if (model.TypeFilter != "ALL")
+    // Lọc theo năm học
+        if (model.AcademicYearFilter.HasValue)
         {
             query = query.Where(t =>
-                t.TopicType == model.TypeFilter);
+                t.Campaign!.Term!.AcademicYearId == model.AcademicYearFilter.Value);
         }
 
-        // Lọc theo trạng thái
-        if (model.StatusFilter != "ALL")
+    // Lọc theo khoa
+        if (model.FacultyFilter.HasValue)
         {
             query = query.Where(t =>
-                t.Status == model.StatusFilter);
+                t.Campaign!.Major!.FacultyId == model.FacultyFilter.Value);
         }
 
-        model.TotalCount = await query.CountAsync();
+    // Lọc theo giảng viên được phân công
+        if (!string.IsNullOrWhiteSpace(model.LecturerFilter))
+        {
+            query = query.Where(t =>
+                t.Lecturers.Any(l =>
+                    l.LecturerUserId == model.LecturerFilter));
+        }
 
-        model.PageSize = 10;
+    // Lọc theo hình thức đề tài
+    if (model.TypeFilter != "ALL")
+    {
+        query = query.Where(t =>
+            t.TopicType == model.TypeFilter);
+    }
 
-        if (model.Page < 1)
-            model.Page = 1;
+    // Lọc theo trạng thái
+    if (model.StatusFilter != "ALL")
+    {
+        query = query.Where(t =>
+            t.Status == model.StatusFilter);
+    }
 
-        if (model.TotalPages > 0 && model.Page > model.TotalPages)
-            model.Page = model.TotalPages;
+    // Tổng số đề tài sau khi lọc
+    model.TotalCount = await query.CountAsync();
 
+    model.PageSize = 10;
+
+    if (model.Page < 1)
+        model.Page = 1;
+
+    if (model.TotalPages > 0 && model.Page > model.TotalPages)
+        model.Page = model.TotalPages;
+
+    // Lấy danh sách đề tài
         model.Topics = await query
             .OrderByDescending(t => t.CreatedAt)
             .Skip((model.Page - 1) * model.PageSize)
             .Take(model.PageSize)
             .Select(t => new TopicListItemViewModel
-            {
-                Id = t.Id,
-                CampaignId = t.CampaignId,
-                CampaignName = t.Campaign!.Name,
-                CampaignKind = t.Campaign!.Kind,
-                Title = t.Title,
-                TopicType = t.TopicType,
-                Status = t.Status,
-                MaxStudents = t.MaxStudents,
-                MaxGroups = t.MaxGroups,
-                CreatedByName = t.CreatedByUser!.FullName,
-                CreatedAt = t.CreatedAt,
-                UpdatedAt = t.UpdatedAt,
-                CanEdit = isAdmin || t.CreatedByUserId == user.Id
-            })
-            .ToListAsync();
+        {
+            Id = t.Id,
+            CampaignId = t.CampaignId,
+            CampaignName = t.Campaign!.Name,
+            CampaignKind = t.Campaign!.Kind,
+            Title = t.Title,
+            TopicType = t.TopicType,
+            Status = t.Status,
+            MaxStudents = t.MaxStudents,
+            MaxGroups = t.MaxGroups,
+            CreatedByName = t.CreatedByUser!.FullName,
+            CreatedAt = t.CreatedAt,
+            UpdatedAt = t.UpdatedAt,
+            CanEdit = isAdmin || t.CreatedByUserId == user.Id
+        })
+        .ToListAsync();
 
-        model.CampaignOptions = campaigns
-            .Select(c => new SelectListItem
-            {
-                Value = c.Id.ToString(),
-                Text = c.Name,
-                Selected = model.CampaignFilter == c.Id
-            })
-            .ToList();
+    // Danh sách đợt đào tạo
+    model.CampaignOptions = campaigns
+        .Select(c => new SelectListItem
+        {
+            Value = c.Id.ToString(),
+            Text = c.Name,
+            Selected = model.CampaignFilter == c.Id
+        })
+        .ToList();
 
-        return View(model);
-    }
+    // Danh sách năm học trong phạm vi được phép xem
+    model.AcademicYearOptions = await _context.AcademicYears
+        .Where(y => _context.Campaigns.Any(c =>
+            campaignIds.Contains(c.Id) &&
+            c.Term!.AcademicYearId == y.Id))
+        .OrderByDescending(y => y.Code)
+        .Select(y => new SelectListItem
+        {
+            Value = y.Id.ToString(),
+            Text = y.Code,
+            Selected = model.AcademicYearFilter == y.Id
+        })
+        .ToListAsync();
+
+    // Danh sách khoa trong phạm vi được phép xem
+    model.FacultyOptions = await _context.Faculties
+        .Where(f => _context.Campaigns.Any(c =>
+            campaignIds.Contains(c.Id) &&
+            c.Major!.FacultyId == f.Id))
+        .OrderBy(f => f.Name)
+        .Select(f => new SelectListItem
+        {
+            Value = f.Id.ToString(),
+            Text = f.Name,
+            Selected = model.FacultyFilter == f.Id
+        })
+        .ToListAsync();
+
+    // Danh sách giảng viên được phân công đề tài
+    model.LecturerOptions = await _context.TopicLecturers
+        .Where(l => campaignIds.Contains(l.Topic!.CampaignId))
+        .Select(l => new
+        {
+            l.LecturerUserId,
+            FullName = l.Lecturer!.FullName
+        })
+        .Distinct()
+        .OrderBy(l => l.FullName)
+        .Select(l => new SelectListItem
+        {
+            Value = l.LecturerUserId,
+            Text = l.FullName,
+            Selected = model.LecturerFilter == l.LecturerUserId
+        })
+        .ToListAsync();
+
+    return View(model);
+}
+
 
     // LẤY CÁC ĐỢT ĐÀO TẠO MÀ NGƯỜI DÙNG ĐƯỢC PHÉP TRUY CẬP
     private async Task<List<Campaign>?> GetAccessibleCampaignsAsync(
