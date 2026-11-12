@@ -44,24 +44,28 @@
 
     <!-- Tìm kiếm và bộ lọc -->
     <div class="card card-custom p-3 mb-3">
+
         <form asp-action="Index" method="get" class="row g-2 align-items-center">
+
+            <!-- Tìm kiếm tên đề tài -->
             <div class="col-md-3">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-light text-muted">
                         <i class="bi bi-search"></i>
                     </span>
                     <input type="text"
-                           name="Search"
-                           value="@Model.Search"
-                           class="form-control"
-                           placeholder="Nhập tên đề tài...">
+                        name="Search"
+                        value="@Model.Search"
+                        class="form-control"
+                        placeholder="Nhập tên đề tài...">
                 </div>
             </div>
 
+            <!-- Lọc đợt đào tạo -->
             <div class="col-md-3">
                 <select name="CampaignFilter" class="form-select form-select-sm">
                     <option value="">-- Tất cả đợt đào tạo --</option>
-                    @foreach (var item in Model.CampaignOptions)
+                        @foreach (var item in Model.CampaignOptions)
                     {
                         <option value="@item.Value" selected="@item.Selected">
                             @item.Text
@@ -70,33 +74,77 @@
                 </select>
             </div>
 
+            <!-- Lọc năm học -->
+            <div class="col-md-2">
+                <select name="AcademicYearFilter" class="form-select form-select-sm">
+                    <option value="">-- Tất cả năm học --</option>
+                    @foreach (var item in Model.AcademicYearOptions)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">
+                            @item.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Lọc khoa -->
+            <div class="col-md-2">
+                <select name="FacultyFilter" class="form-select form-select-sm">
+                    <option value="">-- Tất cả khoa --</option>
+                    @foreach (var item in Model.FacultyOptions)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">
+                            @item.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Lọc giảng viên -->
+            <div class="col-md-2">
+                <select name="LecturerFilter" class="form-select form-select-sm">
+                    <option value="">-- Tất cả giảng viên --</option>
+                    @foreach (var item in Model.LecturerOptions)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">
+                            @item.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Lọc hình thức -->
             <div class="col-md-2">
                 <select name="TypeFilter" class="form-select form-select-sm">
-                    <option value="ALL" selected="@(Model.TypeFilter == "ALL")">-- Tất cả hình thức --</option>
+                    <option value="ALL" selected="@(Model.TypeFilter == "ALL")">Tất cả hình thức</option>
                     <option value="INDIVIDUAL" selected="@(Model.TypeFilter == "INDIVIDUAL")">Cá nhân</option>
                     <option value="GROUP" selected="@(Model.TypeFilter == "GROUP")">Nhóm</option>
                 </select>
             </div>
 
+            <!-- Lọc trạng thái -->
             <div class="col-md-2">
                 <select name="StatusFilter" class="form-select form-select-sm">
-                    <option value="ALL" selected="@(Model.StatusFilter == "ALL")">-- Tất cả trạng thái --</option>
+                    <option value="ALL" selected="@(Model.StatusFilter == "ALL")">Tất cả trạng thái</option>
                     <option value="PUBLISHED" selected="@(Model.StatusFilter == "PUBLISHED")">Đang công khai</option>
                     <option value="HIDDEN" selected="@(Model.StatusFilter == "HIDDEN")">Đang ẩn</option>
                     <option value="CLOSED" selected="@(Model.StatusFilter == "CLOSED")">Đã đóng</option>
                 </select>
             </div>
 
+            <!-- Nút thao tác -->
             <div class="col-md-2 d-flex gap-1">
-                <button type="submit" class="btn btn-sm btn-primary w-100" title="Áp dụng bộ lọc">
+                <button type="submit" class="btn btn-sm btn-primary w-100">
                     <i class="bi bi-funnel me-1"></i>Lọc
                 </button>
+
                 <a asp-action="Index"
-                   class="btn btn-sm btn-outline-secondary"
-                   title="Xóa bộ lọc">
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Xóa bộ lọc">
                     <i class="bi bi-arrow-counterclockwise"></i>
                 </a>
             </div>
+
         </form>
     </div>
 
