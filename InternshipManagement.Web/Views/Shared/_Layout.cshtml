@@ -517,6 +517,22 @@
                     </li>
                 }
 
+                @if (isStudent || isLecturer)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="TopicProposals"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "TopicProposals" ? "active" : "")">
+                            <span class="menu-link-content">
+                                <i class="bi bi-lightbulb menu-icon text-warning"></i>
+                                <span class="menu-label fw-semibold">
+                                    @(isLecturer ? "Đề xuất của sinh viên" : "Đề xuất đề tài")
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                }
+
                 <!-- Quản lý danh mục đào tạo -->
                 @if (isAdmin || isTrainingManager)
                 {

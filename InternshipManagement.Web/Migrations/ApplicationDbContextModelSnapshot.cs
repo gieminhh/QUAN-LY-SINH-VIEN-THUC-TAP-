@@ -522,6 +522,84 @@ namespace InternshipManagement.Web.Migrations
                     b.ToTable("topics", (string)null);
                 });
 
+            modelBuilder.Entity("InternshipManagement.Web.Models.TopicProposal", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("id");
+
+                    b.Property<ulong>("CampaignId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("campaign_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("description");
+
+                    b.Property<string>("LecturerUserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("lecturer_user_id");
+
+                    b.Property<string>("Objectives")
+                        .HasMaxLength(1000)
+                        .HasColumnType("longtext")
+                        .HasColumnName("objectives");
+
+                    b.Property<string>("ReviewFeedback")
+                        .HasMaxLength(2000)
+                        .HasColumnType("longtext")
+                        .HasColumnName("review_feedback");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StudentNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("longtext")
+                        .HasColumnName("student_note");
+
+                    b.Property<string>("StudentUserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("student_user_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId", "Status");
+
+                    b.HasIndex("LecturerUserId", "Status");
+
+                    b.HasIndex("StudentUserId", "CreatedAt");
+
+                    b.ToTable("topic_proposals", (string)null);
+                });
+
             modelBuilder.Entity("InternshipManagement.Web.Models.TopicAttachment", b =>
                 {
                     b.Property<ulong>("Id")
@@ -941,6 +1019,33 @@ namespace InternshipManagement.Web.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("SourceTopic");
+                });
+
+            modelBuilder.Entity("InternshipManagement.Web.Models.TopicProposal", b =>
+                {
+                    b.HasOne("InternshipManagement.Web.Models.Campaign", "Campaign")
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.ApplicationUser", "Lecturer")
+                        .WithMany()
+                        .HasForeignKey("LecturerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Campaign");
+
+                    b.Navigation("Lecturer");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("InternshipManagement.Web.Models.TopicAttachment", b =>

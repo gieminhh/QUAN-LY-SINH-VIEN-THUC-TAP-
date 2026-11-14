@@ -34,22 +34,6 @@ public class Topic
     [Column("id")]
     public ulong Id { get; set; }
 
-    [Column("campaign_id")]
-    public ulong CampaignId { get; set; }
-
-    [Required]
-    [MaxLength(250)]
-    [Column("title")]
-    public string Title { get; set; } = string.Empty;
-}
-
-[Table("topics")]
-public class Topic
-{
-    [Key]
-    [Column("id")]
-    public ulong Id { get; set; }
-
 [Column("campaign_id")]
 public ulong CampaignId { get; set; }
     [Required]
@@ -103,11 +87,6 @@ public ulong CampaignId { get; set; }
     [Column("source_topic_id")]
     public ulong? SourceTopicId { get; set; }
 
-    [Required]
-    [MaxLength(30)]
-    [Column("status")]
-    public string Status { get; set; } = TopicStatuses.Draft;
-
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -135,6 +114,4 @@ public ulong CampaignId { get; set; }
     public virtual ICollection<TopicAttachment> Attachments { get; set; }
         = new List<TopicAttachment>();
 
-    public virtual ICollection<TopicReview> Reviews { get; set; }
-        = new List<TopicReview>();
 }

@@ -24,6 +24,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<TopicLecturer> TopicLecturers => Set<TopicLecturer>();
     public DbSet<TopicAttachment> TopicAttachments => Set<TopicAttachment>();
+    public DbSet<TopicProposal> TopicProposals => Set<TopicProposal>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -272,6 +273,29 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .WithMany(u => u.UploadedTopicAttachments)
             .HasForeignKey(a => a.UploadedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<TopicProposal>(b =>
+        {
+            b.ToTable("topic_proposals");
+            b.HasIndex(p => new { p.LecturerUserId, p.Status });
+            b.HasIndex(p => new { p.StudentUserId, p.CreatedAt });
+            b.HasIndex(p => new { p.CampaignId, p.Status });
+
+            b.HasOne(p => p.Campaign)
+             .WithMany()
+             .HasForeignKey(p => p.CampaignId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(p => p.Student)
+             .WithMany()
+             .HasForeignKey(p => p.StudentUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(p => p.Lecturer)
+             .WithMany()
+             .HasForeignKey(p => p.LecturerUserId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
