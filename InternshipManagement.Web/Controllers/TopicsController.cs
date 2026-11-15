@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace InternshipManagement.Web.Controllers;
 
@@ -30,66 +32,54 @@ public class TopicsController : Controller
         _logger = logger;
     }
 
+    // DANH SÁCH ĐỀ TÀI
     
-    public async Task<IActionResult> Index(TopicListViewModel model)
-    {
-        var user = await _userManager.GetUserAsync(User);
+[HttpGet]
+public async Task<IActionResult> Index(TopicListViewModel model)
+{
+    var user = await _userManager.GetUserAsync(User);
 
-        if (user == null || !user.IsActive)
-            return Forbid();
+    if (user == null || !user.IsActive)
+        return Forbid();
 
-        var isAdmin = User.IsInRole(AppRoles.Admin);
+    var isAdmin = User.IsInRole(AppRoles.Admin);
 
-        var campaigns = await GetAccessibleCampaignsAsync(user);
+    var campaigns = await GetAccessibleCampaignsAsync(user);
 
-        if (campaigns == null)
-            return Forbid();
+    
 
-        var campaignIds = campaigns.Select(c => c.Id).ToList();
+    if (campaigns == null)
+        return Forbid();
 
-        var query = _context.Topics
-            .AsNoTracking()
-            .Include(t => t.Campaign)
-            .Include(t => t.CreatedByUser)
-            .Where(t => campaignIds.Contains(t.CampaignId));
+    var campaignIds = campaigns.Select(c => c.Id).ToList();
+
+    var query = _context.Topics
+        .AsNoTracking()
+        .Include(t => t.Campaign)
+            .ThenInclude(c => c!.Term)
+                .ThenInclude(term => term!.AcademicYear)
+        .Include(t => t.Major)
+            .ThenInclude(m => m!.Faculty)
+        .Include(t => t.CreatedByUser)
+        .Include(t => t.Lecturers)
+            .ThenInclude(l => l.Lecturer)
+        .Where(t => campaignIds.Contains(t.CampaignId));
 
     // Tìm kiếm theo tên đề tài
-        if (!string.IsNullOrWhiteSpace(model.Search))
-        {
-            var search = model.Search.Trim();
-            query = query.Where(t => t.Title.Contains(search));
-        }
+    if (!string.IsNullOrWhiteSpace(model.Search))
+    {
+        var search = model.Search.Trim();
+        query = query.Where(t => t.Title.Contains(search));
+    }
 
     // Lọc theo đợt đào tạo
-        if (model.CampaignFilter.HasValue)
-        {
-            query = query.Where(t =>
-                t.CampaignId == model.CampaignFilter.Value);
-        }
+    if (model.CampaignFilter.HasValue)
+    {
+        query = query.Where(t =>
+            t.CampaignId == model.CampaignFilter.Value);
+    }
 
-    // Lọc theo năm học
-        if (model.AcademicYearFilter.HasValue)
-        {
-            query = query.Where(t =>
-                t.Campaign!.Term!.AcademicYearId == model.AcademicYearFilter.Value);
-        }
-
-    // Lọc theo khoa
-        if (model.FacultyFilter.HasValue)
-        {
-            query = query.Where(t =>
-                t.Campaign!.Major!.FacultyId == model.FacultyFilter.Value);
-        }
-
-    // Lọc theo giảng viên được phân công
-        if (!string.IsNullOrWhiteSpace(model.LecturerFilter))
-        {
-            query = query.Where(t =>
-                t.Lecturers.Any(l =>
-                    l.LecturerUserId == model.LecturerFilter));
-        }
-
-    // Lọc theo hình thức đề tài
+    // Lọc theo loại đề tài
     if (model.TypeFilter != "ALL")
     {
         query = query.Where(t =>
@@ -103,9 +93,39 @@ public class TopicsController : Controller
             t.Status == model.StatusFilter);
     }
 
-    // Tổng số đề tài sau khi lọc
-    model.TotalCount = await query.CountAsync();
+    // Lọc theo năm học
+    if (model.AcademicYearFilter.HasValue)
+    {
+        var yearId = model.AcademicYearFilter.Value;
 
+        query = query.Where(t =>
+            t.Campaign != null &&
+            t.Campaign.Term != null &&
+            t.Campaign.Term.AcademicYearId == yearId);
+    }
+
+    // Lọc theo khoa
+    if (model.FacultyFilter.HasValue)
+    {
+        var facultyId = model.FacultyFilter.Value;
+
+        query = query.Where(t =>
+            t.Major != null &&
+            t.Major.FacultyId == facultyId);
+    }
+
+    // Lọc theo giảng viên
+    if (!string.IsNullOrWhiteSpace(model.LecturerFilter))
+    {
+        var lecturerId = model.LecturerFilter;
+
+        query = query.Where(t =>
+            t.Lecturers.Any(l =>
+                l.LecturerUserId == lecturerId));
+    }
+
+    // Tổng số đề tài
+    model.TotalCount = await query.CountAsync();
     model.PageSize = 10;
 
     if (model.Page < 1)
@@ -115,11 +135,11 @@ public class TopicsController : Controller
         model.Page = model.TotalPages;
 
     // Lấy danh sách đề tài
-        model.Topics = await query
-            .OrderByDescending(t => t.CreatedAt)
-            .Skip((model.Page - 1) * model.PageSize)
-            .Take(model.PageSize)
-            .Select(t => new TopicListItemViewModel
+    model.Topics = await query
+        .OrderByDescending(t => t.CreatedAt)
+        .Skip((model.Page - 1) * model.PageSize)
+        .Take(model.PageSize)
+        .Select(t => new TopicListItemViewModel
         {
             Id = t.Id,
             CampaignId = t.CampaignId,
@@ -147,11 +167,9 @@ public class TopicsController : Controller
         })
         .ToList();
 
-    // Danh sách năm học trong phạm vi được phép xem
+    // Danh sách năm học
     model.AcademicYearOptions = await _context.AcademicYears
-        .Where(y => _context.Campaigns.Any(c =>
-            campaignIds.Contains(c.Id) &&
-            c.Term!.AcademicYearId == y.Id))
+        .AsNoTracking()
         .OrderByDescending(y => y.Code)
         .Select(y => new SelectListItem
         {
@@ -161,11 +179,10 @@ public class TopicsController : Controller
         })
         .ToListAsync();
 
-    // Danh sách khoa trong phạm vi được phép xem
+    // Danh sách khoa
     model.FacultyOptions = await _context.Faculties
-        .Where(f => _context.Campaigns.Any(c =>
-            campaignIds.Contains(c.Id) &&
-            c.Major!.FacultyId == f.Id))
+        .AsNoTracking()
+        .Where(f => f.IsActive)
         .OrderBy(f => f.Name)
         .Select(f => new SelectListItem
         {
@@ -175,25 +192,120 @@ public class TopicsController : Controller
         })
         .ToListAsync();
 
-    // Danh sách giảng viên được phân công đề tài
+    // Danh sách giảng viên đã được gán đề tài
     model.LecturerOptions = await _context.TopicLecturers
+        .AsNoTracking()
         .Where(l => campaignIds.Contains(l.Topic!.CampaignId))
         .Select(l => new
         {
             l.LecturerUserId,
-            FullName = l.Lecturer!.FullName
+            LecturerName = l.Lecturer!.FullName
         })
         .Distinct()
-        .OrderBy(l => l.FullName)
+        .OrderBy(l => l.LecturerName)
         .Select(l => new SelectListItem
         {
             Value = l.LecturerUserId,
-            Text = l.FullName,
+            Text = l.LecturerName,
             Selected = model.LecturerFilter == l.LecturerUserId
         })
         .ToListAsync();
 
     return View(model);
+}
+
+private async Task<List<SimilarTopicWarningViewModel>> FindSimilarTopicsAsync(
+    TopicCreateEditViewModel model,
+    List<ulong> campaignIds,
+    ulong? excludeTopicId = null)
+{
+    var existingTopics = await _context.Topics
+        .AsNoTracking()
+        .Where(t => campaignIds.Contains(t.CampaignId)
+            && (!excludeTopicId.HasValue || t.Id != excludeTopicId.Value))
+        .Select(t => new
+        {
+            t.Id,
+            t.Title,
+            t.Description,
+            t.Objectives,
+            t.Specialty,
+            t.Technologies,
+            t.Requirements,
+            CampaignName = t.Campaign!.Name,
+            t.Status
+        })
+        .ToListAsync();
+
+    var newTitle = GetWords(model.Title);
+    var newContent = GetWords(string.Join(" ",
+        model.Description,
+        model.Objectives,
+        model.Specialty,
+        model.Technologies,
+        model.Requirements));
+
+    var results = new List<SimilarTopicWarningViewModel>();
+
+    foreach (var topic in existingTopics)
+    {
+        var oldTitle = GetWords(topic.Title);
+
+        var oldContent = GetWords(string.Join(" ",
+            topic.Description,
+            topic.Objectives,
+            topic.Specialty,
+            topic.Technologies,
+            topic.Requirements));
+
+        double titleScore = CalculateSimilarity(newTitle, oldTitle);
+        double contentScore = CalculateSimilarity(newContent, oldContent);
+
+        double totalScore = titleScore * 0.65 + contentScore * 0.35;
+
+        // Chỉ đưa vào danh sách khi có dấu hiệu tương đồng
+        if (titleScore >= 0.25 || totalScore >= 0.28)
+        {
+            results.Add(new SimilarTopicWarningViewModel
+            {
+                Id = topic.Id,
+                Title = topic.Title,
+                CampaignName = topic.CampaignName,
+                Status = topic.Status,
+                SimilarityPercent = Math.Round(totalScore * 100, 1)
+            });
+        }
+    }
+
+    return results
+        .OrderByDescending(t => t.SimilarityPercent)
+        .Take(5)
+        .ToList();
+}
+
+private static HashSet<string> GetWords(string? text)
+{
+    if (string.IsNullOrWhiteSpace(text))
+        return new HashSet<string>();
+
+    return Regex.Matches(
+            text.ToLowerInvariant(),
+            @"[\p{L}\p{N}]{2,}")
+        .Select(m => m.Value)
+        .ToHashSet();
+}
+
+private static double CalculateSimilarity(
+    HashSet<string> first,
+    HashSet<string> second)
+{
+    if (first.Count == 0 || second.Count == 0)
+        return 0;
+
+    int intersection = first.Intersect(second).Count();
+    int union = first.Union(second).Count();
+
+    return union == 0 ? 0 : (double)intersection / union;
 }
 
 
@@ -295,76 +407,101 @@ public class TopicsController : Controller
     }
 
     // XỬ LÝ TẠO ĐỀ TÀI
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(TopicCreateEditViewModel model)
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Create(TopicCreateEditViewModel model)
+{
+    var user = await _userManager.GetUserAsync(User);
+
+    if (user == null || !user.IsActive)
+        return Forbid();
+
+    var campaigns = await GetAccessibleCampaignsAsync(user);
+
+    if (campaigns == null)
+        return Forbid();
+
+    var campaign = campaigns.FirstOrDefault(c => c.Id == model.CampaignId);
+
+    if (campaign == null)
     {
-        var user = await _userManager.GetUserAsync(User);
+        ModelState.AddModelError(
+            nameof(model.CampaignId),
+            "Đợt đào tạo không hợp lệ hoặc bạn không có quyền truy cập.");
+    }
+    else if (!await CanManageTopicAsync(user, campaign))
+    {
+        ModelState.AddModelError(
+            nameof(model.CampaignId),
+            "Bạn chỉ được tạo đề tài khi đợt đào tạo đang mở, còn trong thời hạn và đã được cấp hạn mức.");
+    }
 
-        if (user == null || !user.IsActive)
-            return Forbid();
+    ValidateTopicType(model);
+    ValidateTopicFiles(model.Files);
 
-        var campaigns = await GetAccessibleCampaignsAsync(user);
+    if (!ModelState.IsValid)
+    {
+        await PopulateTopicOptionsAsync(
+            model,
+            campaigns.Where(c => c.Id == model.CampaignId).ToList());
 
-        if (campaigns == null)
-            return Forbid();
+        return View(model);
+    }
 
-        var campaign = campaigns.FirstOrDefault(c => c.Id == model.CampaignId);
+    // KIỂM TRA ĐỀ TÀI CÓ TƯƠNG ĐỒNG HAY KHÔNG
+    if (!model.ConfirmSimilarTopics)
+    {
+        var campaignIds = campaigns.Select(c => c.Id).ToList();
 
-        if (campaign == null)
+        model.SimilarTopics = await FindSimilarTopicsAsync(
+            model,
+            campaignIds);
+
+        // Nếu phát hiện đề tài tương đồng thì hiển thị cảnh báo
+        if (model.SimilarTopics.Any())
         {
-            ModelState.AddModelError(
-                nameof(model.CampaignId),
-                "Đợt đào tạo không hợp lệ hoặc bạn không có quyền truy cập.");
-        }
-        else if (!await CanManageTopicAsync(user, campaign))
-        {
-            ModelState.AddModelError(
-                nameof(model.CampaignId),
-                "Bạn chỉ được tạo đề tài khi đợt đào tạo đang mở, còn trong thời hạn và đã được cấp hạn mức.");
-        }
+            await PopulateTopicOptionsAsync(
+                model,
+                campaigns.Where(c => c.Id == model.CampaignId).ToList());
 
-        ValidateTopicType(model);
-        ValidateTopicFiles(model.Files);
-
-        if (!ModelState.IsValid)
-        {
-            await PopulateTopicOptionsAsync(model, campaigns);
             return View(model);
         }
-
-        var topic = new Topic
-        {
-            CampaignId = model.CampaignId,
-            Title = model.Title.Trim(),
-            Description = model.Description.Trim(),
-            Objectives = model.Objectives,
-            Specialty = model.Specialty,
-            Technologies = model.Technologies,
-            Requirements = model.Requirements,
-            TopicType = model.TopicType,
-            MaxStudents = model.TopicType == TopicTypes.Individual
-                ? model.MaxStudents : null,
-            MaxGroups = model.TopicType == TopicTypes.Group
-                ? model.MaxGroups : null,
-            Status = model.Status,
-            CreatedByUserId = user.Id,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        _context.Topics.Add(topic);
-        await _context.SaveChangesAsync();
-
-        await UploadTopicAttachmentsAsync(
-            topic,
-            model.Files,
-            user.Id);
-
-        TempData["Success"] = "Tạo đề tài thành công.";
-
-        return RedirectToAction(nameof(Details), new { id = topic.Id });
     }
+
+    // TIẾN HÀNH TẠO ĐỀ TÀI
+    var topic = new Topic
+    {
+        CampaignId = model.CampaignId,
+        MajorId = campaign.MajorId,
+        Title = model.Title.Trim(),
+        Description = model.Description.Trim(),
+        Objectives = model.Objectives,
+        Specialty = model.Specialty,
+        Technologies = model.Technologies,
+        Requirements = model.Requirements,
+        TopicType = model.TopicType,
+        MaxStudents = model.TopicType == TopicTypes.Individual
+            ? model.MaxStudents : null,
+        MaxGroups = model.TopicType == TopicTypes.Group
+            ? model.MaxGroups : null,
+        Status = model.Status,
+        CreatedByUserId = user.Id,
+        CreatedAt = DateTime.UtcNow,
+        UpdatedAt = DateTime.UtcNow
+    };
+
+    _context.Topics.Add(topic);
+    await _context.SaveChangesAsync();
+
+    await UploadTopicAttachmentsAsync(
+        topic,
+        model.Files,
+        user.Id);
+
+    TempData["Success"] = "Tạo đề tài thành công.";
+
+    return RedirectToAction(nameof(Details), new { id = topic.Id });
+}
         // HIỂN THỊ FORM SỬA ĐỀ TÀI
     [HttpGet]
     public async Task<IActionResult> Edit(ulong id)
