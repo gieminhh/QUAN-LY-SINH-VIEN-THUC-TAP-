@@ -228,30 +228,7 @@
             </div>
 
             <!-- Notification -->
-            <div class="dropdown">
-                <a href="#"
-                   class="nav-icon-btn"
-                   data-bs-toggle="dropdown"
-                   aria-expanded="false"
-                   title="Thông báo">
-
-                    <i class="bi bi-bell-fill"></i>
-                </a>
-
-                <ul class="dropdown-menu dropdown-menu-end shadow"
-                    style="width: 280px;">
-
-                    <li>
-                        <h6 class="dropdown-header">Thông báo hệ thống</h6>
-                    </li>
-
-                    <li>
-                        <p class="px-3 py-2 mb-0 small text-muted">
-                            Chưa có thông báo mới.
-                        </p>
-                    </li>
-                </ul>
-            </div>
+            @await Component.InvokeAsync("PendingTopicApprovals")
 
             <!-- User Profile -->
             @if (SignInManager.IsSignedIn(User))
@@ -496,6 +473,24 @@
                                 </a>
                             </li>
                         </ul>
+                    </li>
+                }
+
+                <!-- Quản lý duyệt đề tài -->
+                @if (isManager)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="TopicApprovals"
+                        asp-action="Index"
+                        class="menu-link @(currentController == "TopicApprovals" ? "active" : "")">
+
+                            <span class="menu-link-content">
+                                <i class="bi bi-clipboard-check menu-icon text-success"></i>
+                                <span class="menu-label fw-semibold">
+                                    Duyệt đề tài
+                                </span>
+                            </span>
+                        </a>
                     </li>
                 }
 

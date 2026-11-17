@@ -52,4 +52,5 @@ public class TopicListItemViewModel
     public DateTime UpdatedAt { get; set; }
 
     public bool CanEdit { get; set; }
+    public string ApprovalStatus { get; set; } = "";
 }

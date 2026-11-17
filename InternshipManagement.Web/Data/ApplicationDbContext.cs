@@ -214,6 +214,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<Topic>(b =>
         {
             b.ToTable("topics");
+            b.Property(t => t.ApprovalStatus)
+            .HasDefaultValue(TopicApprovalStatuses.Pending);
 
             b.HasIndex(t => new { t.CampaignId, t.Status });
             b.HasIndex(t => t.CreatedByUserId);

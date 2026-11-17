@@ -16,6 +16,12 @@ public static class TopicStatuses
     public const string Hidden = "HIDDEN";
     public const string Closed = "CLOSED";
 }
+public static class TopicApprovalStatuses
+{
+    public const string Pending = "PENDING";
+    public const string Approved = "APPROVED";
+    public const string Rejected = "REJECTED";
+}
 
 [Table("topics")]
 public class Topic
@@ -67,6 +73,21 @@ public class Topic
     [MaxLength(20)]
     [Column("status")]
     public string Status { get; set; } = TopicStatuses.Published;
+
+    [Required]
+    [MaxLength(20)]
+    [Column("approval_status")]
+    public string ApprovalStatus { get; set; } = TopicApprovalStatuses.Pending;
+
+    [MaxLength(255)]
+    [Column("reviewed_by_user_id")]
+    public string? ReviewedByUserId { get; set; }
+
+    [Column("reviewed_at")]
+    public DateTime? ReviewedAt { get; set; }
+
+    [Column("rejection_reason", TypeName = "longtext")]
+    public string? RejectionReason { get; set; }
 
     [Required]
     [MaxLength(255)]

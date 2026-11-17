@@ -7,6 +7,11 @@ public interface IUserScopeService
     Task<List<UserRoleScope>> GetUserScopesAsync(string userId);
     Task<bool> HasGlobalScopeAsync(string userId, string? roleName = null);
     Task<bool> CanManageCampaignAsync(string userId, ulong campaignId);
+    Task<bool> CanReviewCampaignAsync(string userId, ulong campaignId);
+
+    Task<IQueryable<Campaign>> FilterReviewableCampaignsAsync(
+        string userId,
+        IQueryable<Campaign> query);
     Task<bool> CanManageMajorAsync(string userId, ulong majorId);
     Task<IQueryable<Major>> FilterManageableMajorsAsync(string userId, IQueryable<Major> query);
     Task<IQueryable<Campaign>> FilterAccessibleCampaignsAsync(string userId, IQueryable<Campaign> query);

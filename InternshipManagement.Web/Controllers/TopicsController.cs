@@ -106,6 +106,7 @@ public class TopicsController : Controller
                 Title = t.Title,
                 TopicType = t.TopicType,
                 Status = t.Status,
+                ApprovalStatus = t.ApprovalStatus,
                 MaxStudents = t.MaxStudents,
                 MaxGroups = t.MaxGroups,
                 CreatedByName = t.CreatedByUser!.FullName,
@@ -438,6 +439,16 @@ public class TopicsController : Controller
         topic.MaxGroups = model.TopicType == TopicTypes.Group
             ? model.MaxGroups : null;
         topic.Status = model.Status;
+
+        // Giảng viên chỉnh sửa đề tài thì phải gửi duyệt lại
+        if (!isAdmin)
+        {
+            topic.ApprovalStatus = TopicApprovalStatuses.Pending;
+            topic.ReviewedByUserId = null;
+            topic.ReviewedAt = null;
+            topic.RejectionReason = null;
+        }
+
         topic.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
