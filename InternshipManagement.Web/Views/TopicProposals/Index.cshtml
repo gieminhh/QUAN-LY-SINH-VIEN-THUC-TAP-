@@ -1,0 +1,119 @@
+@model InternshipManagement.Web.ViewModels.TopicProposals.TopicProposalListViewModel
+
+@{
+    ViewData["Title"] = Model.IsLecturer ? "Đề xuất của sinh viên" : "Đề xuất đề tài của tôi";
+}
+
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-lightbulb me-2"></i>@ViewData["Title"]
+            </h4>
+            <div class="text-muted small">
+                @(Model.IsLecturer ? "Xem và xử lý đề xuất được gửi đến bạn." : "Theo dõi tình trạng các đề xuất đã gửi.")
+            </div>
+        </div>
+        @if (!Model.IsLecturer)
+        {
+            <a href="@Url.Action("Create", "TopicProposals")" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle me-1"></i>Gửi đề xuất
+            </a>
+        }
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning">@TempData["Error"]</div>
+    }
+
+    <div class="card card-custom">
+        @if (Model.Proposals.Count == 0)
+        {
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                @(Model.IsLecturer ? "Bạn chưa nhận được đề xuất nào." : "Bạn chưa gửi đề xuất nào.")
+            </div>
+        }
+        else
+        {
+            <div class="list-group list-group-flush">
+                @foreach (var proposal in Model.Proposals)
+                {
+                    var statusLabel = proposal.Status switch
+                    {
+                        TopicProposalStatuses.Pending => "Chờ duyệt",
+                        TopicProposalStatuses.Approved => "Đã chấp nhận",
+                        TopicProposalStatuses.Rejected => "Đã từ chối",
+                        TopicProposalStatuses.RevisionRequested => "Yêu cầu chỉnh sửa",
+                        _ => proposal.Status
+                    };
+                    var statusClass = proposal.Status switch
+                    {
+                        TopicProposalStatuses.Pending => "bg-warning text-dark",
+                        TopicProposalStatuses.Approved => "bg-success",
+                        TopicProposalStatuses.Rejected => "bg-danger",
+                        _ => "bg-secondary"
+                    };
+
+                    <article class="list-group-item p-3">
+                        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                            <div>
+                                <h5 class="mb-1">@proposal.Title</h5>
+                                <div class="small text-muted">
+                                    Đợt: @proposal.CampaignName
+                                    <span class="mx-1">·</span>
+                                    @(Model.IsLecturer ? $"Sinh viên: {proposal.StudentName}" : $"Giảng viên: {proposal.LecturerName}")
+                                    <span class="mx-1">·</span>
+                                    Gửi lúc @proposal.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            </div>
+                            <span class="badge @statusClass">@statusLabel</span>
+                        </div>
+
+                        <p class="mt-3 mb-2">@proposal.Description</p>
+                        @if (!string.IsNullOrWhiteSpace(proposal.Objectives))
+                        {
+                            <p class="mb-2"><strong>Mục tiêu:</strong> @proposal.Objectives</p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(proposal.StudentNote))
+                        {
+                            <p class="mb-2"><strong>Ghi chú sinh viên:</strong> @proposal.StudentNote</p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(proposal.ReviewFeedback))
+                        {
+                            <p class="mb-2 text-muted"><strong>Phản hồi:</strong> @proposal.ReviewFeedback</p>
+                        }
+
+                        @if (Model.IsLecturer && proposal.Status == TopicProposalStatuses.Pending)
+                        {
+                            <form action="@Url.Action("Review", "TopicProposals")" method="post" class="mt-3">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@proposal.Id" />
+                                <div class="mb-2">
+                                    <label class="form-label" for="feedback-@proposal.Id">Phản hồi (không bắt buộc)</label>
+                                    <textarea class="form-control" id="feedback-@proposal.Id" name="reviewFeedback"
+                                              maxlength="2000" rows="2"></textarea>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" name="decision" value="@TopicProposalStatuses.Approved"
+                                            class="btn btn-success btn-sm">
+                                        <i class="bi bi-check-circle me-1"></i>Chấp nhận
+                                    </button>
+                                    <button type="submit" name="decision" value="@TopicProposalStatuses.Rejected"
+                                            class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-x-circle me-1"></i>Từ chối
+                                    </button>
+                                </div>
+                            </form>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</div>

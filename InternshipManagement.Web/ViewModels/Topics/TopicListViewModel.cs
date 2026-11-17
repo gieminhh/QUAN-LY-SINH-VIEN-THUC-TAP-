@@ -7,6 +7,18 @@ public class TopicListViewModel
     public string? Search { get; set; }
 
     public ulong? CampaignFilter { get; set; }
+    
+    public ulong? AcademicYearFilter { get; set; }
+
+    public ulong? FacultyFilter { get; set; }
+
+    public string? LecturerFilter { get; set; }
+
+    public List<SelectListItem> AcademicYearOptions { get; set; } = new();
+
+    public List<SelectListItem> FacultyOptions { get; set; } = new();
+
+    public List<SelectListItem> LecturerOptions { get; set; } = new();
 
     public string TypeFilter { get; set; } = "ALL";
 
@@ -52,5 +64,5 @@ public class TopicListItemViewModel
     public DateTime UpdatedAt { get; set; }
 
     public bool CanEdit { get; set; }
-    public string ApprovalStatus { get; set; } = "";
+    public string ApprovalStatus { get; set; } = string.Empty;
 }

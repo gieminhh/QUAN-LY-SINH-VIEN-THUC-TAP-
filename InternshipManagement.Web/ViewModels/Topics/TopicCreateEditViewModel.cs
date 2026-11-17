@@ -62,4 +62,23 @@ public class TopicCreateEditViewModel
     public List<SelectListItem> StatusOptions { get; set; } = new();
 
     public List<TopicAttachmentViewModel> ExistingAttachments { get; set; } = new();
+
+    // Xác nhận đã xem cảnh báo và vẫn muốn tiếp tục
+public bool ConfirmSimilarTopics { get; set; }
+
+// Danh sách đề tài có nội dung tương đồng
+public List<SimilarTopicWarningViewModel> SimilarTopics { get; set; } = new();
+}
+
+public class SimilarTopicWarningViewModel
+{
+    public ulong Id { get; set; }
+
+    public string Title { get; set; } = string.Empty;
+
+    public string CampaignName { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public double SimilarityPercent { get; set; }
 }
