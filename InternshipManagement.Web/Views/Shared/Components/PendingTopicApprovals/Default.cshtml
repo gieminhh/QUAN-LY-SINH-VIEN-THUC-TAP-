@@ -1,0 +1,59 @@
+
+@model int
+
+<div class="dropdown">
+    <a href="#"
+       class="nav-icon-btn position-relative"
+       data-bs-toggle="dropdown"
+       aria-expanded="false"
+       title="Thông báo duyệt đề tài">
+
+        <i class="bi bi-bell-fill"></i>
+
+        @if (Model > 0)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                @(Model > 99 ? "99+" : Model)
+            </span>
+        }
+    </a>
+
+    <ul class="dropdown-menu dropdown-menu-end shadow"
+        style="width: 300px;">
+
+        <li>
+            <h6 class="dropdown-header">Thông báo duyệt đề tài</h6>
+        </li>
+
+        @if (Model > 0)
+        {
+            <li>
+                <a asp-controller="TopicApprovals"
+                   asp-action="Index"
+                   asp-route-ApprovalFilter="PENDING"
+                   class="dropdown-item py-3">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-clipboard-check text-primary fs-4"></i>
+                        <div>
+                            <div class="fw-semibold">
+                                Có @Model đề tài chờ duyệt
+                            </div>
+                            <small class="text-muted">
+                                Nhấn để xem và xử lý
+                            </small>
+                        </div>
+                    </div>
+                </a>
+            </li>
+        }
+        else
+        {
+            <li>
+                <p class="px-3 py-2 mb-0 small text-muted">
+                    Hiện không có đề tài nào chờ duyệt.
+                </p>
+            </li>
+        }
+    </ul>
+</div>

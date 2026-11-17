@@ -167,7 +167,8 @@
                         <th>Hình thức</th>
                         <th>Chỉ tiêu</th>
                         <th>Người tạo</th>
-                        <th class="text-center">Trạng thái</th>
+                        <th class="text-center">Trạng thái hiển thị</th>
+                        <th class="text-center">Trạng thái duyệt</th>
                         <th class="text-end pe-3">Thao tác</th>
                     </tr>
                 </thead>
@@ -240,6 +241,30 @@
                                         </span>
                                     }
                                 </td>
+                                <td class="text-center">
+                                    @if (topic.ApprovalStatus == "PENDING")
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt
+                                        </span>
+                                    }
+                                    else if (topic.ApprovalStatus == "APPROVED")
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Đã duyệt
+                                        </span>
+                                    }
+                                    else if (topic.ApprovalStatus == "REJECTED")
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle me-1"></i>Đã từ chối
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Chưa xác định</span>
+                                    }
+                                </td>                               
 
                                 <td class="text-end pe-3">
                                     <div class="btn-group btn-group-sm">
@@ -269,7 +294,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="9" class="text-center text-muted py-4">
                                 <i class="bi bi-journal-x fs-3 d-block mb-1"></i>
                                 Không tìm thấy đề tài nào trong phạm vi quản lý của bạn.
                             </td>

@@ -134,28 +134,27 @@ public async Task<IActionResult> Index(TopicListViewModel model)
     if (model.TotalPages > 0 && model.Page > model.TotalPages)
         model.Page = model.TotalPages;
 
-    // Lấy danh sách đề tài
-    model.Topics = await query
-        .OrderByDescending(t => t.CreatedAt)
-        .Skip((model.Page - 1) * model.PageSize)
-        .Take(model.PageSize)
-        .Select(t => new TopicListItemViewModel
-        {
-            Id = t.Id,
-            CampaignId = t.CampaignId,
-            CampaignName = t.Campaign!.Name,
-            CampaignKind = t.Campaign!.Kind,
-            Title = t.Title,
-            TopicType = t.TopicType,
-            Status = t.Status,
-            MaxStudents = t.MaxStudents,
-            MaxGroups = t.MaxGroups,
-            CreatedByName = t.CreatedByUser!.FullName,
-            CreatedAt = t.CreatedAt,
-            UpdatedAt = t.UpdatedAt,
-            CanEdit = isAdmin || t.CreatedByUserId == user.Id
-        })
-        .ToListAsync();
+        model.Topics = await query
+            .OrderByDescending(t => t.CreatedAt)
+            .Skip((model.Page - 1) * model.PageSize)
+            .Take(model.PageSize)
+            .Select(t => new TopicListItemViewModel
+            {
+                Id = t.Id,
+                CampaignId = t.CampaignId,
+                CampaignName = t.Campaign!.Name,
+                CampaignKind = t.Campaign!.Kind,
+                Title = t.Title,
+                TopicType = t.TopicType,
+                Status = t.Status,
+                MaxStudents = t.MaxStudents,
+                MaxGroups = t.MaxGroups,
+                CreatedByName = t.CreatedByUser!.FullName,
+                CreatedAt = t.CreatedAt,
+                UpdatedAt = t.UpdatedAt,
+                CanEdit = isAdmin || t.CreatedByUserId == user.Id
+            })
+            .ToListAsync();
 
     // Danh sách đợt đào tạo
     model.CampaignOptions = campaigns
@@ -428,6 +427,8 @@ public async Task<IActionResult> Create(TopicCreateEditViewModel model)
         ModelState.AddModelError(
             nameof(model.CampaignId),
             "Đợt đào tạo không hợp lệ hoặc bạn không có quyền truy cập.");
+        await PopulateTopicOptionsAsync(model, campaigns);
+        return View(model);
     }
     else if (!await CanManageTopicAsync(user, campaign))
     {
@@ -645,6 +646,16 @@ public async Task<IActionResult> Create(TopicCreateEditViewModel model)
         topic.MaxGroups = model.TopicType == TopicTypes.Group
             ? model.MaxGroups : null;
         topic.Status = model.Status;
+
+        // Giảng viên chỉnh sửa đề tài thì phải gửi duyệt lại
+        if (!isAdmin)
+        {
+            topic.ApprovalStatus = TopicApprovalStatuses.Pending;
+            topic.ReviewedByUserId = null;
+            topic.ReviewedAt = null;
+            topic.RejectionReason = null;
+        }
+
         topic.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

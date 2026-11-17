@@ -440,6 +440,14 @@ namespace InternshipManagement.Web.Migrations
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("id");
 
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("PENDING")
+                        .HasColumnName("approval_status");
+
                     b.Property<ulong>("CampaignId")
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("campaign_id");
@@ -471,9 +479,22 @@ namespace InternshipManagement.Web.Migrations
                         .HasColumnType("longtext")
                         .HasColumnName("objectives");
 
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("longtext")
+                        .HasColumnName("rejection_reason");
+
                     b.Property<string>("Requirements")
                         .HasColumnType("longtext")
                         .HasColumnName("requirements");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("reviewed_by_user_id");
 
                     b.Property<ulong?>("SourceTopicId")
                         .HasColumnType("bigint unsigned")
