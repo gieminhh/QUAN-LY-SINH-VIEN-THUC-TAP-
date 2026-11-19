@@ -14,12 +14,10 @@ public static class TopicTypes
 // Các trạng thái của đề tài
 public static class TopicStatuses
 {
-    // Trạng thái quản lý đề tài
     public const string Published = "PUBLISHED";
     public const string Hidden = "HIDDEN";
     public const string Closed = "CLOSED";
 
-    // Trạng thái xét duyệt đề tài
     public const string Draft = "DRAFT";
     public const string Pending = "PENDING";
     public const string Approved = "APPROVED";
@@ -40,8 +38,9 @@ public class Topic
     [Column("id")]
     public ulong Id { get; set; }
 
-[Column("campaign_id")]
-public ulong CampaignId { get; set; }
+    [Column("campaign_id")]
+    public ulong CampaignId { get; set; }
+
     [Required]
     [MaxLength(250)]
     [Column("title")]
@@ -82,9 +81,10 @@ public ulong CampaignId { get; set; }
     public int? MaxGroups { get; set; }
 
     [Required]
-    [MaxLength(20)]
+    [MaxLength(30)]
     [Column("status")]
-    public string Status { get; set; } = TopicStatuses.Published;
+    public string Status { get; set; } = TopicStatuses.Draft;
+
     [Required]
     [MaxLength(20)]
     [Column("approval_status")]
@@ -124,6 +124,7 @@ public ulong CampaignId { get; set; }
     [ForeignKey(nameof(CreatedByUserId))]
     public virtual ApplicationUser? CreatedByUser { get; set; }
 
+    [ForeignKey(nameof(SourceTopicId))]
     public virtual Topic? SourceTopic { get; set; }
 
     public virtual ICollection<Topic> DerivedTopics { get; set; }
@@ -134,5 +135,4 @@ public ulong CampaignId { get; set; }
 
     public virtual ICollection<TopicAttachment> Attachments { get; set; }
         = new List<TopicAttachment>();
-
 }
