@@ -32,8 +32,6 @@ public class TopicsController : Controller
         _logger = logger;
     }
 
-    // DANH SÁCH ĐỀ TÀI
-    
 [HttpGet]
 public async Task<IActionResult> Index(TopicListViewModel model)
 {
@@ -44,15 +42,15 @@ public async Task<IActionResult> Index(TopicListViewModel model)
 
     var isAdmin = User.IsInRole(AppRoles.Admin);
 
+    // Lấy các đợt đào tạo mà người dùng được phép truy cập
     var campaigns = await GetAccessibleCampaignsAsync(user);
-
-    
 
     if (campaigns == null)
         return Forbid();
 
     var campaignIds = campaigns.Select(c => c.Id).ToList();
 
+    // Truy vấn đề tài trong phạm vi được phân quyền
     var query = _context.Topics
         .AsNoTracking()
         .Include(t => t.Campaign)
@@ -69,6 +67,7 @@ public async Task<IActionResult> Index(TopicListViewModel model)
     if (!string.IsNullOrWhiteSpace(model.Search))
     {
         var search = model.Search.Trim();
+
         query = query.Where(t => t.Title.Contains(search));
     }
 
@@ -86,7 +85,7 @@ public async Task<IActionResult> Index(TopicListViewModel model)
             t.TopicType == model.TypeFilter);
     }
 
-    // Lọc theo trạng thái
+    // Lọc theo trạng thái đề tài
     if (model.StatusFilter != "ALL")
     {
         query = query.Where(t =>
@@ -124,8 +123,9 @@ public async Task<IActionResult> Index(TopicListViewModel model)
                 l.LecturerUserId == lecturerId));
     }
 
-    // Tổng số đề tài
+    // Tính tổng số đề tài
     model.TotalCount = await query.CountAsync();
+
     model.PageSize = 10;
 
     if (model.Page < 1)
@@ -134,29 +134,34 @@ public async Task<IActionResult> Index(TopicListViewModel model)
     if (model.TotalPages > 0 && model.Page > model.TotalPages)
         model.Page = model.TotalPages;
 
-        model.Topics = await query
-            .OrderByDescending(t => t.CreatedAt)
-            .Skip((model.Page - 1) * model.PageSize)
-            .Take(model.PageSize)
-            .Select(t => new TopicListItemViewModel
-            {
-                Id = t.Id,
-                CampaignId = t.CampaignId,
-                CampaignName = t.Campaign!.Name,
-                CampaignKind = t.Campaign!.Kind,
-                Title = t.Title,
-                TopicType = t.TopicType,
-                Status = t.Status,
-                MaxStudents = t.MaxStudents,
-                MaxGroups = t.MaxGroups,
-                CreatedByName = t.CreatedByUser!.FullName,
-                CreatedAt = t.CreatedAt,
-                UpdatedAt = t.UpdatedAt,
-                CanEdit = isAdmin || t.CreatedByUserId == user.Id
-            })
-            .ToListAsync();
+    // Lấy danh sách đề tài theo phân trang
+    model.Topics = await query
+        .OrderByDescending(t => t.CreatedAt)
+        .Skip((model.Page - 1) * model.PageSize)
+        .Take(model.PageSize)
+        .Select(t => new TopicListItemViewModel
+        {
+            Id = t.Id,
+            CampaignId = t.CampaignId,
+            CampaignName = t.Campaign!.Name,
+            CampaignKind = t.Campaign!.Kind,
+            Title = t.Title,
+            TopicType = t.TopicType,
+            Status = t.Status,
 
-    // Danh sách đợt đào tạo
+            // Trạng thái duyệt đề tài
+            ApprovalStatus = t.ApprovalStatus,
+
+            MaxStudents = t.MaxStudents,
+            MaxGroups = t.MaxGroups,
+            CreatedByName = t.CreatedByUser!.FullName,
+            CreatedAt = t.CreatedAt,
+            UpdatedAt = t.UpdatedAt,
+            CanEdit = isAdmin || t.CreatedByUserId == user.Id
+        })
+        .ToListAsync();
+
+    // Danh sách đợt đào tạo được phép truy cập
     model.CampaignOptions = campaigns
         .Select(c => new SelectListItem
         {
@@ -166,9 +171,13 @@ public async Task<IActionResult> Index(TopicListViewModel model)
         })
         .ToList();
 
-    // Danh sách năm học
+    // Danh sách năm học thuộc các đợt được phép truy cập
     model.AcademicYearOptions = await _context.AcademicYears
         .AsNoTracking()
+        .Where(y => _context.Campaigns.Any(c =>
+            campaignIds.Contains(c.Id) &&
+            c.Term != null &&
+            c.Term.AcademicYearId == y.Id))
         .OrderByDescending(y => y.Code)
         .Select(y => new SelectListItem
         {
@@ -178,10 +187,14 @@ public async Task<IActionResult> Index(TopicListViewModel model)
         })
         .ToListAsync();
 
-    // Danh sách khoa
+    // Danh sách khoa thuộc các đợt được phép truy cập
     model.FacultyOptions = await _context.Faculties
         .AsNoTracking()
-        .Where(f => f.IsActive)
+        .Where(f => f.IsActive &&
+            _context.Campaigns.Any(c =>
+                campaignIds.Contains(c.Id) &&
+                c.Major != null &&
+                c.Major.FacultyId == f.Id))
         .OrderBy(f => f.Name)
         .Select(f => new SelectListItem
         {
@@ -191,10 +204,12 @@ public async Task<IActionResult> Index(TopicListViewModel model)
         })
         .ToListAsync();
 
-    // Danh sách giảng viên đã được gán đề tài
+    // Danh sách giảng viên được gán đề tài trong phạm vi truy cập
     model.LecturerOptions = await _context.TopicLecturers
         .AsNoTracking()
-        .Where(l => campaignIds.Contains(l.Topic!.CampaignId))
+        .Where(l =>
+            l.Topic != null &&
+            campaignIds.Contains(l.Topic.CampaignId))
         .Select(l => new
         {
             l.LecturerUserId,
@@ -211,6 +226,54 @@ public async Task<IActionResult> Index(TopicListViewModel model)
         .ToListAsync();
 
     return View(model);
+}
+
+    // KHO ĐỀ TÀI CÁC KHÓA TRƯỚC
+[HttpGet]
+public async Task<IActionResult> Archive()
+{
+    var user = await _userManager.GetUserAsync(User);
+
+    if (user == null || !user.IsActive)
+        return Forbid();
+
+    // Lấy các đợt đào tạo mà người dùng có quyền truy cập
+    var campaigns = await GetAccessibleCampaignsAsync(user);
+
+    if (campaigns == null)
+        return Forbid();
+
+    var campaignIds = campaigns
+        .Where(c => c.Status == CampaignStatuses.Closed
+                 || c.Status == CampaignStatuses.Archived)
+        .Select(c => c.Id)
+        .ToList();
+
+    // Lấy đề tài thuộc các đợt đào tạo đã kết thúc
+    var topics = await _context.Topics
+        .AsNoTracking()
+        .Include(t => t.Campaign)
+        .Include(t => t.CreatedByUser)
+        .Where(t => campaignIds.Contains(t.CampaignId))
+        .OrderByDescending(t => t.CreatedAt)
+        .Select(t => new TopicListItemViewModel
+        {
+            Id = t.Id,
+            CampaignId = t.CampaignId,
+            CampaignName = t.Campaign!.Name,
+            CampaignKind = t.Campaign!.Kind,
+            Title = t.Title,
+            TopicType = t.TopicType,
+            Status = t.Status,
+            MaxStudents = t.MaxStudents,
+            MaxGroups = t.MaxGroups,
+            CreatedByName = t.CreatedByUser!.FullName,
+            CreatedAt = t.CreatedAt,
+            UpdatedAt = t.UpdatedAt
+        })
+        .ToListAsync();
+
+    return View(topics);
 }
 
 private async Task<List<SimilarTopicWarningViewModel>> FindSimilarTopicsAsync(
@@ -427,8 +490,6 @@ public async Task<IActionResult> Create(TopicCreateEditViewModel model)
         ModelState.AddModelError(
             nameof(model.CampaignId),
             "Đợt đào tạo không hợp lệ hoặc bạn không có quyền truy cập.");
-        await PopulateTopicOptionsAsync(model, campaigns);
-        return View(model);
     }
     else if (!await CanManageTopicAsync(user, campaign))
     {
@@ -646,16 +707,6 @@ public async Task<IActionResult> Create(TopicCreateEditViewModel model)
         topic.MaxGroups = model.TopicType == TopicTypes.Group
             ? model.MaxGroups : null;
         topic.Status = model.Status;
-
-        // Giảng viên chỉnh sửa đề tài thì phải gửi duyệt lại
-        if (!isAdmin)
-        {
-            topic.ApprovalStatus = TopicApprovalStatuses.Pending;
-            topic.ReviewedByUserId = null;
-            topic.ReviewedAt = null;
-            topic.RejectionReason = null;
-        }
-
         topic.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

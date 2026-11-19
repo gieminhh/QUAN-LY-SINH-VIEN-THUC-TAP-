@@ -159,6 +159,57 @@
             </div>
         </div>
 
+        @if (Model.SimilarTopics != null && Model.SimilarTopics.Any())
+    {
+        <div class="alert alert-warning mt-3">
+            <h5 class="alert-heading">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Phát hiện đề tài có nội dung tương đồng
+            </h5>
+
+            <p>
+             Hệ thống phát hiện một số đề tài có nội dung gần giống với đề tài bạn đang đăng ký.
+                Vui lòng kiểm tra trước khi tiếp tục.
+            </p>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm bg-white">
+                    <thead>
+                        <tr>
+                            <th>Đề tài tương đồng</th>
+                            <th>Đợt đào tạo</th>
+                            <th>Trạng thái</th>
+                            <th>Mức độ tương đồng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.SimilarTopics)
+                        {
+                            <tr>
+                                <td>@item.Title</td>
+                                <td>@item.CampaignName</td>
+                                <td>@item.Status</td>
+                                <td>
+                                    <span class="badge bg-warning text-dark">
+                                        @item.SimilarityPercent%
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-check mt-3">
+                <input asp-for="ConfirmSimilarTopics"
+                   class="form-check-input" />
+
+                <label asp-for="ConfirmSimilarTopics" class="form-check-label">
+                    Tôi đã xem cảnh báo và vẫn muốn tiếp tục đăng ký đề tài này.
+                </label>
+            </div>
+        </div>
+    }
         <!-- Nút thao tác -->
         <div class="d-flex justify-content-end gap-2 mb-3">
             <a asp-action="Index" class="btn btn-sm btn-outline-secondary">

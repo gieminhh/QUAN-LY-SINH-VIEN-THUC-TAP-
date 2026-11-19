@@ -7,18 +7,6 @@ public class TopicListViewModel
     public string? Search { get; set; }
 
     public ulong? CampaignFilter { get; set; }
-    
-    public ulong? AcademicYearFilter { get; set; }
-
-    public ulong? FacultyFilter { get; set; }
-
-    public string? LecturerFilter { get; set; }
-
-    public List<SelectListItem> AcademicYearOptions { get; set; } = new();
-
-    public List<SelectListItem> FacultyOptions { get; set; } = new();
-
-    public List<SelectListItem> LecturerOptions { get; set; } = new();
 
     public string TypeFilter { get; set; } = "ALL";
 
@@ -35,6 +23,19 @@ public class TopicListViewModel
     public List<SelectListItem> CampaignOptions { get; set; } = new();
 
     public List<TopicListItemViewModel> Topics { get; set; } = new();
+     
+    public ulong? AcademicYearFilter { get; set; }
+
+    public ulong? FacultyFilter { get; set; }
+
+    public string? LecturerFilter { get; set; }
+
+    public List<SelectListItem> AcademicYearOptions { get; set; } = new();
+
+    public List<SelectListItem> FacultyOptions { get; set; } = new();
+
+    public List<SelectListItem> LecturerOptions { get; set; } = new();
+
 }
 
 public class TopicListItemViewModel
@@ -64,5 +65,6 @@ public class TopicListItemViewModel
     public DateTime UpdatedAt { get; set; }
 
     public bool CanEdit { get; set; }
+
     public string ApprovalStatus { get; set; } = string.Empty;
 }
