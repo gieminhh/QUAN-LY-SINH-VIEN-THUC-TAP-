@@ -40,6 +40,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<CompanyRegistration> Companies => Set<CompanyRegistration>();
     public DbSet<CompanyMentor> CompanyMentors => Set<CompanyMentor>();
     public DbSet<StudentAssignment> StudentAssignments => Set<StudentAssignment>();
+    public DbSet<TopicPreferenceList> TopicPreferenceLists => Set<TopicPreferenceList>();
+    public DbSet<TopicPreference> TopicPreferences => Set<TopicPreference>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -50,6 +52,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<CompanyRegistration>().HasIndex(x=>x.RegistrationCode).IsUnique();
         builder.Entity<CompanyMentor>().HasIndex(x=>new {x.CompanyId,x.UserId}).IsUnique();
         builder.Entity<StudentAssignment>().HasIndex(x=>new {x.CampaignId,x.StudentProfileId}).IsUnique();
+
+        builder.Entity<TopicPreferenceList>(b =>
+        {
+            b.HasKey(x => new { x.CampaignId, x.StudentProfileId });
+            b.Property(x => x.SavedAt).HasPrecision(6);
+            b.HasOne<Campaign>().WithMany().HasForeignKey(x => x.CampaignId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<StudentProfile>().WithMany().HasForeignKey(x => x.StudentProfileId).OnDelete(DeleteBehavior.Restrict);
+        });
+        builder.Entity<TopicPreference>(b =>
+        {
+            b.HasKey(x => new { x.CampaignId, x.StudentProfileId, x.PreferenceRank });
+            b.HasIndex(x => new { x.CampaignId, x.StudentProfileId, x.TopicId }).IsUnique();
+            b.HasOne<TopicPreferenceList>().WithMany(x => x.Choices)
+                .HasForeignKey(x => new { x.CampaignId, x.StudentProfileId }).OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(x => x.Topic).WithMany().HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.Restrict);
+        });
 
 
         // Map ASP.NET Core Identity tables

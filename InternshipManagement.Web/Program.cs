@@ -80,6 +80,7 @@ builder.Services.AddScoped<IStudentProfileService, StudentProfileService>();
 builder.Services.AddScoped<ILecturerProfileService, LecturerProfileService>();
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<ITopicApprovalService, TopicApprovalService>();
+builder.Services.AddScoped<TopicPreferenceService>();
 
 // Add Authorization Policies
 builder.Services.AddAuthorization(options =>

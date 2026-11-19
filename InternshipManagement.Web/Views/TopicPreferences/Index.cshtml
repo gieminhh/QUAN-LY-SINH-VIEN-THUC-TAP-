@@ -1,0 +1,155 @@
+@model TopicPreferencePage
+@{
+    ViewData["Title"] = "Nguyện vọng đề tài";
+    var selected = Model.Input.TopicIds.Count == 0 ? new List<ulong?> { null } : Model.Input.TopicIds;
+}
+
+<div class="page-container">
+    <h4 class="fw-bold text-primary mb-3">Nguyện vọng đề tài</h4>
+    @if (Model.Campaigns.Count == 0)
+    {
+        <p class="alert alert-info">Chưa có đợt đăng ký nguyện vọng cho ngành của bạn.</p>
+    }
+    else
+    {
+        <form method="get" asp-action="Index" class="d-flex flex-wrap align-items-end gap-2 mb-3">
+            <div>
+                <label for="campaign-picker" class="form-label">Đợt đăng ký</label>
+                <select id="campaign-picker" name="campaignId" class="form-select">
+                    @foreach (var campaign in Model.Campaigns)
+                    {
+                        <option value="@campaign.Id" selected="@(campaign.Id == Model.Input.CampaignId)">@campaign.Name</option>
+                    }
+                </select>
+            </div>
+            <button type="submit" class="btn btn-outline-primary">Xem đợt</button>
+        </form>
+
+        <div class="card card-custom p-3">
+            <div class="d-flex flex-wrap gap-3 mb-2 small text-muted">
+                @if (Model.ClosesAt is { } deadline)
+                {
+                    <span>Hạn đăng ký @deadline.ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam)</span>
+                }
+                @if (Model.SavedAtUtc is { } savedAt)
+                {
+                    <span>Lưu lần cuối @savedAt.AddHours(7).ToString("dd/MM/yyyy HH:mm:ss")</span>
+                }
+            </div>
+            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+
+            @if (Model.LockedReason != null)
+            {
+                <p class="alert alert-info">@Model.LockedReason</p>
+                @if (!string.IsNullOrEmpty(Model.Input.ResearchDirection))
+                {
+                    <p><strong>Hướng quan tâm</strong> @Model.Input.ResearchDirection</p>
+                }
+                @if (Model.SavedChoices.Count == 0)
+                {
+                    <p class="mb-0">Bạn chưa đăng ký đề tài nào.</p>
+                }
+                else
+                {
+                    <ol class="mb-0">
+                        @foreach (var choice in Model.SavedChoices)
+                        {
+                            <li>@choice.Topic.Code · @choice.Topic.Title</li>
+                        }
+                    </ol>
+                }
+            }
+            else
+            {
+                <form asp-action="Save" method="post">
+                    <input type="hidden" asp-for="Input.CampaignId" />
+                    <input type="hidden" asp-for="Input.Version" />
+
+                    <label asp-for="Input.ResearchDirection" class="form-label fw-semibold">Hướng quan tâm</label>
+                    <input asp-for="Input.ResearchDirection" class="form-control mb-3" maxlength="180" list="research-directions" />
+                    <datalist id="research-directions">
+                        @foreach (var field in Model.Topics.Select(t => t.ResearchField).Where(f => !string.IsNullOrWhiteSpace(f)).Distinct().Order())
+                        {
+                            <option value="@field"></option>
+                        }
+                    </datalist>
+
+                    <h5 class="mb-2">Thứ tự ưu tiên</h5>
+                    @if (Model.Topics.Count == 0)
+                    {
+                        <p class="text-muted">Đợt này chưa có đề tài được phê duyệt.</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted small">Nguyện vọng ở trên được ưu tiên trước. Để trống hoặc bỏ dòng để gỡ lựa chọn.</p>
+                        <ol id="topic-choices" class="ps-4">
+                            @foreach (var choice in selected)
+                            {
+                                <li class="mb-2">
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <select name="Input.TopicIds" class="form-select" aria-label="Chọn đề tài">
+                                            <option value="">Chọn đề tài</option>
+                                            @foreach (var topic in Model.Topics)
+                                            {
+                                                <option value="@topic.Id" selected="@(topic.Id == choice)">@topic.Code · @topic.Title</option>
+                                            }
+                                        </select>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" data-remove-choice>Bỏ dòng</button>
+                                    </div>
+                                </li>
+                            }
+                        </ol>
+                        <template id="topic-choice-template">
+                            <li class="mb-2">
+                                <div class="d-flex gap-2 align-items-center">
+                                    <select name="Input.TopicIds" class="form-select" aria-label="Chọn đề tài">
+                                        <option value="">Chọn đề tài</option>
+                                        @foreach (var topic in Model.Topics)
+                                        {
+                                            <option value="@topic.Id">@topic.Code · @topic.Title</option>
+                                        }
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" data-remove-choice>Bỏ dòng</button>
+                                </div>
+                            </li>
+                        </template>
+                        <button type="button" id="add-topic-choice" class="btn btn-outline-primary me-2">Thêm nguyện vọng</button>
+                    }
+                    <button type="submit" class="btn btn-primary">Lưu nguyện vọng</button>
+                </form>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const list = document.getElementById("topic-choices");
+            if (!list) return;
+            const template = document.getElementById("topic-choice-template");
+            const addButton = document.getElementById("add-topic-choice");
+            const topicCount = @Model.Topics.Count;
+
+            function refresh() {
+                const choices = list.querySelectorAll("select");
+                choices.forEach((choice, index) => choice.setAttribute("aria-label", "Nguyện vọng " + (index + 1)));
+                addButton.disabled = choices.length >= topicCount;
+            }
+
+            addButton.addEventListener("click", () => {
+                list.append(template.content.cloneNode(true));
+                refresh();
+                list.lastElementChild.querySelector("select").focus();
+            });
+            list.addEventListener("click", event => {
+                const button = event.target.closest("[data-remove-choice]");
+                if (!button) return;
+                button.closest("li").remove();
+                refresh();
+                addButton.focus();
+            });
+            refresh();
+        })();
+    </script>
+}
