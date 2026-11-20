@@ -26,6 +26,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<TopicAttachment> TopicAttachments => Set<TopicAttachment>();
     public DbSet<TopicProposal> TopicProposals => Set<TopicProposal>();
     public DbSet<TopicStudentAssignment> TopicStudentAssignments => Set<TopicStudentAssignment>();
+    public DbSet<TopicAssignmentGroup> TopicAssignmentGroups => Set<TopicAssignmentGroup>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -280,8 +281,49 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<TopicStudentAssignment>(e =>
         {
             e.HasIndex(x => new { x.TopicId, x.StudentUserId }).IsUnique();
-            e.HasOne(x => x.Topic).WithMany().HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(x => x.StudentUser).WithMany().HasForeignKey(x => x.StudentUserId).OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.Topic)
+                .WithMany()
+                .HasForeignKey(x => x.TopicId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.StudentUser)
+                .WithMany()
+                .HasForeignKey(x => x.StudentUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.Group)
+                .WithMany()
+                .HasForeignKey(x => x.GroupId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<TopicStudentAssignment>(e =>
+        {
+            e.HasIndex(x => new { x.TopicId, x.StudentUserId }).IsUnique();
+
+            e.HasOne(x => x.Topic)
+                .WithMany()
+                .HasForeignKey(x => x.TopicId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.StudentUser)
+                .WithMany()
+                .HasForeignKey(x => x.StudentUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.Group)
+                .WithMany()
+                .HasForeignKey(x => x.GroupId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<TopicAssignmentGroup>(e =>
+        {
+            e.HasOne(x => x.Topic)
+                .WithMany()
+                .HasForeignKey(x => x.TopicId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<TopicProposal>(b =>
