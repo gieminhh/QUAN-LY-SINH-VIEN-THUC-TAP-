@@ -25,7 +25,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<TopicLecturer> TopicLecturers => Set<TopicLecturer>();
     public DbSet<TopicAttachment> TopicAttachments => Set<TopicAttachment>();
     public DbSet<TopicProposal> TopicProposals => Set<TopicProposal>();
-
+    public DbSet<TopicStudentAssignment> TopicStudentAssignments => Set<TopicStudentAssignment>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -275,6 +275,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .WithMany(u => u.UploadedTopicAttachments)
             .HasForeignKey(a => a.UploadedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<TopicStudentAssignment>(e =>
+        {
+            e.HasIndex(x => new { x.TopicId, x.StudentUserId }).IsUnique();
+            e.HasOne(x => x.Topic).WithMany().HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.StudentUser).WithMany().HasForeignKey(x => x.StudentUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<TopicProposal>(b =>
