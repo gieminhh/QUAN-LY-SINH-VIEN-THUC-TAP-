@@ -52,6 +52,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Register Domain Services
 builder.Services.AddScoped<IUserScopeService, UserScopeService>();
+builder.Services.AddScoped<ITopicAssignmentService, TopicAssignmentService>();
 
 // Add Authorization Policies
 builder.Services.AddAuthorization(options =>
