@@ -206,6 +206,8 @@ public class CampaignsController : Controller
             TrainingSystem = (model.TrainingSystem.Trim() == "Chính quy" ? "CHINH_QUY" : model.TrainingSystem.Trim()),
             StartDate = model.StartDate,
             EndDate = model.EndDate,
+            NoPreferencePolicy = model.NoPreferencePolicy,
+            RandomSeed = model.RandomSeed,
             Status = CampaignStatuses.Draft,
             CreatedByUserId = currentUserId,
             CreatedAt = DateTime.UtcNow,
@@ -252,6 +254,8 @@ public class CampaignsController : Controller
             TrainingSystem = campaign.TrainingSystem,
             StartDate = campaign.StartDate,
             EndDate = campaign.EndDate,
+            NoPreferencePolicy = campaign.NoPreferencePolicy,
+            RandomSeed = campaign.RandomSeed,
             Status = campaign.Status
         };
 
@@ -308,6 +312,8 @@ public class CampaignsController : Controller
         campaign.TrainingSystem = (model.TrainingSystem.Trim() == "Chính quy" ? "CHINH_QUY" : model.TrainingSystem.Trim());
         campaign.StartDate = model.StartDate;
         campaign.EndDate = model.EndDate;
+        campaign.NoPreferencePolicy = model.NoPreferencePolicy;
+        campaign.RandomSeed = model.RandomSeed;
         campaign.Status = model.Status;
         campaign.UpdatedAt = DateTime.UtcNow;
 
@@ -448,6 +454,14 @@ public class CampaignsController : Controller
             new() { Value = CampaignStatuses.Open, Text = "Đang mở" },
             new() { Value = CampaignStatuses.Closed, Text = "Đã đóng" },
             new() { Value = CampaignStatuses.Archived, Text = "Lưu trữ" }
+        };
+
+        model.NoPreferencePolicyOptions = new List<SelectListItem>
+        {
+            new() { Value = ((int)NoPreferencePolicy.LeaveUnassigned).ToString(), Text = "Để chưa ghép" },
+            new() { Value = ((int)NoPreferencePolicy.ManualByAdmin).ToString(), Text = "Quản trị viên ghép thủ công" },
+            new() { Value = ((int)NoPreferencePolicy.RandomFill).ToString(), Text = "Bốc thăm đề tài còn chỉ tiêu" },
+            new() { Value = ((int)NoPreferencePolicy.SupplementaryRound).ToString(), Text = "Đánh dấu cho đợt bổ sung" }
         };
     }
     private async Task ValidateCampaignPeriodAsync(CampaignCreateEditViewModel model)

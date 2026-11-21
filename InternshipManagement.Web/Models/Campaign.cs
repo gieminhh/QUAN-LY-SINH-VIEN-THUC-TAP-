@@ -59,6 +59,12 @@ public class Campaign
     [Column("status")]
     public string Status { get; set; } = CampaignStatuses.Draft;
 
+    [Column("no_preference_policy")]
+    public NoPreferencePolicy NoPreferencePolicy { get; set; } = NoPreferencePolicy.ManualByAdmin;
+
+    [Column("random_seed")]
+    public int? RandomSeed { get; set; }
+
     [Required]
     [MaxLength(255)]
     [Column("created_by_user_id")]

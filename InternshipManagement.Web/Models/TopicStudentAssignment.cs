@@ -11,18 +11,27 @@ public class TopicStudentAssignment
     public ulong Id { get; set; }
 
     [Column("topic_id")]
-    public ulong TopicId { get; set; }
+    public ulong? TopicId { get; set; }
 
     [Required]
     [MaxLength(255)]
     [Column("student_user_id")]
     public string StudentUserId { get; set; } = string.Empty;
 
+    [Column("campaign_id")]
+    public ulong CampaignId { get; set; }
+
+    [Column("status")]
+    public MatchStatus Status { get; set; } = MatchStatus.Matched;
+
     [Column("assigned_at")]
     public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
 
     [ForeignKey(nameof(TopicId))]
     public virtual Topic? Topic { get; set; }
+
+    [ForeignKey(nameof(CampaignId))]
+    public virtual Campaign? Campaign { get; set; }
 
     [ForeignKey(nameof(StudentUserId))]
     public virtual ApplicationUser? StudentUser { get; set; }

@@ -52,6 +52,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Register Domain Services
 builder.Services.AddScoped<IUserScopeService, UserScopeService>();
+builder.Services.AddScoped<ITopicAssignmentService, TopicAssignmentService>();
 
 // Add Authorization Policies
 builder.Services.AddAuthorization(options =>
@@ -96,4 +97,3 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
-builder.Services.AddScoped<ITopicAssignmentService, TopicAssignmentService>();
