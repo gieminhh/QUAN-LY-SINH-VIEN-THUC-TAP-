@@ -1,0 +1,26 @@
+@model GroupPage
+@{ ViewData["Title"] = "Đăng ký cá nhân / nhóm"; }
+<h3>Đăng ký cá nhân / nhóm đồ án</h3>
+<p>Nhóm đồ án thuộc đợt đào tạo. Đây không phải nhóm làm việc tại doanh nghiệp.</p>
+<form method="get" class="d-flex gap-2 mb-3"><select class="form-select" name="campaignId" aria-label="Đợt">@foreach(var c in Model.Campaigns) { <option value="@c.Id" selected="@(c.Id == Model.CampaignId)">@c.Name</option> }</select><button class="btn btn-outline-primary">Xem đợt</button></form>
+@if(Model.CampaignId != 0) {
+@if(Model.Policy != null) { <p>Hạn đăng ký: @Model.Policy.RegistrationClosesAt.ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam). Tối đa @Model.Policy.MaxGroupSize thành viên/nhóm.</p> }
+@if(Model.LockedReason != null) { <p class="alert alert-info">@Model.LockedReason</p> }
+@if(Model.Participation != null) {
+<div class="card p-3 mb-3"><h4>@(Model.Group?.Name ?? "Đăng ký cá nhân")</h4>
+@if(Model.Group != null) { <ul>@foreach(var u in Model.Members) { <li>@u.FullName (@u.UserName) @(u.Id == Model.Group.LeaderId ? "— Nhóm trưởng" : "— Đã xác nhận")</li> }</ul> }
+@if(Model.LockedReason == null) { <form asp-action="Leave" method="post"><input type="hidden" name="campaignId" value="@Model.CampaignId" /><button class="btn btn-outline-danger">@(Model.IsLeader ? "Giải tán nhóm và hủy đăng ký các thành viên" : "Rời đăng ký")</button></form> }
+</div>
+} else if(Model.LockedReason == null) {
+<form asp-action="Individual" method="post" class="mb-3"><input type="hidden" name="campaignId" value="@Model.CampaignId" /><button class="btn btn-primary">Đăng ký cá nhân</button></form>
+@if(Model.CanGroup) { <form asp-action="Create" method="post" class="d-flex gap-2 mb-3"><input type="hidden" name="campaignId" value="@Model.CampaignId" /><input class="form-control" name="name" maxlength="100" required placeholder="Tên nhóm đồ án" aria-label="Tên nhóm" /><button class="btn btn-primary">Tạo nhóm</button></form> }
+else { <p>Đợt này chỉ đăng ký theo từng sinh viên.</p> }
+}
+@if(Model.IsLeader && Model.Group != null) {
+<h4>Lời mời đã gửi</h4><ul>@foreach(var i in Model.SentInvitations) { <li>@(Model.Invitees.FirstOrDefault(u => u.Id == i.StudentId)?.FullName ?? Model.Members.FirstOrDefault(u => u.Id == i.StudentId)?.FullName ?? i.StudentId): @(i.Status == "PENDING" ? "Chờ xác nhận" : i.Status == "ACCEPTED" ? "Đã xác nhận" : "Đã từ chối")</li> }</ul>
+@if(Model.LockedReason == null) { <form asp-action="Invite" method="post" class="d-flex gap-2 mb-3"><input type="hidden" name="groupId" value="@Model.Group.Id" /><select name="studentId" class="form-select" aria-label="Sinh viên nhận lời mời" required><option value="">Chọn sinh viên cùng ngành</option>@foreach(var u in Model.Invitees) { <option value="@u.Id">@u.FullName (@u.UserName)</option> }</select><button class="btn btn-outline-primary">Gửi lời mời</button></form> }
+}
+<h4>Lời mời tham gia của bạn</h4>
+@foreach(var g in Model.Invitations) { <div class="card p-3 mb-2"><strong>@g.Name</strong>@if(Model.LockedReason == null) { <form asp-action="Respond" method="post"><input type="hidden" name="groupId" value="@g.Id" /><button class="btn btn-success" name="accept" value="true">Xác nhận tham gia</button><button class="btn btn-outline-secondary" name="accept" value="false">Từ chối</button></form> }</div> }
+}
+else { <p>Chưa có đợt cho ngành của bạn. Kiểm tra ngành học trong hồ sơ.</p> }

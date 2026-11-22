@@ -1,0 +1,21 @@
+@model PolicyPage
+@{ ViewData["Title"] = "Chính sách nhóm và ưu tiên"; }
+<h3>Chính sách nhóm và ưu tiên</h3>
+<form method="get" class="d-flex gap-2 mb-3">
+<select name="campaignId" class="form-select" aria-label="Đợt">@foreach(var c in Model.Campaigns) { <option value="@c.Id" selected="@(c.Id == Model.Input.CampaignId)">@c.Name</option> }</select><button class="btn btn-outline-primary">Xem đợt</button>
+</form>
+@if(Model.Input.CampaignId != 0) {
+<form asp-action="Save" method="post" class="card p-3">
+<div asp-validation-summary="All" class="text-danger"></div>
+<input type="hidden" asp-for="Input.CampaignId" />
+<p>Lịch bên dưới dùng giờ Việt Nam. Thực tập luôn đăng ký cá nhân; chỉ đồ án được bật nhóm.</p>
+<div class="form-check mb-3"><input class="form-check-input" asp-for="Input.GroupsAllowed" /><label class="form-check-label" asp-for="Input.GroupsAllowed">Cho phép đăng ký nhóm đồ án</label></div>
+<label asp-for="Input.MaxGroupSize">Số thành viên tối đa, bao gồm nhóm trưởng</label><input class="form-control mb-3" asp-for="Input.MaxGroupSize" min="2" max="20" />
+<label asp-for="Input.RegistrationOpensAt">Mở đăng ký</label><input type="datetime-local" class="form-control mb-3" asp-for="Input.RegistrationOpensAt" />
+<label asp-for="Input.RegistrationClosesAt">Đóng đăng ký</label><input type="datetime-local" class="form-control mb-3" asp-for="Input.RegistrationClosesAt" />
+<div class="form-check mb-3"><input class="form-check-input" asp-for="Input.LecturerRankingEnabled" /><label class="form-check-label" asp-for="Input.LecturerRankingEnabled">Bật danh sách ưu tiên giảng viên</label></div>
+<label asp-for="Input.RankingOpensAt">Mở xếp hạng</label><input type="datetime-local" class="form-control mb-3" asp-for="Input.RankingOpensAt" />
+<label asp-for="Input.RankingClosesAt">Khóa xếp hạng</label><input type="datetime-local" class="form-control mb-3" asp-for="Input.RankingClosesAt" />
+<button class="btn btn-primary">Lưu chính sách</button>
+</form>
+} else { <p>Chưa có đợt trong phạm vi quản lý.</p> }

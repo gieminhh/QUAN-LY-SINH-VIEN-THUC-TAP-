@@ -30,6 +30,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.ConfigureParticipation();
 
         // Map ASP.NET Core Identity tables
         builder.Entity<ApplicationUser>(b =>
