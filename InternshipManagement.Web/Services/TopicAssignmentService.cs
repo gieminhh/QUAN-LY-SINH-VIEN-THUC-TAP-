@@ -42,12 +42,47 @@ public class TopicAssignmentService : ITopicAssignmentService
         if (studentRoleId is null)
             throw new InvalidOperationException("Không tìm thấy role sinh viên.");
 
-        var studentIds = await _db.Users
+        var studentsQuery = _db.Users
             .Where(user => user.MajorId == campaign.MajorId &&
-                _db.UserRoles.Any(role => role.UserId == user.Id && role.RoleId == studentRoleId))
-            .OrderBy(user => user.Id)
-            .Select(user => user.Id)
-            .ToListAsync();
+                _db.UserRoles.Any(role => role.UserId == user.Id && role.RoleId == studentRoleId));
+
+        var random = campaign.RandomSeed.HasValue ? new Random(campaign.RandomSeed.Value) : new Random();
+        List<string> studentIds;
+        switch (campaign.MatchingOrder)
+        {
+            case MatchingOrder.RegistrationTime:
+                studentIds = await studentsQuery
+                    .Select(user => new
+                    {
+                        user.Id,
+                        RegisteredAt = _db.StudentTopicPreferences
+                            .Where(preference =>
+                                preference.StudentId == user.Id &&
+                                preference.Topic != null &&
+                                preference.Topic.CampaignId == campaignId)
+                            .Select(preference => (DateTime?)preference.CreatedAt)
+                            .Min()
+                    })
+                    .OrderBy(student => student.RegisteredAt == null)
+                    .ThenBy(student => student.RegisteredAt)
+                    .ThenBy(student => student.Id)
+                    .Select(student => student.Id)
+                    .ToListAsync();
+                break;
+            case MatchingOrder.Random:
+                studentIds = await studentsQuery
+                    .OrderBy(user => user.Id)
+                    .Select(user => user.Id)
+                    .ToListAsync();
+                for (var i = studentIds.Count - 1; i > 0; i--)
+                {
+                    var j = random.Next(i + 1);
+                    (studentIds[i], studentIds[j]) = (studentIds[j], studentIds[i]);
+                }
+                break;
+            default:
+                throw new InvalidOperationException("Thứ tự xét sinh viên không hợp lệ.");
+        }
 
         var noPreferences = new List<string>();
         foreach (var studentId in studentIds)
@@ -82,7 +117,6 @@ public class TopicAssignmentService : ITopicAssignmentService
                 await SetUnmatchedStatusAsync(studentId, campaignId, MatchStatus.Unmatched);
         }
 
-        var random = campaign.RandomSeed.HasValue ? new Random(campaign.RandomSeed.Value) : new Random();
         foreach (var studentId in noPreferences)
         {
             var status = campaign.NoPreferencePolicy switch

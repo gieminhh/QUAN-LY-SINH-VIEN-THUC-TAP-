@@ -1,5 +1,11 @@
 namespace InternshipManagement.Web.Models;
 
+public enum MatchingOrder
+{
+    RegistrationTime = 0,
+    Random = 1
+}
+
 public enum NoPreferencePolicy
 {
     LeaveUnassigned = 0,

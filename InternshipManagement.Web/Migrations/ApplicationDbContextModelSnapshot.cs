@@ -194,6 +194,10 @@ namespace InternshipManagement.Web.Migrations
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("major_id");
 
+                    b.Property<int>("MatchingOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("matching_order");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(250)

@@ -62,6 +62,9 @@ public class Campaign
     [Column("no_preference_policy")]
     public NoPreferencePolicy NoPreferencePolicy { get; set; } = NoPreferencePolicy.ManualByAdmin;
 
+    [Column("matching_order")]
+    public MatchingOrder MatchingOrder { get; set; } = MatchingOrder.RegistrationTime;
+
     [Column("random_seed")]
     public int? RandomSeed { get; set; }
 
