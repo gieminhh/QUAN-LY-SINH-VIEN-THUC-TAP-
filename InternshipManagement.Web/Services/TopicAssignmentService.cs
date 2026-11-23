@@ -1,5 +1,6 @@
 using InternshipManagement.Web.Data;
 using InternshipManagement.Web.Models;
+using InternshipManagement.Web.Services.Matching;
 using Microsoft.EntityFrameworkCore;
 
 namespace InternshipManagement.Web.Services;
@@ -85,6 +86,8 @@ public class TopicAssignmentService : ITopicAssignmentService
         }
 
         var noPreferences = new List<string>();
+        var studentsWithPreferences = new List<string>();
+        var preferencesByStudent = new Dictionary<string, List<ulong>>();
         foreach (var studentId in studentIds)
         {
             var existing = await _db.TopicStudentAssignments
@@ -99,23 +102,54 @@ public class TopicAssignmentService : ITopicAssignmentService
                 continue;
             }
 
-            var assigned = false;
-            foreach (var preference in preferences)
-            {
-                var result = await AssignAsync(studentId, preference.TopicId);
-                if (result.ok)
-                {
-                    assigned = true;
-                    break;
-                }
+            studentsWithPreferences.Add(studentId);
+            preferencesByStudent[studentId] = preferences
+                .Select(preference => preference.TopicId)
+                .ToList();
+        }
 
+        var preferredTopicIds = preferencesByStudent.Values
+            .SelectMany(topicIds => topicIds)
+            .Distinct()
+            .ToList();
+        var topics = await _db.Topics
+            .Where(topic =>
+                topic.CampaignId == campaignId &&
+                topic.ApprovalStatus == TopicApprovalStatuses.Approved &&
+                preferredTopicIds.Contains(topic.Id))
+            .Select(topic => new { topic.Id, topic.MaxStudents })
+            .ToListAsync();
+        var currentAssignmentCounts = await _db.TopicStudentAssignments
+            .Where(assignment =>
+                assignment.CampaignId == campaignId &&
+                assignment.Status == MatchStatus.Matched &&
+                assignment.TopicId.HasValue &&
+                preferredTopicIds.Contains(assignment.TopicId.Value))
+            .GroupBy(assignment => assignment.TopicId!.Value)
+            .Select(group => new { TopicId = group.Key, Count = group.Count() })
+            .ToDictionaryAsync(group => group.TopicId, group => group.Count);
+        var topicCapacities = topics.ToDictionary(
+            topic => topic.Id,
+            topic => topic.MaxStudents.HasValue
+                ? Math.Max(0, topic.MaxStudents.Value - currentAssignmentCounts.GetValueOrDefault(topic.Id))
+                : studentsWithPreferences.Count);
+        var matching = GreedyMatcher.Match(studentsWithPreferences, preferencesByStudent, topicCapacities);
+        var unmatchedStudentIds = matching.UnmatchedStudentIds.ToHashSet();
+
+        foreach (var (studentId, topicId) in matching.Matches)
+        {
+            var result = await AssignAsync(studentId, topicId);
+            if (!result.ok)
+            {
                 if (result.error != "Đề tài đã đủ chỉ tiêu.")
                     throw new InvalidOperationException(result.error);
-            }
 
-            if (!assigned)
-                await SetUnmatchedStatusAsync(studentId, campaignId, MatchStatus.Unmatched);
+                unmatchedStudentIds.Add(studentId);
+            }
         }
+
+        foreach (var studentId in unmatchedStudentIds)
+            await SetUnmatchedStatusAsync(studentId, campaignId, MatchStatus.Unmatched);
 
         foreach (var studentId in noPreferences)
         {
