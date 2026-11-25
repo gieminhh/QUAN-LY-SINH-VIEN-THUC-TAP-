@@ -1,126 +1,75 @@
-
 @model InternshipManagement.Web.Models.Topic
 @using InternshipManagement.Web.Models
 
 @{
     ViewData["Title"] = "Chi tiết đề tài";
+
+    var isPending = Model.ApprovalStatus == TopicApprovalStatuses.Pending;
+    var isSelfCreated = ViewBag.IsSelfCreated as bool? ?? false;
+
+    var creatorName = Model.CreatedByUser?.FullName
+        ?? Model.CreatedByUser?.UserName
+        ?? "Không xác định";
+
+    var reviewerName = ViewBag.ReviewerName as string;
+
+    var displayStatusText = Model.Status switch
+    {
+        TopicStatuses.Published => "Đang công khai",
+        TopicStatuses.Hidden => "Đang ẩn",
+        TopicStatuses.Closed => "Đã đóng",
+        _ => Model.Status
+    };
 }
 
-<div class="page-container" style="max-width: 900px;">
-    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <div>
             <h4 class="fw-bold text-primary mb-1">
-                <i class="bi bi-info-circle-fill me-2"></i>Chi tiết đề tài
+                <i class="bi bi-file-earmark-text me-2"></i>Chi tiết đề tài
             </h4>
             <div class="text-muted small">
-                Xem thông tin và xử lý đề tài do giảng viên đăng ký.
+                Xem thông tin và xử lý phê duyệt đề tài.
             </div>
         </div>
 
         <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i> Danh sách đề tài
+            <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
         </a>
     </div>
 
-    <!-- Approval Status & Actions -->
-    <div class="card card-custom p-4 mb-4" style="background: #f8fafc;">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div>
-                <span class="text-muted small d-block mb-2">
-                    Trạng thái duyệt hiện tại:
-                </span>
-
-                @switch (Model.ApprovalStatus)
-                {
-                    case TopicApprovalStatuses.Pending:
-                        <span class="badge bg-warning text-dark fs-6 px-3 py-2">
-                            <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt
-                        </span>
-                        break;
-
-                    case TopicApprovalStatuses.Approved:
-                        <span class="badge bg-success fs-6 px-3 py-2">
-                            <i class="bi bi-check-circle-fill me-1"></i>Đã duyệt
-                        </span>
-                        break;
-
-                    case TopicApprovalStatuses.Rejected:
-                        <span class="badge bg-danger fs-6 px-3 py-2">
-                            <i class="bi bi-x-circle-fill me-1"></i>Đã từ chối
-                        </span>
-                        break;
-                }
-            </div>
+    <div class="card card-custom mb-3">
+        <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="fw-semibold">Thông tin đề tài</span>
 
             @if (Model.ApprovalStatus == TopicApprovalStatuses.Pending)
             {
-                <div class="d-flex gap-2 flex-wrap">
-                    <form asp-action="Approve"
-                          asp-route-id="@Model.Id"
-                          method="post"
-                          onsubmit="return confirm('Bạn có chắc chắn muốn duyệt đề tài này?');">
-                        @Html.AntiForgeryToken()
-
-                        <button type="submit" class="btn btn-sm btn-success px-3">
-                            <i class="bi bi-check-circle-fill me-1"></i>Duyệt đề tài
-                        </button>
-                    </form>
-
-                    <button type="button"
-                            class="btn btn-sm btn-outline-danger px-3"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#rejectForm">
-                        <i class="bi bi-x-circle me-1"></i>Từ chối
-                    </button>
-                </div>
+                <span class="badge bg-warning text-dark">
+                    <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt
+                </span>
+            }
+            else if (Model.ApprovalStatus == TopicApprovalStatuses.Approved)
+            {
+                <span class="badge bg-success">
+                    <i class="bi bi-check-circle-fill me-1"></i>Đã duyệt
+                </span>
+            }
+            else if (Model.ApprovalStatus == TopicApprovalStatuses.Rejected)
+            {
+                <span class="badge bg-danger">
+                    <i class="bi bi-x-circle-fill me-1"></i>Đã từ chối
+                </span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">Không xác định</span>
             }
         </div>
 
-        @if (Model.ApprovalStatus == TopicApprovalStatuses.Pending)
-        {
-            <div class="collapse mt-3" id="rejectForm">
-                <div class="card border-danger">
-                    <div class="card-body">
-                        <form asp-action="Reject"
-                              asp-route-id="@Model.Id"
-                              method="post"
-                              onsubmit="return confirm('Bạn có chắc chắn muốn từ chối đề tài này?');">
-                            @Html.AntiForgeryToken()
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">@Model.Title</h5>
 
-                            <label for="rejectionReason" class="form-label fw-semibold">
-                                Lý do từ chối <span class="text-danger">*</span>
-                            </label>
-
-                            <textarea id="rejectionReason"
-                                      name="reason"
-                                      class="form-control form-control-sm"
-                                      rows="3"
-                                      maxlength="2000"
-                                      required
-                                      placeholder="Nhập lý do từ chối để giảng viên biết và điều chỉnh..."></textarea>
-
-                            <div class="d-flex justify-content-end mt-2">
-                                <button type="submit" class="btn btn-danger btn-sm px-3">
-                                    <i class="bi bi-x-circle me-1"></i>Xác nhận từ chối
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-
-    <!-- General Information -->
-    <div class="card card-custom mb-4">
-        <div class="card-header-custom">
-            <i class="bi bi-card-text me-2"></i>Thông tin chung
-        </div>
-
-        <div class="card-body p-4">
-            <h5 class="fw-bold text-dark mb-4">@Model.Title</h5>
-
-            <div class="row g-4">
+            <div class="row g-3 mb-4">
                 <div class="col-md-6">
                     <div class="text-muted small">Đợt đăng ký</div>
                     <div class="fw-semibold">
@@ -129,201 +78,271 @@
                 </div>
 
                 <div class="col-md-6">
+                    <div class="text-muted small">Ngành đào tạo</div>
+                    <div class="fw-semibold">
+                        @(Model.Major?.Name ?? "—")
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Chuyên ngành đề tài</div>
+                    <div class="fw-semibold">
+                        @(Model.Specialty ?? "—")
+                    </div>
+                </div>
+
+                <div class="col-md-6">
                     <div class="text-muted small">Hình thức đề tài</div>
                     <div class="fw-semibold">
                         @if (Model.TopicType == TopicTypes.Individual)
                         {
-                            <span class="badge bg-primary">
-                                <i class="bi bi-person me-1"></i>Cá nhân
-                            </span>
+                            <span>Cá nhân</span>
                         }
                         else if (Model.TopicType == TopicTypes.Group)
                         {
-                            <span class="badge bg-info text-dark">
-                                <i class="bi bi-people me-1"></i>Nhóm
-                            </span>
+                            <span>Nhóm</span>
                         }
                         else
                         {
-                            <span class="badge bg-secondary">@Model.TopicType</span>
+                            <span>@Model.TopicType</span>
                         }
                     </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="text-muted small">Chuyên ngành</div>
-                    <div class="fw-semibold">@(Model.Specialty ?? "—")</div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="text-muted small">Công nghệ sử dụng</div>
-                    <div class="fw-semibold">@(Model.Technologies ?? "—")</div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="text-muted small">Số sinh viên tối đa</div>
-                    <div class="fw-semibold">@(Model.MaxStudents?.ToString() ?? "—")</div>
+                    <div class="fw-semibold">
+                        @(Model.MaxStudents?.ToString() ?? "Không giới hạn")
+                    </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="text-muted small">Số nhóm tối đa</div>
-                    <div class="fw-semibold">@(Model.MaxGroups?.ToString() ?? "—")</div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="text-muted small">Trạng thái hoạt động</div>
-                    <div>
-                        @switch (Model.Status)
-                        {
-                            case TopicStatuses.Published:
-                                <span class="badge bg-success">
-                                    <i class="bi bi-eye me-1"></i>Đang công khai
-                                </span>
-                                break;
-
-                            case TopicStatuses.Hidden:
-                                <span class="badge bg-secondary">
-                                    <i class="bi bi-eye-slash me-1"></i>Đang ẩn
-                                </span>
-                                break;
-
-                            case TopicStatuses.Closed:
-                                <span class="badge bg-dark">
-                                    <i class="bi bi-lock me-1"></i>Đã đóng
-                                </span>
-                                break;
-
-                            default:
-                                <span class="badge bg-light text-dark border">
-                                    @Model.Status
-                                </span>
-                                break;
-                        }
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="text-muted small">Người tạo đề tài</div>
                     <div class="fw-semibold">
-                        @(Model.CreatedByUser?.UserName ?? "—")
+                        @(Model.MaxGroups?.ToString() ?? "Không giới hạn")
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Topic Description -->
-    <div class="card card-custom mb-4">
-        <div class="card-header-custom">
-            <i class="bi bi-file-text me-2"></i>Mô tả và yêu cầu đề tài
-        </div>
-
-        <div class="card-body p-4">
-            <div class="mb-4">
-                <div class="text-muted small mb-2">Mô tả đề tài</div>
-                <div class="text-dark" style="white-space: pre-line">
-                    @(Model.Description ?? "Chưa có mô tả.")
+                <div class="col-md-6">
+                    <div class="text-muted small">Người tạo</div>
+                    <div class="fw-semibold">@creatorName</div>
                 </div>
-            </div>
 
-            <div class="mb-4">
-                <div class="text-muted small mb-2">Mục tiêu thực hiện</div>
-                <div class="text-dark" style="white-space: pre-line">
-                    @(Model.Objectives ?? "Chưa có thông tin.")
-                </div>
-            </div>
-
-            <div>
-                <div class="text-muted small mb-2">Yêu cầu đối với sinh viên</div>
-                <div class="text-dark" style="white-space: pre-line">
-                    @(Model.Requirements ?? "Chưa có yêu cầu.")
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Attachments -->
-    <div class="card card-custom mb-4">
-        <div class="card-header-custom">
-            <i class="bi bi-paperclip me-2"></i>Tệp đính kèm
-        </div>
-
-        <div class="card-body p-4">
-            @if (Model.Attachments != null && Model.Attachments.Any())
-            {
-                <div class="list-group list-group-flush">
-                    @foreach (var attachment in Model.Attachments)
-                    {
-                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div>
-                                <div class="fw-semibold">
-                                    <i class="bi bi-file-earmark-text text-primary me-2"></i>
-                                    @attachment.OriginalFileName
-                                </div>
-
-                                <small class="text-muted">
-                                    @((attachment.FileSize / 1024.0).ToString("N1")) KB
-                                </small>
-                            </div>
-
-                            <a asp-controller="Topics"
-                               asp-action="DownloadAttachment"
-                               asp-route-id="@attachment.Id"
-                               class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-download me-1"></i>Tải xuống
-                            </a>
-                        </div>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="text-center text-muted py-3">
-                    <i class="bi bi-folder2-open fs-3 d-block mb-2"></i>
-                    Đề tài chưa có tệp đính kèm.
-                </div>
-            }
-        </div>
-    </div>
-
-    <!-- Review Information -->
-    @if (Model.ApprovalStatus != TopicApprovalStatuses.Pending)
-    {
-        <div class="card card-custom mb-4">
-            <div class="card-header-custom">
-                <i class="bi bi-person-check me-2"></i>Thông tin xử lý
-            </div>
-
-            <div class="card-body p-4">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="text-muted small">Người xử lý</div>
-                        <div class="fw-semibold">
-                            @(ViewBag.ReviewerName ?? "—")
-                        </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Ngày tạo</div>
+                    <div class="fw-semibold">
+                        @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                     </div>
+                </div>
 
+                <div class="col-md-6">
+                    <div class="text-muted small">Trạng thái hiển thị</div>
+                    <div class="fw-semibold">
+                        @displayStatusText
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Người xử lý</div>
+                    <div class="fw-semibold">
+                        @(reviewerName ?? "Chưa xử lý")
+                    </div>
+                </div>
+
+                @if (Model.ReviewedAt.HasValue)
+                {
                     <div class="col-md-6">
                         <div class="text-muted small">Thời gian xử lý</div>
                         <div class="fw-semibold">
-                            @(Model.ReviewedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")
+                            @Model.ReviewedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                         </div>
+                    </div>
+                }
+            </div>
+
+            <hr />
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Mô tả đề tài</h6>
+                <div class="text-break">
+                    @Html.Raw(System.Net.WebUtility.HtmlEncode(Model.Description)
+                        .Replace("\r\n", "\n")
+                        .Replace("\n", "<br />"))
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Objectives))
+            {
+                <div class="mb-4">
+                    <h6 class="fw-bold">Mục tiêu</h6>
+                    <div class="text-break">
+                        @Html.Raw(System.Net.WebUtility.HtmlEncode(Model.Objectives)
+                            .Replace("\r\n", "\n")
+                            .Replace("\n", "<br />"))
                     </div>
                 </div>
+            }
 
-                @if (Model.ApprovalStatus == TopicApprovalStatuses.Rejected)
-                {
-                    <div class="alert alert-danger mt-3 mb-0">
-                        <div class="fw-bold mb-1">
-                            <i class="bi bi-exclamation-circle me-1"></i>Lý do từ chối
-                        </div>
+            @if (!string.IsNullOrWhiteSpace(Model.Technologies))
+            {
+                <div class="mb-4">
+                    <h6 class="fw-bold">Công nghệ sử dụng</h6>
+                    <div class="text-break">@Model.Technologies</div>
+                </div>
+            }
 
-                        <div style="white-space: pre-line">
-                            @(Model.RejectionReason ?? "Không có lý do được ghi nhận.")
-                        </div>
+            @if (!string.IsNullOrWhiteSpace(Model.Requirements))
+            {
+                <div class="mb-4">
+                    <h6 class="fw-bold">Yêu cầu đối với sinh viên</h6>
+                    <div class="text-break">
+                        @Html.Raw(System.Net.WebUtility.HtmlEncode(Model.Requirements)
+                            .Replace("\r\n", "\n")
+                            .Replace("\n", "<br />"))
                     </div>
+                </div>
+            }
+
+            @if (Model.Attachments != null && Model.Attachments.Any())
+            {
+                <hr />
+
+                <div class="mb-3">
+                    <h6 class="fw-bold">
+                        <i class="bi bi-paperclip me-1"></i>Tệp đính kèm
+                    </h6>
+
+                    <div class="list-group">
+                        @foreach (var attachment in Model.Attachments)
+                        {
+                            <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div>
+                                    <i class="bi bi-file-earmark me-2 text-primary"></i>
+                                    <span class="fw-semibold">
+                                        @attachment.OriginalFileName
+                                    </span>
+
+                                    <div class="text-muted small">
+                                        @((attachment.FileSize / 1024.0).ToString("N1")) KB
+                                    </div>
+                                </div>
+
+                                <a asp-controller="TopicApprovals"
+                                   asp-action="DownloadAttachment"
+                                   asp-route-id="@attachment.Id"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-download me-1"></i>Tải xuống
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (Model.ApprovalStatus == TopicApprovalStatuses.Rejected
+                && !string.IsNullOrWhiteSpace(Model.RejectionReason))
+            {
+                <div class="alert alert-danger mt-3 mb-0">
+                    <div class="fw-bold mb-1">
+                        <i class="bi bi-exclamation-circle me-1"></i>Lý do từ chối
+                    </div>
+                    <div class="text-break">@Model.RejectionReason</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (isPending)
+    {
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">
+                <span class="fw-semibold">Xử lý phê duyệt</span>
+            </div>
+
+            <div class="card-body">
+                @if (isSelfCreated)
+                {
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-shield-exclamation me-1"></i>
+                        Đề tài này do chính bạn tạo nên không thể tự phê duyệt hoặc từ chối.
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        Đề tài đang chờ xử lý. Cán bộ quản lý có thể phê duyệt hoặc từ chối
+                        sau khi xem xét nội dung và tệp đính kèm.
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <form asp-action="Approve"
+                              asp-route-id="@Model.Id"
+                              method="post"
+                              onsubmit="return confirm('Bạn có chắc chắn muốn phê duyệt đề tài này?');">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle me-1"></i>Phê duyệt đề tài
+                            </button>
+                        </form>
+                    </div>
+
+                    <hr />
+
+                    <form asp-action="Reject"
+                          asp-route-id="@Model.Id"
+                          method="post"
+                          onsubmit="return validateRejectForm(this);">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="rejectionReason" class="form-label fw-semibold">
+                                Lý do từ chối <span class="text-danger">*</span>
+                            </label>
+
+                            <textarea id="rejectionReason"
+                                      name="rejectionReason"
+                                      class="form-control"
+                                      rows="4"
+                                      maxlength="2000"
+                                      required
+                                      placeholder="Nhập lý do từ chối để giảng viên biết và chỉnh sửa đề tài..."></textarea>
+
+                            <div class="form-text">
+                                Tối đa 2000 ký tự. Lý do này sẽ được lưu lại để giảng viên xem.
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle me-1"></i>Từ chối đề tài
+                        </button>
+                    </form>
                 }
             </div>
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        function validateRejectForm(form) {
+            const textarea = form.querySelector('#rejectionReason');
+            if (!textarea) return true;
+
+            const value = textarea.value.trim();
+            if (!value) {
+                alert('Vui lòng nhập lý do từ chối.');
+                textarea.focus();
+                return false;
+            }
+
+            if (value.length > 2000) {
+                alert('Lý do từ chối không được vượt quá 2000 ký tự.');
+                textarea.focus();
+                return false;
+            }
+
+            return confirm('Bạn có chắc chắn muốn từ chối đề tài này?');
+        }
+    </script>
+}

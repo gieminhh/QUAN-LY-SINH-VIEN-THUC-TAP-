@@ -193,7 +193,6 @@
                                 Đợt thực tập / Đồ án
                             </a>
                         </li>
-                        <li><a class="dropdown-item" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-calendar-check"></i> Đợt thực tập / Đồ án</a></li>
                         <li><a class="dropdown-item" asp-controller="Profiles" asp-action="Manage"><i class="bi bi-person-workspace"></i> Hồ sơ & quota giảng viên</a></li>
                     }
                     @if (isStudent || isLecturer)
@@ -493,7 +492,23 @@
                         </a>
                     </li>
                 }
+                <!-- Quản lý: Duyệt nơi thực tập -->
+                @if (isManager)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="InternshipApprovals"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "InternshipApprovals" ? "active" : "")">
 
+                            <span class="menu-link-content">
+                                <i class="bi bi-building-gear menu-icon text-success"></i>
+                                <span class="menu-label fw-semibold">
+                                    Duyệt nơi thực tập
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                }
                 <!-- Quản lý đề tài -->
                 @if (isAdmin || isLecturer)
                 {
@@ -527,7 +542,23 @@
                         </a>
                     </li>
                 }
+                <!-- Sinh viên: Đăng ký nơi thực tập -->
+                @if (isStudent)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="InternshipRegistrations"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "InternshipRegistrations" ? "active" : "")">
 
+                            <span class="menu-link-content">
+                                <i class="bi bi-building-check menu-icon text-primary"></i>
+                                <span class="menu-label fw-semibold">
+                                    Đăng ký nơi thực tập
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                }
                 <!-- Quản lý danh mục đào tạo -->
                 @if (isAdmin || isTrainingManager)
                 {

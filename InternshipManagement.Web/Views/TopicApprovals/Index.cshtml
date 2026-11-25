@@ -1,3 +1,4 @@
+
 @model InternshipManagement.Web.ViewModels.TopicApprovals.TopicApprovalListViewModel
 @using InternshipManagement.Web.Models
 
@@ -17,7 +18,6 @@
         </div>
     </div>
 
-    <!-- Search & Filter Card -->
     <div class="card card-custom p-3 mb-3">
         <form method="get" asp-action="Index" class="row g-2 align-items-center">
             <div class="col-md-4">
@@ -48,25 +48,37 @@
 
             <div class="col-md-3">
                 <select name="ApprovalFilter" class="form-select form-select-sm">
-                    <option value="ALL" selected="@(Model.ApprovalFilter == "ALL")">Tất cả trạng thái</option>
-                    <option value="PENDING" selected="@(Model.ApprovalFilter == "PENDING")">Chờ duyệt</option>
-                    <option value="APPROVED" selected="@(Model.ApprovalFilter == "APPROVED")">Đã duyệt</option>
-                    <option value="REJECTED" selected="@(Model.ApprovalFilter == "REJECTED")">Đã từ chối</option>
+                    <option value="ALL" selected="@(Model.ApprovalFilter == "ALL")">
+                        Tất cả trạng thái
+                    </option>
+                    <option value="PENDING" selected="@(Model.ApprovalFilter == "PENDING")">
+                        Chờ duyệt
+                    </option>
+                    <option value="APPROVED" selected="@(Model.ApprovalFilter == "APPROVED")">
+                        Đã duyệt
+                    </option>
+                    <option value="REJECTED" selected="@(Model.ApprovalFilter == "REJECTED")">
+                        Đã từ chối
+                    </option>
                 </select>
             </div>
 
             <div class="col-md-1 d-flex gap-1">
-                <button type="submit" class="btn btn-sm btn-primary w-100" title="Áp dụng bộ lọc">
+                <button type="submit"
+                        class="btn btn-sm btn-primary w-100"
+                        title="Áp dụng bộ lọc">
                     <i class="bi bi-funnel"></i>
                 </button>
-                <a asp-action="Index" class="btn btn-sm btn-outline-secondary" title="Xóa bộ lọc">
+
+                <a asp-action="Index"
+                   class="btn btn-sm btn-outline-secondary"
+                   title="Xóa bộ lọc">
                     <i class="bi bi-arrow-counterclockwise"></i>
                 </a>
             </div>
         </form>
     </div>
 
-    <!-- Topics Table Card -->
     <div class="card card-custom">
         <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
             <span>Danh sách đề tài (@Model.TotalCount đề tài)</span>
@@ -104,7 +116,7 @@
                                     </a>
 
                                     @if (topic.ApprovalStatus == TopicApprovalStatuses.Rejected
-                                         && !string.IsNullOrWhiteSpace(topic.RejectionReason))
+                                        && !string.IsNullOrWhiteSpace(topic.RejectionReason))
                                     {
                                         <div class="text-danger small mt-1">
                                             <i class="bi bi-info-circle me-1"></i>
@@ -132,7 +144,9 @@
                                     }
                                     else
                                     {
-                                        <span class="badge bg-light text-dark border">@topic.TopicType</span>
+                                        <span class="badge bg-light text-dark border">
+                                            @topic.TopicType
+                                        </span>
                                     }
                                 </td>
 
@@ -164,7 +178,9 @@
                                             break;
 
                                         default:
-                                            <span class="badge bg-secondary">Không xác định</span>
+                                            <span class="badge bg-secondary">
+                                                Không xác định
+                                            </span>
                                             break;
                                     }
                                 </td>
@@ -173,6 +189,7 @@
                                     @if (!string.IsNullOrWhiteSpace(topic.ReviewerName))
                                     {
                                         <span>@topic.ReviewerName</span>
+
                                         @if (topic.ReviewedAt.HasValue)
                                         {
                                             <div class="text-muted small">
@@ -210,7 +227,6 @@
             </table>
         </div>
 
-        <!-- Pagination -->
         @if (Model.TotalPages > 1)
         {
             <div class="card-footer bg-white d-flex justify-content-between align-items-center flex-wrap gap-2 py-2">

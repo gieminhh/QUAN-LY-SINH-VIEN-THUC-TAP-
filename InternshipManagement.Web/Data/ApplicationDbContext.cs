@@ -19,13 +19,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Term> Terms => Set<Term>();
     public DbSet<Campaign> Campaigns => Set<Campaign>();
     public DbSet<UserRoleScope> UserRoleScopes => Set<UserRoleScope>();
-    public DbSet<LecturerCampaignQuota> LecturerCampaignQuotas => Set<LecturerCampaignQuota>();
+    public DbSet<LecturerTermQuota> LecturerTermQuotas => Set<LecturerTermQuota>();
     public DbSet<LecturerCampaignAssignment> LecturerCampaignAssignments => Set<LecturerCampaignAssignment>();
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<TopicLecturer> TopicLecturers => Set<TopicLecturer>();
     public DbSet<TopicAttachment> TopicAttachments => Set<TopicAttachment>();
     public DbSet<TopicProposal> TopicProposals => Set<TopicProposal>();
-
+    public DbSet<InternshipPlace> InternshipPlaces => Set<InternshipPlace>();
+    public DbSet<InternshipRegistration> InternshipRegistrations => Set<InternshipRegistration>();
+    public DbSet<InternshipRegistrationReview> InternshipRegistrationReviews => Set<InternshipRegistrationReview>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -175,20 +177,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
              .OnDelete(DeleteBehavior.SetNull);
         });
 
-        builder.Entity<LecturerCampaignQuota>(b =>
+        builder.Entity<LecturerTermQuota>(b =>
         {
-            b.ToTable("lecturer_campaign_quotas");
-            b.HasIndex(q => new { q.CampaignId, q.LecturerUserId }).IsUnique();
-            b.HasOne(q => q.Campaign)
-             .WithMany()
-             .HasForeignKey(q => q.CampaignId)
-             .OnDelete(DeleteBehavior.Cascade);
-            b.HasOne(q => q.Lecturer)
-             .WithMany(u => u.LecturerCampaignQuotas)
-             .HasForeignKey(q => q.LecturerUserId)
-             .OnDelete(DeleteBehavior.Cascade);
-        });
+            b.ToTable("lecturer_term_quotas");
 
+            b.HasIndex(q => new { q.TermId, q.LecturerUserId })
+            .IsUnique();
+
+            b.HasOne(q => q.Term)
+            .WithMany(t => t.LecturerTermQuotas)
+            .HasForeignKey(q => q.TermId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(q => q.Lecturer)
+            .WithMany(u => u.LecturerTermQuotas)
+            .HasForeignKey(q => q.LecturerUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        });
         builder.Entity<LecturerCampaignAssignment>(b =>
         {
             b.ToTable("lecturer_campaign_assignments");
@@ -298,6 +303,63 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
              .WithMany()
              .HasForeignKey(p => p.LecturerUserId)
              .OnDelete(DeleteBehavior.Restrict);
+        });
+        builder.Entity<InternshipPlace>(b =>
+        {
+            b.ToTable("internship_places");
+            b.HasIndex(p => p.Name);
+            b.HasIndex(p => p.IsActive);
+
+            b.HasOne(p => p.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(p => p.CreatedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<InternshipRegistration>(b =>
+        {
+            b.ToTable("internship_registrations");
+            b.Property(r => r.ApprovalStatus)
+             .HasDefaultValue(InternshipRegistrationStatuses.Pending);
+
+            b.HasIndex(r => new { r.CampaignId, r.StudentUserId });
+            b.HasIndex(r => new { r.CampaignId, r.ApprovalStatus });
+            b.HasIndex(r => r.InternshipPlaceId);
+
+            b.HasOne(r => r.Campaign)
+             .WithMany()
+             .HasForeignKey(r => r.CampaignId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(r => r.StudentUser)
+             .WithMany()
+             .HasForeignKey(r => r.StudentUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(r => r.InternshipPlace)
+             .WithMany(p => p.Registrations)
+             .HasForeignKey(r => r.InternshipPlaceId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(r => r.ReviewedByUser)
+             .WithMany()
+             .HasForeignKey(r => r.ReviewedByUserId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+        builder.Entity<InternshipRegistrationReview>(b =>
+        {
+            b.ToTable("internship_registration_reviews");
+            b.HasIndex(rv => new { rv.RegistrationId, rv.CreatedAt });
+
+            b.HasOne(rv => rv.Registration)
+            .WithMany(r => r.Reviews)
+            .HasForeignKey(rv => rv.RegistrationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(rv => rv.ActorUser)
+            .WithMany()
+            .HasForeignKey(rv => rv.ActorUserId)
+            .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

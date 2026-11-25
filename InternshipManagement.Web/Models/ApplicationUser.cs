@@ -35,7 +35,7 @@ public class ApplicationUser : IdentityUser
     public virtual ICollection<Campaign> CreatedCampaigns { get; set; } = new List<Campaign>();
     public virtual ICollection<UserRoleScope> GrantedRoleScopes { get; set; } = new List<UserRoleScope>();
     public virtual Major? Major { get; set; }
-    public virtual ICollection<LecturerCampaignQuota> LecturerCampaignQuotas { get; set; } = new List<LecturerCampaignQuota>();
+    public virtual ICollection<LecturerTermQuota> LecturerTermQuotas { get; set; } = new List<LecturerTermQuota>();
     public virtual ICollection<Topic> CreatedTopics { get; set; } = new List<Topic>();
     public virtual ICollection<TopicLecturer> TopicLectures { get; set; } = new List<TopicLecturer>();
     public virtual ICollection<TopicAttachment> UploadedTopicAttachments { get; set; } = new List<TopicAttachment>();

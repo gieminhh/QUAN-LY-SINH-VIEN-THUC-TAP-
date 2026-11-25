@@ -1,0 +1,133 @@
+@model IEnumerable<InternshipManagement.Web.Models.InternshipRegistration>
+@using InternshipManagement.Web.Models
+
+@{
+    ViewData["Title"] = "Đăng ký nơi thực tập";
+    var openCampaigns = ViewBag.OpenCampaigns as List<Campaign> ?? new List<Campaign>();
+}
+
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-building-check me-2"></i>Đăng ký nơi thực tập
+            </h4>
+            <div class="text-muted small">
+                Đăng ký đơn vị thực tập, theo dõi trạng thái xét duyệt hoặc chỉnh sửa nộp lại khi bị từ chối.
+            </div>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Đăng ký nơi thực tập mới
+        </a>
+    </div>
+
+    @if (openCampaigns.Any())
+    {
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">
+                Đợt thực tập đang mở đăng ký
+            </div>
+            <div class="card-body py-2">
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var camp in openCampaigns)
+                    {
+                        <a asp-action="Create"
+                           asp-route-campaignId="@camp.Id"
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-calendar-event me-1"></i>@camp.Name
+                            <span class="text-muted">(@camp.StartDate.ToString("dd/MM/yyyy") - @camp.EndDate.ToString("dd/MM/yyyy"))</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="card card-custom">
+        <div class="card-header-custom">
+            Hồ sơ đăng ký của tôi (@Model.Count())
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-light">
+                    <tr>
+                        <th>Đợt thực tập</th>
+                        <th>Nơi thực tập</th>
+                        <th>Vị trí</th>
+                        <th>Ngày gửi</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end pe-3">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@(item.Campaign?.Name ?? "—")</td>
+                                <td>
+                                    <div class="fw-semibold">@(item.InternshipPlace?.Name ?? "—")</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.InternshipPlace?.Address))
+                                    {
+                                        <div class="text-muted">@item.InternshipPlace.Address</div>
+                                    }
+                                    @if (item.ApprovalStatus == InternshipRegistrationStatuses.Rejected
+                                        && !string.IsNullOrWhiteSpace(item.RejectionReason))
+                                    {
+                                        <div class="text-danger mt-1">
+                                            <i class="bi bi-exclamation-circle me-1"></i>Lý do từ chối: @item.RejectionReason
+                                        </div>
+                                    }
+                                </td>
+                                <td>@(item.PositionTitle ?? "—")</td>
+                                <td class="text-muted">@item.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-center">
+                                    @switch (item.ApprovalStatus)
+                                    {
+                                        case InternshipRegistrationStatuses.Pending:
+                                            <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                            break;
+                                        case InternshipRegistrationStatuses.Approved:
+                                            <span class="badge bg-success">Đã duyệt</span>
+                                            break;
+                                        case InternshipRegistrationStatuses.Rejected:
+                                            <span class="badge bg-danger">Bị từ chối</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">@item.ApprovalStatus</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="text-end pe-3">
+                                    <a asp-action="Details"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-outline-info btn-sm">
+                                        Chi tiết
+                                    </a>
+                                    @if (item.ApprovalStatus == InternshipRegistrationStatuses.Rejected)
+                                    {
+                                        <a asp-action="Resubmit"
+                                           asp-route-id="@item.Id"
+                                           class="btn btn-warning btn-sm text-dark">
+                                            Sửa & nộp lại
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                Bạn chưa có hồ sơ đăng ký nơi thực tập nào.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
