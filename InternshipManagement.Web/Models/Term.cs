@@ -27,4 +27,6 @@ public class Term
     public virtual AcademicYear? AcademicYear { get; set; }
 
     public virtual ICollection<Campaign> Campaigns { get; set; } = new List<Campaign>();
+    public virtual ICollection<LecturerTermQuota> LecturerTermQuotas { get; set; }
+    = new List<LecturerTermQuota>();
 }

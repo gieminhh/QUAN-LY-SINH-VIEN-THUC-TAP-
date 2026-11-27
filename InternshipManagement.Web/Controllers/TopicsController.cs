@@ -1066,8 +1066,8 @@ public async Task<IActionResult> Create(TopicCreateEditViewModel model)
             return false;
 
         // Giảng viên phải có hạn mức trong đợt đào tạo
-        return await _context.LecturerCampaignQuotas.AnyAsync(q =>
-            q.CampaignId == campaign.Id &&
+        return await _context.LecturerTermQuotas.AnyAsync(q =>
+            q.TermId == campaign.TermId &&
             q.LecturerUserId == user.Id);
     }
     private bool ValidateTopicFiles(List<IFormFile> files)
