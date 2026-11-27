@@ -16,7 +16,13 @@
             </div>
         </div>
 
-        <div>
+        <div class="d-flex gap-2">
+            <a asp-action="Archive"
+                class="btn btn-outline-primary btn-sm px-3">
+                <i class="bi bi-archive me-1"></i>
+                    Kho đề tài các khóa trước
+            </a>
+
             <a asp-action="Create" class="btn btn-primary btn-sm px-3">
                 <i class="bi bi-plus-circle me-1"></i> Tạo đề tài
             </a>
@@ -167,8 +173,8 @@
                         <th>Hình thức</th>
                         <th>Chỉ tiêu</th>
                         <th>Người tạo</th>
-                        <th class="text-center">Trạng thái hiển thị</th>
-                        <th class="text-center">Trạng thái duyệt</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-center" style="white-space: nowrap;">Trạng thái duyệt</th>
                         <th class="text-end pe-3">Thao tác</th>
                     </tr>
                 </thead>
@@ -241,32 +247,26 @@
                                         </span>
                                     }
                                 </td>
-                                <td class="text-center">
-                                    @if (topic.ApprovalStatus == "PENDING")
-                                    {
-                                        <span class="badge bg-warning text-dark">
-                                            <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt
-                                        </span>
-                                    }
-                                    else if (topic.ApprovalStatus == "APPROVED")
-                                    {
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-check-circle me-1"></i>Đã duyệt
-                                        </span>
-                                    }
-                                    else if (topic.ApprovalStatus == "REJECTED")
-                                    {
-                                        <span class="badge bg-danger">
-                                            <i class="bi bi-x-circle me-1"></i>Đã từ chối
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">Chưa xác định</span>
-                                    }
-                                </td>                               
-
+                                    <td class="text-center">
+                                        @if (topic.ApprovalStatus == "PENDING")
+                                        {
+                                            <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                        }
+                                        else if (topic.ApprovalStatus == "APPROVED")
+                                        {
+                                            <span class="badge bg-success">Đã duyệt</span>
+                                        }
+                                        else if (topic.ApprovalStatus == "REJECTED")
+                                        {
+                                            <span class="badge bg-danger">Từ chối</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@topic.ApprovalStatus</span>
+                                        }
+                                    </td>
                                 <td class="text-end pe-3">
+                                    
                                     <div class="btn-group btn-group-sm">
                                         <a asp-action="Details"
                                            asp-route-id="@topic.Id"

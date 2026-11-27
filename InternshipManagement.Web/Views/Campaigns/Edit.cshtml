@@ -85,12 +85,41 @@
                     </div>
                 </div>
 
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="NoPreferencePolicy" class="form-label small fw-semibold"></label>
+                        <select asp-for="NoPreferencePolicy" class="form-select form-select-sm" asp-items="Model.NoPreferencePolicyOptions"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="MatchingOrder" class="form-label small fw-semibold"></label>
+                        <select asp-for="MatchingOrder" class="form-select form-select-sm" asp-items="Model.MatchingOrderOptions"></select>
+                    </div>
+                    <div class="col-md-6" id="randomSeedContainer">
+                        <label asp-for="RandomSeed" class="form-label small fw-semibold"></label>
+                        <input asp-for="RandomSeed" class="form-control form-control-sm" type="number">
+                    </div>
+                </div>
+
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <label asp-for="StartDate" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
                         <input asp-for="StartDate" class="form-control form-control-sm" type="date">
                         <span asp-validation-for="StartDate" class="text-danger small"></span>
                     </div>
+
+                    <script>
+                        const policySelect = document.getElementById("NoPreferencePolicy");
+                        const matchingOrderSelect = document.getElementById("MatchingOrder");
+                        const randomSeedContainer = document.getElementById("randomSeedContainer");
+                        function updateRandomSeedVisibility() {
+                            randomSeedContainer.hidden =
+                                policySelect.value !== "@((int)NoPreferencePolicy.RandomFill)" &&
+                                matchingOrderSelect.value !== "@((int)MatchingOrder.Random)";
+                        }
+                        policySelect.addEventListener("change", updateRandomSeedVisibility);
+                        matchingOrderSelect.addEventListener("change", updateRandomSeedVisibility);
+                        updateRandomSeedVisibility();
+                    </script>
 
                     <div class="col-md-6">
                         <label asp-for="EndDate" class="form-label small fw-semibold"></label> <span class="text-danger">*</span>
