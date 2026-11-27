@@ -1,0 +1,71 @@
+@model IEnumerable<InternshipManagement.Web.Models.DoanhNghiep>
+@using InternshipManagement.Web.Models
+
+@{
+    ViewData["Title"] = "Danh mục doanh nghiệp";
+}
+
+<h1>Danh mục doanh nghiệp và tình trạng hợp tác</h1>
+
+<form asp-action="Index" method="get" class="mb-3">
+    <input type="text" name="search" value="@ViewBag.Search" placeholder="Tên, mã số thuế hoặc lĩnh vực" />
+    <select name="trangThai" asp-items="Html.GetEnumSelectList<TrangThaiHopTac>()">
+        <option value="">-- Tất cả trạng thái --</option>
+    </select>
+    <button type="submit">Tìm kiếm</button>
+    @if (User.IsInRole(AppRoles.Admin) || User.IsInRole(AppRoles.Lecturer))
+    {
+        <a asp-action="Create">Thêm doanh nghiệp</a>
+    }
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tên</th>
+            <th>Mã số thuế</th>
+            <th>Lĩnh vực</th>
+            <th>Địa chỉ</th>
+            <th>Người liên hệ</th>
+            <th>Số điện thoại</th>
+            <th>Email</th>
+            <th>Trạng thái</th>
+            <th>File hợp tác</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Ten</td>
+                <td>@item.MaSoThue</td>
+                <td>@item.LinhVuc</td>
+                <td>@item.DiaChi</td>
+                <td>@item.NguoiLienHe</td>
+                <td>@item.SoDienThoai</td>
+                <td>@item.Email</td>
+                <td>@Html.DisplayFor(modelItem => item.TrangThai)</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(item.FileHopTac))
+                    {
+                        <a href="@item.FileHopTac">Tải file</a>
+                    }
+                </td>
+                <td>
+                    @if (User.IsInRole(AppRoles.Admin) || User.IsInRole(AppRoles.Lecturer))
+                    {
+                        <a asp-action="Edit" asp-route-id="@item.Id">Sửa</a>
+                    }
+                    @if (User.IsInRole(AppRoles.Admin))
+                    {
+                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" onclick="return confirm('Xóa doanh nghiệp này?')">Xóa</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

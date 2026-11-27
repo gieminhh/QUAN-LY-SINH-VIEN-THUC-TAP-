@@ -28,6 +28,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<InternshipPlace> InternshipPlaces => Set<InternshipPlace>();
     public DbSet<InternshipRegistration> InternshipRegistrations => Set<InternshipRegistration>();
     public DbSet<InternshipRegistrationReview> InternshipRegistrationReviews => Set<InternshipRegistrationReview>();
+    public DbSet<DoanhNghiep> DoanhNghieps => Set<DoanhNghiep>();
 
     public DbSet<TopicStudentAssignment> TopicStudentAssignments => Set<TopicStudentAssignment>();
     public DbSet<StudentTopicPreference> StudentTopicPreferences => Set<StudentTopicPreference>();
@@ -386,6 +387,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .WithMany()
             .HasForeignKey(rv => rv.ActorUserId)
             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<DoanhNghiep>(b =>
+        {
+            b.HasIndex(d => d.MaSoThue).IsUnique();
         });
     }
 }
