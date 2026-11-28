@@ -333,6 +333,17 @@ namespace InternshipManagement.Web.Migrations
                         .HasColumnType("varchar(50)")
                         .HasColumnName("contact_phone");
 
+                    b.Property<string>("CooperationNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("cooperation_note");
+
+                    b.Property<string>("CooperationStatus")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)")
+                        .HasColumnName("cooperation_status");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("created_at");
@@ -358,9 +369,19 @@ namespace InternshipManagement.Web.Migrations
                         .HasColumnType("varchar(250)")
                         .HasColumnName("name");
 
+                    b.Property<string>("TaxCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("tax_code");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("updated_at");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)")
+                        .HasColumnName("website");
 
                     b.HasKey("Id");
 
@@ -594,41 +615,6 @@ namespace InternshipManagement.Web.Migrations
                     b.ToTable("lecturer_campaign_assignments", (string)null);
                 });
 
-            modelBuilder.Entity("InternshipManagement.Web.Models.LecturerTermQuota", b =>
-                {
-                    b.Property<ulong>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("id");
-
-                    b.Property<int>("Capacity")
-                        .HasColumnType("int")
-                        .HasColumnName("capacity");
-
-                    b.Property<string>("LecturerUserId")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("lecturer_user_id");
-
-                    b.Property<ulong>("TermId")
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("term_id");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LecturerUserId");
-
-                    b.HasIndex("TermId", "LecturerUserId")
-                        .IsUnique();
-
-                    b.ToTable("lecturer_term_quotas", (string)null);
-                });
-
             modelBuilder.Entity("InternshipManagement.Web.Models.LecturerPriorityList", b =>
                 {
                     b.Property<ulong>("TopicId")
@@ -686,6 +672,41 @@ namespace InternshipManagement.Web.Migrations
                         {
                             t.HasCheckConstraint("chk_lecturer_priority_rank", "`Rank` > 0");
                         });
+                });
+
+            modelBuilder.Entity("InternshipManagement.Web.Models.LecturerTermQuota", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int")
+                        .HasColumnName("capacity");
+
+                    b.Property<string>("LecturerUserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("lecturer_user_id");
+
+                    b.Property<ulong>("TermId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("term_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LecturerUserId");
+
+                    b.HasIndex("TermId", "LecturerUserId")
+                        .IsUnique();
+
+                    b.ToTable("lecturer_term_quotas", (string)null);
                 });
 
             modelBuilder.Entity("InternshipManagement.Web.Models.Major", b =>
@@ -1166,7 +1187,7 @@ namespace InternshipManagement.Web.Migrations
                     b.ToTable("topic_proposals", (string)null);
                 });
 
-                modelBuilder.Entity("InternshipManagement.Web.Models.TopicStudentAssignment", b =>
+            modelBuilder.Entity("InternshipManagement.Web.Models.TopicStudentAssignment", b =>
                 {
                     b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
@@ -1208,6 +1229,7 @@ namespace InternshipManagement.Web.Migrations
 
                     b.ToTable("topic_student_assignments");
                 });
+
             modelBuilder.Entity("InternshipManagement.Web.Models.UserRoleScope", b =>
                 {
                     b.Property<ulong>("Id")
@@ -1440,7 +1462,28 @@ namespace InternshipManagement.Web.Migrations
                     b.Navigation("Term");
                 });
 
-modelBuilder.Entity("InternshipManagement.Web.Models.InternshipPlace", b =>
+            modelBuilder.Entity("InternshipManagement.Web.Models.CampaignParticipant", b =>
+                {
+                    b.HasOne("InternshipManagement.Web.Models.Campaign", null)
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.ProjectRegistrationGroup", null)
+                        .WithMany()
+                        .HasForeignKey("CampaignId", "GroupId")
+                        .HasPrincipalKey("CampaignId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("InternshipManagement.Web.Models.InternshipPlace", b =>
                 {
                     b.HasOne("InternshipManagement.Web.Models.ApplicationUser", "CreatedByUser")
                         .WithMany()
@@ -1504,27 +1547,6 @@ modelBuilder.Entity("InternshipManagement.Web.Models.InternshipPlace", b =>
                     b.Navigation("Registration");
                 });
 
-            modelBuilder.Entity("InternshipManagement.Web.Models.CampaignParticipant", b =>
-                {
-                    b.HasOne("InternshipManagement.Web.Models.Campaign", null)
-                        .WithMany()
-                        .HasForeignKey("CampaignId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("InternshipManagement.Web.Models.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("InternshipManagement.Web.Models.ProjectRegistrationGroup", null)
-                        .WithMany()
-                        .HasForeignKey("CampaignId", "GroupId")
-                        .HasPrincipalKey("CampaignId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict);
-                });
-
             modelBuilder.Entity("InternshipManagement.Web.Models.LecturerCampaignAssignment", b =>
                 {
                     b.HasOne("InternshipManagement.Web.Models.Campaign", "Campaign")
@@ -1559,25 +1581,6 @@ modelBuilder.Entity("InternshipManagement.Web.Models.InternshipPlace", b =>
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("InternshipManagement.Web.Models.LecturerTermQuota", b =>
-                {
-                    b.HasOne("InternshipManagement.Web.Models.ApplicationUser", "Lecturer")
-                        .WithMany("LecturerTermQuotas")
-                        .HasForeignKey("LecturerUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("InternshipManagement.Web.Models.Term", "Term")
-                        .WithMany("LecturerTermQuotas")
-                        .HasForeignKey("TermId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Lecturer");
-
-                    b.Navigation("Term");
-                });
-
             modelBuilder.Entity("InternshipManagement.Web.Models.LecturerPriorityList", b =>
                 {
                     b.HasOne("InternshipManagement.Web.Models.ApplicationUser", null)
@@ -1606,6 +1609,25 @@ modelBuilder.Entity("InternshipManagement.Web.Models.InternshipPlace", b =>
                         .HasForeignKey("TopicId", "LecturerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("InternshipManagement.Web.Models.LecturerTermQuota", b =>
+                {
+                    b.HasOne("InternshipManagement.Web.Models.ApplicationUser", "Lecturer")
+                        .WithMany("LecturerTermQuotas")
+                        .HasForeignKey("LecturerUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.Term", "Term")
+                        .WithMany("LecturerTermQuotas")
+                        .HasForeignKey("TermId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lecturer");
+
+                    b.Navigation("Term");
                 });
 
             modelBuilder.Entity("InternshipManagement.Web.Models.Major", b =>
@@ -1787,7 +1809,7 @@ modelBuilder.Entity("InternshipManagement.Web.Models.InternshipPlace", b =>
                     b.Navigation("Student");
                 });
 
-modelBuilder.Entity("InternshipManagement.Web.Models.TopicStudentAssignment", b =>
+            modelBuilder.Entity("InternshipManagement.Web.Models.TopicStudentAssignment", b =>
                 {
                     b.HasOne("InternshipManagement.Web.Models.Campaign", "Campaign")
                         .WithMany()
@@ -1812,6 +1834,7 @@ modelBuilder.Entity("InternshipManagement.Web.Models.TopicStudentAssignment", b 
 
                     b.Navigation("Topic");
                 });
+
             modelBuilder.Entity("InternshipManagement.Web.Models.UserRoleScope", b =>
                 {
                     b.HasOne("InternshipManagement.Web.Models.Campaign", "Campaign")

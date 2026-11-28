@@ -1,0 +1,116 @@
+@using InternshipManagement.Web.Models
+@model IEnumerable<InternshipPlace>
+@{
+    ViewData["Title"] = "Danh mục doanh nghiệp và tình trạng hợp tác";
+    var currentSearch = ViewBag.Search as string ?? "";
+    var currentStatus = ViewBag.Status as string ?? "ALL";
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">@ViewData["Title"]</h4>
+        <a asp-action="Create" class="btn btn-primary">+ Thêm doanh nghiệp</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-5">
+            <input type="text" name="search" value="@currentSearch" class="form-control"
+                   placeholder="Tìm theo tên, mã số thuế, địa chỉ, người liên hệ..." />
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="ALL" selected="@(currentStatus == "ALL")">Tất cả tình trạng hợp tác</option>
+                @foreach (var st in BusinessCooperationStatuses.All)
+                {
+                    <option value="@st" selected="@(currentStatus == st)">@BusinessCooperationStatuses.GetLabel(st)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary">Lọc</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Đặt lại</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Doanh nghiệp</th>
+                    <th>Mã số thuế</th>
+                    <th>Liên hệ</th>
+                    <th>Vị trí gợi ý</th>
+                    <th>Hồ sơ ĐK</th>
+                    <th>Tình trạng hợp tác</th>
+                    <th style="width: 150px;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Chưa có doanh nghiệp nào phù hợp bộ lọc.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model)
+                    {
+                        var badgeClass = item.CooperationStatus switch
+                        {
+                            BusinessCooperationStatuses.ActivePartner => "bg-success",
+                            BusinessCooperationStatuses.PendingVerify => "bg-warning text-dark",
+                            BusinessCooperationStatuses.Suspended => "bg-secondary",
+                            BusinessCooperationStatuses.Terminated => "bg-danger",
+                            _ => "bg-light text-dark"
+                        };
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@item.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(item.Address))
+                                {
+                                    <div class="small text-muted">@item.Address</div>
+                                }
+                            </td>
+                            <td>@(item.TaxCode ?? "—")</td>
+                            <td>
+                                <div>@(item.ContactPerson ?? "—")</div>
+                                @if (!string.IsNullOrWhiteSpace(item.ContactPhone) || !string.IsNullOrWhiteSpace(item.ContactEmail))
+                                {
+                                    <div class="small text-muted">@item.ContactPhone @(!string.IsNullOrWhiteSpace(item.ContactPhone) && !string.IsNullOrWhiteSpace(item.ContactEmail) ? " | " : "") @item.ContactEmail</div>
+                                }
+                            </td>
+                            <td>@(item.DefaultPosition ?? "—")</td>
+                            <td>@item.Registrations.Count</td>
+                            <td>
+                                <span class="badge @badgeClass">@BusinessCooperationStatuses.GetLabel(item.CooperationStatus)</span>
+                                @if (!string.IsNullOrWhiteSpace(item.CooperationNote))
+                                {
+                                    <div class="small text-muted mt-1">@item.CooperationNote</div>
+                                }
+                            </td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Sửa / Đổi trạng thái</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
