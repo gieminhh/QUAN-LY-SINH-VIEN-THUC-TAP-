@@ -49,11 +49,22 @@ public class CampaignCreateEditViewModel : IValidatableObject
     [Display(Name = "Trạng thái đợt")]
     public string Status { get; set; } = CampaignStatuses.Draft;
 
+    [Display(Name = "Xử lý sinh viên không có nguyện vọng hợp lệ")]
+    public NoPreferencePolicy NoPreferencePolicy { get; set; } = NoPreferencePolicy.ManualByAdmin;
+
+    [Display(Name = "Thứ tự xét sinh viên")]
+    public MatchingOrder MatchingOrder { get; set; } = MatchingOrder.RegistrationTime;
+
+    [Display(Name = "Seed bốc thăm")]
+    public int? RandomSeed { get; set; }
+
     // Dropdown lists
     public List<SelectListItem> TermOptions { get; set; } = new();
     public List<SelectListItem> MajorOptions { get; set; } = new();
     public List<SelectListItem> KindOptions { get; set; } = new();
     public List<SelectListItem> StatusOptions { get; set; } = new();
+    public List<SelectListItem> NoPreferencePolicyOptions { get; set; } = new();
+    public List<SelectListItem> MatchingOrderOptions { get; set; } = new();
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

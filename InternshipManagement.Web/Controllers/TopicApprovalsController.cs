@@ -1,9 +1,9 @@
-
 using InternshipManagement.Web.Data;
 using InternshipManagement.Web.Models;
 using InternshipManagement.Web.Services;
 using InternshipManagement.Web.ViewModels.TopicApprovals;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -17,15 +17,18 @@ public class TopicApprovalsController : Controller
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUserScopeService _scopeService;
+    private readonly IWebHostEnvironment _environment;
 
     public TopicApprovalsController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
-        IUserScopeService scopeService)
+        IUserScopeService scopeService,
+        IWebHostEnvironment environment)
     {
         _context = context;
         _userManager = userManager;
         _scopeService = scopeService;
+        _environment = environment;
     }
 
     // DANH SÁCH VÀ LỊCH SỬ DUYỆT ĐỀ TÀI
@@ -40,7 +43,9 @@ public class TopicApprovalsController : Controller
         var reviewableQuery =
             await _scopeService.FilterReviewableCampaignsAsync(
                 user.Id,
-                _context.Campaigns.AsNoTracking().Include(c => c.Major));
+                _context.Campaigns
+                    .AsNoTracking()
+                    .Include(c => c.Major));
 
         var campaigns = await reviewableQuery.ToListAsync();
 
@@ -69,9 +74,9 @@ public class TopicApprovalsController : Controller
         // Lọc theo trạng thái duyệt
         var validStatuses = new[]
         {
-            "PENDING",
-            "APPROVED",
-            "REJECTED"
+            TopicApprovalStatuses.Pending,
+            TopicApprovalStatuses.Approved,
+            TopicApprovalStatuses.Rejected
         };
 
         if (validStatuses.Contains(model.ApprovalFilter))
@@ -103,13 +108,14 @@ public class TopicApprovalsController : Controller
                 Id = t.Id,
                 CampaignId = t.CampaignId,
                 CampaignName = t.Campaign != null
-                    ? t.Campaign.Name : "Không xác định",
+                    ? t.Campaign.Name
+                    : "Không xác định",
                 Title = t.Title,
                 TopicType = t.TopicType,
                 Status = t.Status,
                 ApprovalStatus = t.ApprovalStatus,
                 CreatedByName = t.CreatedByUser != null
-                    ? t.CreatedByUser.UserName ?? "Không xác định"
+                    ? t.CreatedByUser.FullName ?? t.CreatedByUser.UserName ?? "Không xác định"
                     : "Không xác định",
                 CreatedAt = t.CreatedAt,
                 ReviewedByUserId = t.ReviewedByUserId,
@@ -178,6 +184,7 @@ public class TopicApprovalsController : Controller
         var topic = await _context.Topics
             .AsNoTracking()
             .Include(t => t.Campaign)
+            .Include(t => t.Major)
             .Include(t => t.CreatedByUser)
             .Include(t => t.Attachments)
             .FirstOrDefaultAsync(t => t.Id == id);
@@ -199,6 +206,8 @@ public class TopicApprovalsController : Controller
             ViewBag.ReviewerName =
                 reviewer?.FullName ?? reviewer?.UserName ?? "Không xác định";
         }
+
+        ViewBag.IsSelfCreated = topic.CreatedByUserId == user.Id;
 
         return View(topic);
     }
@@ -225,16 +234,29 @@ public class TopicApprovalsController : Controller
             return Forbid();
         }
 
+        if (topic.CreatedByUserId == user.Id)
+        {
+            TempData["ErrorMessage"] =
+                "Bạn không thể tự phê duyệt đề tài do chính mình tạo.";
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         if (topic.ApprovalStatus != TopicApprovalStatuses.Pending)
         {
-            TempData["ErrorMessage"] = "Đề tài không còn ở trạng thái chờ duyệt.";
+            TempData["ErrorMessage"] =
+                "Đề tài không còn ở trạng thái chờ duyệt.";
+
             return RedirectToAction(nameof(Index));
         }
 
+        var now = DateTime.UtcNow;
+
         topic.ApprovalStatus = TopicApprovalStatuses.Approved;
         topic.ReviewedByUserId = user.Id;
-        topic.ReviewedAt = DateTime.UtcNow;
+        topic.ReviewedAt = now;
         topic.RejectionReason = null;
+        topic.UpdatedAt = now;
 
         await _context.SaveChangesAsync();
 
@@ -267,9 +289,19 @@ public class TopicApprovalsController : Controller
             return Forbid();
         }
 
+        if (topic.CreatedByUserId == user.Id)
+        {
+            TempData["ErrorMessage"] =
+                "Bạn không thể tự từ chối đề tài do chính mình tạo.";
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         if (topic.ApprovalStatus != TopicApprovalStatuses.Pending)
         {
-            TempData["ErrorMessage"] = "Đề tài không còn ở trạng thái chờ duyệt.";
+            TempData["ErrorMessage"] =
+                "Đề tài không còn ở trạng thái chờ duyệt.";
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -285,18 +317,76 @@ public class TopicApprovalsController : Controller
         {
             TempData["ErrorMessage"] =
                 "Lý do từ chối không được vượt quá 2000 ký tự.";
+
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        var now = DateTime.UtcNow;
+
         topic.ApprovalStatus = TopicApprovalStatuses.Rejected;
         topic.ReviewedByUserId = user.Id;
-        topic.ReviewedAt = DateTime.UtcNow;
+        topic.ReviewedAt = now;
         topic.RejectionReason = rejectionReason;
+        topic.UpdatedAt = now;
 
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Đã từ chối đề tài.";
 
         return RedirectToAction(nameof(Index));
+    }
+
+    // TẢI TỆP ĐÍNH KÈM TRONG PHẠM VI ĐƯỢC PHÉP DUYỆT
+    [HttpGet]
+    public async Task<IActionResult> DownloadAttachment(ulong id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null || !user.IsActive)
+            return Forbid();
+
+        var attachment = await _context.Set<TopicAttachment>()
+            .AsNoTracking()
+            .Include(a => a.Topic)
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+        if (attachment == null)
+            return NotFound();
+
+        var topic = attachment.Topic;
+
+        if (topic == null)
+            return NotFound();
+
+        if (!await _scopeService.CanReviewCampaignAsync(
+            user.Id, topic.CampaignId))
+        {
+            return Forbid();
+        }
+
+        if (string.IsNullOrWhiteSpace(attachment.StoredFileName))
+            return NotFound();
+
+        var uploadFolder = Path.Combine(
+            _environment.WebRootPath
+                ?? Path.Combine(_environment.ContentRootPath, "wwwroot"),
+            "uploads",
+            "topics");
+
+        var filePath = Path.Combine(
+            uploadFolder,
+            Path.GetFileName(attachment.StoredFileName));
+
+        if (!System.IO.File.Exists(filePath))
+            return NotFound();
+
+        var contentType = string.IsNullOrWhiteSpace(attachment.ContentType)
+            ? "application/octet-stream"
+            : attachment.ContentType;
+
+        return PhysicalFile(
+            filePath,
+            contentType,
+            attachment.OriginalFileName);
     }
 }

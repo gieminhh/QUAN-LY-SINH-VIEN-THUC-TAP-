@@ -1,0 +1,90 @@
+@model InternshipManagement.Web.ViewModels.Assignments.PublicationReviewPage
+@using InternshipManagement.Web.Models
+@{
+    ViewData["Title"] = "Công bố kết quả ghép";
+    var latest = Model.Rounds.FirstOrDefault();
+}
+<div class="page-container">
+    <h4 class="fw-bold text-primary mb-3">Duyệt công bố &amp; vòng bổ sung</h4>
+    @if (TempData["SuccessMessage"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+    @if (TempData["ErrorMessage"] is string error) { <div class="alert alert-danger" role="alert">@error</div> }
+    <form method="get" class="d-flex gap-2 mb-3">
+        <select class="form-select" name="campaignId" aria-label="Đợt xét ghép">
+            @foreach (var campaign in Model.Campaigns) { <option value="@campaign.Id" selected="@(campaign.Id == Model.Campaign?.Id)">@campaign.Code — @campaign.Name</option> }
+        </select>
+        <button class="btn btn-outline-primary text-nowrap">Xem đợt</button>
+    </form>
+    @if (Model.Campaign is null || Model.Plan is null)
+    {
+        <div class="alert alert-info">Không có đợt trong phạm vi duyệt của bạn.</div>
+    }
+    else
+    {
+        var plan = Model.Plan;
+        <div class="alert alert-info">
+            Cán bộ kiểm tra danh sách bên dưới rồi chọn <strong>Duyệt và công bố</strong>. Sinh viên chỉ xem được cặp ghép của mình sau khi công bố.
+            Các cặp đã công bố được giữ nguyên ở vòng bổ sung.
+        </div>
+        @if (Model.Campaign.Status != CampaignStatuses.Closed)
+        {
+            <div class="alert alert-warning">Cần đóng đăng ký chính thức của đợt trước khi công bố hoặc mở vòng bổ sung.</div>
+        }
+        @foreach (var problem in plan.Errors) { <div class="alert alert-danger" role="alert">@problem</div> }
+        @if (latest?.State == MatchingRoundState.RegistrationOpen)
+        {
+            <div class="card card-body mb-3">
+                <h5>Vòng bổ sung @latest.Number</h5>
+                <div>Hạn đăng ký: @latest.ClosesAt?.AddHours(7).ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam).</div>
+                <div>@plan.Input.Preferences.Select(p => p.StudentId).Distinct().Count() sinh viên đã gửi nguyện vọng.</div>
+                @if (Model.UtcNow < latest.ClosesAt) { <div class="text-muted">Đang nhận nguyện vọng. Chỉ duyệt công bố sau khi hết hạn; danh sách dự kiến có thể thay đổi.</div> }
+                else { <div class="text-muted">Đã hết hạn. Kiểm tra kết quả dự kiến rồi duyệt công bố vòng này.</div> }
+            </div>
+        }
+        <h5>@(latest?.State == MatchingRoundState.RegistrationOpen ? "Kết quả dự kiến của vòng bổ sung" : "Danh sách ghép nội bộ để kiểm tra")</h5>
+        <p>@plan.Rows.Count sinh viên — @plan.Rows.Count(r => r.Status == MatchStatus.Matched) đã/dự kiến ghép — @plan.Rows.Count(r => r.Status != MatchStatus.Matched) chưa ghép.</p>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead><tr><th scope="col">Sinh viên</th><th scope="col">Đề tài</th><th scope="col">Trạng thái</th><th scope="col">Xác nhận của SV</th></tr></thead>
+                <tbody>
+                    @foreach (var row in plan.Rows)
+                    {
+                        <tr><td>@row.Name<div class="small text-muted">@row.Code</div></td><td>@(row.TopicTitle ?? "—")</td>
+                            <td>@(row.Status == MatchStatus.Matched ? "Đã/dự kiến ghép" : "Chưa ghép")</td>
+                            <td>@(row.ConfirmedAt.HasValue ? row.ConfirmedAt.Value.AddHours(7).ToString("dd/MM/yyyy HH:mm") : "—")</td></tr>
+                    }
+                    @if (plan.Rows.Count == 0) { <tr><td colspan="4" class="text-center text-muted">Không có sinh viên xét ghép.</td></tr> }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.CanPublish)
+        {
+            <form asp-action="Publish" method="post" class="mb-4">
+                <input type="hidden" name="campaignId" value="@Model.Campaign.Id" />
+                <input type="hidden" name="token" value="@Model.Token" />
+                <button class="btn btn-primary">Duyệt và công bố vòng @plan.Input.Number</button>
+                <span class="small text-muted ms-2">Bản duyệt có hiệu lực 30 phút. Dữ liệu thay đổi phải xem lại.</span>
+            </form>
+        }
+        @if (latest?.State == MatchingRoundState.Published && Model.Campaign.Status == CampaignStatuses.Closed)
+        {
+            <div class="card card-body mb-3">
+                <h5>Mở vòng bổ sung @(latest.Number + 1)</h5>
+                <p>Sinh viên chưa ghép được đăng ký tối đa 3 nguyện vọng vào các đề tài đã duyệt còn chỉ tiêu. Hết hạn, cán bộ kiểm tra và duyệt công bố kết quả bổ sung.</p>
+                <form asp-action="OpenSupplementary" method="post" class="d-flex flex-wrap gap-2 align-items-end">
+                    <input type="hidden" name="campaignId" value="@Model.Campaign.Id" />
+                    <input type="hidden" name="previousRoundId" value="@latest.Id" />
+                    <div><label class="form-label" for="supplementary-close">Hạn đăng ký (giờ Việt Nam)</label><input id="supplementary-close" class="form-control" name="closesAt" type="datetime-local" required /></div>
+                    <button class="btn btn-outline-primary">Mở vòng bổ sung</button>
+                </form>
+            </div>
+        }
+        <h5>Lịch sử công bố</h5>
+        <ul>
+            @foreach (var round in Model.Rounds.Where(r => r.State == MatchingRoundState.Published))
+            {
+                <li>Vòng @round.Number — @round.PublishedAt?.AddHours(7).ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam)</li>
+            }
+        </ul>
+        @if (!Model.Rounds.Any(r => r.State == MatchingRoundState.Published)) { <p class="text-muted">Chưa có kết quả công bố.</p> }
+    }
+</div>

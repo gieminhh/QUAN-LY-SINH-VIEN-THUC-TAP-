@@ -67,7 +67,8 @@ public class TopicAssignmentsController : Controller
             .Include(a => a.Topic)
             .Include(a => a.StudentUser)
             .Include(a => a.Group)
-            .Where(a => allowedTopicIds.Contains(a.TopicId))
+            .Where(a => a.TopicId.HasValue &&
+                        allowedTopicIds.Contains(a.TopicId.Value))
             .OrderByDescending(a => a.AssignedAt)
             .ToListAsync();
 

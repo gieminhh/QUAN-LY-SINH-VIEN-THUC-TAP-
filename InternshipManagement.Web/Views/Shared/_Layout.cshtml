@@ -193,7 +193,6 @@
                                 Đợt thực tập / Đồ án
                             </a>
                         </li>
-                        <li><a class="dropdown-item" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-calendar-check"></i> Đợt thực tập / Đồ án</a></li>
                         <li><a class="dropdown-item" asp-controller="Profiles" asp-action="Manage"><i class="bi bi-person-workspace"></i> Hồ sơ & quota giảng viên</a></li>
                     }
                     @if (isStudent || isLecturer)
@@ -400,6 +399,18 @@
                     </a>
                 </li>
 
+                @if (isStudent) {
+                    <li class="menu-item"><a class="menu-link" asp-controller="StudentMatching" asp-action="Index"><span class="menu-link-content"><i class="bi bi-check2-circle menu-icon"></i><span class="menu-label">Kết quả ghép &amp; bổ sung</span></span></a></li>
+                    <li class="menu-item"><a class="menu-link" asp-controller="ProjectGroups" asp-action="Index"><span class="menu-link-content"><i class="bi bi-people menu-icon"></i><span class="menu-label">Đăng ký cá nhân / nhóm</span></span></a></li>
+                }
+                @if (isLecturer) {
+                    <li class="menu-item"><a class="menu-link" asp-controller="LecturerPriorities" asp-action="Index"><span class="menu-link-content"><i class="bi bi-list-ol menu-icon"></i><span class="menu-label">Ưu tiên sinh viên</span></span></a></li>
+                }
+                @if (isManager) {
+                    <li class="menu-item"><a class="menu-link" asp-controller="MatchingPublications" asp-action="Index"><span class="menu-link-content"><i class="bi bi-megaphone menu-icon"></i><span class="menu-label">Công bố kết quả ghép</span></span></a></li>
+                    <li class="menu-item"><a class="menu-link" asp-controller="ParticipationPolicies" asp-action="Index"><span class="menu-link-content"><i class="bi bi-sliders menu-icon"></i><span class="menu-label">Chính sách nhóm / ưu tiên</span></span></a></li>
+                }
+
                 <!-- Admin: Quản lý người dùng -->
                 @if (isAdmin)
                 {
@@ -493,7 +504,50 @@
                         </a>
                     </li>
                 }
+                <!-- Quản lý: Duyệt nơi thực tập -->
+                @if (isManager)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="InternshipApprovals"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "InternshipApprovals" ? "active" : "")">
 
+                            <span class="menu-link-content">
+                                <i class="bi bi-building-gear menu-icon text-success"></i>
+                                <span class="menu-label fw-semibold">
+                                    Duyệt nơi thực tập
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a asp-controller="InternshipPlaces"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "InternshipPlaces" ? "active" : "")">
+
+                            <span class="menu-link-content">
+                                <i class="bi bi-buildings menu-icon text-primary"></i>
+                                <span class="menu-label fw-semibold">
+                                    Danh mục doanh nghiệp
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+
+                    <li class="menu-item">
+                        <a asp-controller="InternshipPositions"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "InternshipPositions" ? "active" : "")">
+
+                            <span class="menu-link-content">
+                                <i class="bi bi-briefcase menu-icon text-info"></i>
+                                <span class="menu-label fw-semibold">
+                                    Vị trí thực tập
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                }
                 <!-- Quản lý đề tài -->
                 @if (isAdmin || isLecturer)
                 {
@@ -527,7 +581,23 @@
                         </a>
                     </li>
                 }
+                <!-- Sinh viên: Đăng ký nơi thực tập -->
+                @if (isStudent)
+                {
+                    <li class="menu-item">
+                        <a asp-controller="InternshipRegistrations"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "InternshipRegistrations" ? "active" : "")">
 
+                            <span class="menu-link-content">
+                                <i class="bi bi-building-check menu-icon text-primary"></i>
+                                <span class="menu-label fw-semibold">
+                                    Đăng ký nơi thực tập
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                }
                 <!-- Quản lý danh mục đào tạo -->
                 @if (isAdmin || isTrainingManager)
                 {

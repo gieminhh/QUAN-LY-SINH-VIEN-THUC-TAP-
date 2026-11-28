@@ -1,0 +1,190 @@
+@model InternshipManagement.Web.ViewModels.InternshipRegistrations.InternshipRegistrationDetailViewModel
+@using InternshipManagement.Web.Models
+
+@{
+    ViewData["Title"] = "Xét duyệt hồ sơ thực tập";
+    var reg = Model.Registration;
+}
+
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">Xét duyệt hồ sơ thực tập</h4>
+            <div class="text-muted small">Sinh viên: <strong>@Model.StudentName</strong> (@Model.StudentEmail)</div>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="card card-custom mb-3">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span>Thông tin nơi thực tập</span>
+            @switch (reg.ApprovalStatus)
+            {
+                case InternshipRegistrationStatuses.Pending:
+                    <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                    break;
+                case InternshipRegistrationStatuses.Approved:
+                    <span class="badge bg-success">Đã duyệt</span>
+                    break;
+                case InternshipRegistrationStatuses.Rejected:
+                    <span class="badge bg-danger">Bị từ chối</span>
+                    break;
+                default:
+                    <span class="badge bg-secondary">@reg.ApprovalStatus</span>
+                    break;
+            }
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">Đợt thực tập</div>
+                    <div class="fw-semibold">@(reg.Campaign?.Name ?? "—")</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Vị trí thực tập</div>
+                    <div class="fw-semibold">@(reg.PositionTitle ?? "—")</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Tên nơi thực tập</div>
+                    <div class="fw-semibold">@(reg.InternshipPlace?.Name ?? "—")</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Địa chỉ</div>
+                    <div>@(reg.InternshipPlace?.Address ?? "—")</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Người liên hệ & SĐT / Email</div>
+                    <div>@(reg.InternshipPlace?.ContactPerson ?? "—")</div>
+                    <div class="text-muted small">@reg.InternshipPlace?.ContactPhone @reg.InternshipPlace?.ContactEmail</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Thời gian dự kiến</div>
+                    <div>@(reg.StartDate?.ToString("dd/MM/yyyy") ?? "—") - @(reg.EndDate?.ToString("dd/MM/yyyy") ?? "—")</div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(reg.Note))
+            {
+                <div class="mb-3">
+                    <div class="text-muted small">Ghi chú của sinh viên</div>
+                    <div>@reg.Note</div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(reg.OriginalFileName))
+            {
+                <div class="mb-3">
+                    <span class="text-muted small me-2">Tệp minh chứng:</span>
+                    <a asp-action="DownloadFile" asp-route-id="@reg.Id" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-download me-1"></i>@reg.OriginalFileName
+                    </a>
+                </div>
+            }
+
+            @if (reg.ApprovalStatus == InternshipRegistrationStatuses.Rejected && !string.IsNullOrWhiteSpace(reg.RejectionReason))
+            {
+                <div class="alert alert-danger mb-0">
+                    <div class="fw-semibold mb-1">Lý do từ chối hiện tại</div>
+                    <div>@reg.RejectionReason</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.CanApproveOrReject)
+    {
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">Thao tác xét duyệt</div>
+            <div class="card-body">
+                <form asp-action="Approve" asp-route-id="@reg.Id" method="post" class="mb-3"
+                      onsubmit="return confirm('Xác nhận phê duyệt hồ sơ đăng ký nơi thực tập này?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i>Phê duyệt hồ sơ
+                    </button>
+                </form>
+
+                <hr />
+
+                <form asp-action="Reject" asp-route-id="@reg.Id" method="post"
+                      onsubmit="return validateRejectRegistration(this);">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label fw-semibold">
+                            Lý do từ chối <span class="text-danger">*</span>
+                        </label>
+                        <textarea id="rejectionReason" name="rejectionReason" class="form-control" rows="3"
+                                  maxlength="2000" required
+                                  placeholder="Nhập lý do từ chối để sinh viên chỉnh sửa và nộp lại..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle me-1"></i>Từ chối hồ sơ
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="card card-custom">
+        <div class="card-header-custom">Lịch sử gửi & xét duyệt</div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Lần</th>
+                        <th>Hành động</th>
+                        <th>Nơi / vị trí</th>
+                        <th>Nội dung / lý do</th>
+                        <th>Người thực hiện</th>
+                        <th>Thời gian</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Reviews.Any())
+                    {
+                        foreach (var rv in Model.Reviews)
+                        {
+                            <tr>
+                                <td>#@rv.AttemptNo</td>
+                                <td><span class="badge bg-secondary">@rv.Action</span></td>
+                                <td>@rv.PlaceNameSnapshot @(string.IsNullOrWhiteSpace(rv.PositionSnapshot) ? "" : $"— {rv.PositionSnapshot}")</td>
+                                <td>@(rv.Comment ?? "—")</td>
+                                <td>@rv.ActorName</td>
+                                <td class="text-muted">@rv.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-3">Chưa có lịch sử ghi nhận.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function validateRejectRegistration(form) {
+            const input = form.querySelector('#rejectionReason');
+            if (!input) return true;
+            const val = input.value.trim();
+            if (!val) {
+                alert('Vui lòng nhập lý do từ chối.');
+                input.focus();
+                return false;
+            }
+            if (val.length > 2000) {
+                alert('Lý do từ chối không được vượt quá 2000 ký tự.');
+                input.focus();
+                return false;
+            }
+            return confirm('Xác nhận từ chối hồ sơ đăng ký nơi thực tập này?');
+        }
+    </script>
+}

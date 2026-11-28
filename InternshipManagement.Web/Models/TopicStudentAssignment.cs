@@ -11,7 +11,10 @@ public class TopicStudentAssignment
     public ulong Id { get; set; }
 
     [Column("topic_id")]
-    public ulong TopicId { get; set; }
+    public ulong? TopicId { get; set; }
+
+    [Column("campaign_id")]
+    public ulong CampaignId { get; set; }
 
     [Required]
     [MaxLength(255)]
@@ -21,8 +24,8 @@ public class TopicStudentAssignment
     [Column("group_id")]
     public ulong? GroupId { get; set; }
 
-    [ForeignKey(nameof(GroupId))]
-    public virtual TopicAssignmentGroup? Group { get; set; }
+    [Column("status")]
+    public MatchStatus Status { get; set; } = MatchStatus.Matched;
 
     [Column("assigned_at")]
     public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
@@ -43,6 +46,12 @@ public class TopicStudentAssignment
 
     [ForeignKey(nameof(TopicId))]
     public virtual Topic? Topic { get; set; }
+
+    [ForeignKey(nameof(CampaignId))]
+    public virtual Campaign? Campaign { get; set; }
+
+    [ForeignKey(nameof(GroupId))]
+    public virtual TopicAssignmentGroup? Group { get; set; }
 
     [ForeignKey(nameof(StudentUserId))]
     public virtual ApplicationUser? StudentUser { get; set; }

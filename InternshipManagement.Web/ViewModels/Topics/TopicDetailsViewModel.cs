@@ -30,6 +30,8 @@ public class TopicDetailsViewModel
 
     public string Status { get; set; } = string.Empty;
 
+    public string ApprovalStatus { get; set; } = string.Empty;
+
     public string CreatedByName { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; }

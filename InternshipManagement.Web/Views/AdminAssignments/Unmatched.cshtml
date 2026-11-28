@@ -1,0 +1,70 @@
+@model InternshipManagement.Web.ViewModels.Assignments.UnmatchedAssignmentsViewModel
+
+@{
+    ViewData["Title"] = "Sinh viên chưa ghép";
+}
+
+<div class="page-container">
+    <h4 class="fw-bold text-primary mb-3">Sinh viên chưa ghép</h4>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success">@successMessage</div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    @if (!Model.Assignments.Any())
+    {
+        <div class="alert alert-light border">Không có sinh viên đang chờ ghép.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Sinh viên</th>
+                        <th>Đợt</th>
+                        <th>Trạng thái</th>
+                        <th>Ghép đề tài</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var assignment in Model.Assignments)
+                    {
+                        var campaignTopics = Model.Topics.Where(topic => topic.CampaignId == assignment.CampaignId);
+                        <tr>
+                            <td>@(assignment.StudentUser?.FullName ?? assignment.StudentUserId)</td>
+                            <td>@assignment.Campaign?.Name</td>
+                            <td>@assignment.Status</td>
+                            <td>
+                                @if (campaignTopics.Any())
+                                {
+                                    <form asp-action="ManualAssign" method="post" class="d-flex gap-2">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="studentId" value="@assignment.StudentUserId">
+                                        <select name="topicId" class="form-select form-select-sm" required>
+                                            <option value="">-- Chọn đề tài --</option>
+                                            @foreach (var topic in campaignTopics)
+                                            {
+                                                <option value="@topic.Id">@topic.Title</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary text-nowrap">Ghép</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Không có đề tài đã duyệt trong đợt</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
