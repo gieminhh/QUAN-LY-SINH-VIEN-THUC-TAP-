@@ -26,6 +26,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<TopicAttachment> TopicAttachments => Set<TopicAttachment>();
     public DbSet<TopicProposal> TopicProposals => Set<TopicProposal>();
     public DbSet<TopicStudentAssignment> TopicStudentAssignments => Set<TopicStudentAssignment>();
+    public DbSet<TopicAssignmentHistory> TopicAssignmentHistories => Set<TopicAssignmentHistory>();
     public DbSet<TopicAssignmentGroup> TopicAssignmentGroups => Set<TopicAssignmentGroup>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
