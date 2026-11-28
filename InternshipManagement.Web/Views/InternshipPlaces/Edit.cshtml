@@ -1,0 +1,78 @@
+@using InternshipManagement.Web.Models
+@model InternshipPlace
+@{
+    ViewData["Title"] = "Cập nhật doanh nghiệp & tình trạng hợp tác";
+}
+
+<div class="container py-3" style="max-width: 820px;">
+    <h4 class="mb-3">@ViewData["Title"]</h4>
+
+    <form asp-action="Edit" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label asp-for="Name" class="form-label">Tên doanh nghiệp / đơn vị *</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="TaxCode" class="form-label">Mã số thuế</label>
+                <input asp-for="TaxCode" class="form-control" />
+            </div>
+
+            <div class="col-md-8">
+                <label asp-for="Address" class="form-label">Địa chỉ</label>
+                <input asp-for="Address" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Website" class="form-label">Website</label>
+                <input asp-for="Website" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="ContactPerson" class="form-label">Người liên hệ</label>
+                <input asp-for="ContactPerson" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ContactPhone" class="form-label">Số điện thoại</label>
+                <input asp-for="ContactPhone" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ContactEmail" class="form-label">Email liên hệ</label>
+                <input asp-for="ContactEmail" class="form-control" />
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="DefaultPosition" class="form-label">Vị trí thực tập gợi ý</label>
+                <input asp-for="DefaultPosition" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="CooperationStatus" class="form-label">Tình trạng hợp tác *</label>
+                <select asp-for="CooperationStatus" class="form-select">
+                    @foreach (var st in BusinessCooperationStatuses.All)
+                    {
+                        <option value="@st">@BusinessCooperationStatuses.GetLabel(st)</option>
+                    }
+                </select>
+                <span asp-validation-for="CooperationStatus" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="CooperationNote" class="form-label">Ghi chú hợp tác / thỏa thuận</label>
+                <textarea asp-for="CooperationNote" rows="3" class="form-control"></textarea>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Cập nhật</button>
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

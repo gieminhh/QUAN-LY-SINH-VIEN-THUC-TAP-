@@ -376,6 +376,17 @@ namespace InternshipManagement.Web.Migrations
                         .HasColumnType("varchar(50)")
                         .HasColumnName("contact_phone");
 
+                    b.Property<string>("CooperationNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("cooperation_note");
+
+                    b.Property<string>("CooperationStatus")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)")
+                        .HasColumnName("cooperation_status");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("created_at");
@@ -401,9 +412,19 @@ namespace InternshipManagement.Web.Migrations
                         .HasColumnType("varchar(250)")
                         .HasColumnName("name");
 
+                    b.Property<string>("TaxCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("tax_code");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("updated_at");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)")
+                        .HasColumnName("website");
 
                     b.HasKey("Id");
 

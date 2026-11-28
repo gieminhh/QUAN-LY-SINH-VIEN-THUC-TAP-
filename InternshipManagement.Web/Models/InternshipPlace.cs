@@ -10,6 +10,31 @@ public static class InternshipRegistrationStatuses
     public const string Rejected = "REJECTED";
 }
 
+public static class BusinessCooperationStatuses
+{
+    public const string ActivePartner = "ACTIVE_PARTNER";
+    public const string PendingVerify = "PENDING_VERIFY";
+    public const string Suspended = "SUSPENDED";
+    public const string Terminated = "TERMINATED";
+
+    public static readonly IReadOnlyList<string> All =
+    [
+        ActivePartner,
+        PendingVerify,
+        Suspended,
+        Terminated
+    ];
+
+    public static string GetLabel(string? status) => status?.ToUpperInvariant() switch
+    {
+        ActivePartner => "Đang hợp tác",
+        PendingVerify => "Chờ xác minh",
+        Suspended => "Tạm ngưng hợp tác",
+        Terminated => "Ngừng hợp tác",
+        _ => "Không xác định"
+    };
+}
+
 [Table("internship_places")]
 public class InternshipPlace
 {
@@ -17,14 +42,22 @@ public class InternshipPlace
     [Column("id")]
     public ulong Id { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "Vui lòng nhập tên doanh nghiệp / đơn vị thực tập.")]
     [MaxLength(250)]
     [Column("name")]
     public string Name { get; set; } = string.Empty;
 
+    [MaxLength(50)]
+    [Column("tax_code")]
+    public string? TaxCode { get; set; }
+
     [MaxLength(500)]
     [Column("address")]
     public string? Address { get; set; }
+
+    [MaxLength(250)]
+    [Column("website")]
+    public string? Website { get; set; }
 
     [MaxLength(180)]
     [Column("contact_person")]
@@ -41,6 +74,15 @@ public class InternshipPlace
     [MaxLength(200)]
     [Column("default_position")]
     public string? DefaultPosition { get; set; }
+
+    [Required]
+    [MaxLength(40)]
+    [Column("cooperation_status")]
+    public string CooperationStatus { get; set; } = BusinessCooperationStatuses.ActivePartner;
+
+    [MaxLength(1000)]
+    [Column("cooperation_note")]
+    public string? CooperationNote { get; set; }
 
     [Column("is_active")]
     public bool IsActive { get; set; } = true;

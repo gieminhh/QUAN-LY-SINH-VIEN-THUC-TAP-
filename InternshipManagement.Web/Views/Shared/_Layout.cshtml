@@ -518,6 +518,19 @@
                             </span>
                         </a>
                     </li>
+                    <li class="menu-item">
+                        <a asp-controller="InternshipPlaces"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "InternshipPlaces" ? "active" : "")">
+
+                            <span class="menu-link-content">
+                                <i class="bi bi-buildings menu-icon text-primary"></i>
+                                <span class="menu-label fw-semibold">
+                                    Danh mục doanh nghiệp
+                                </span>
+                            </span>
+                        </a>
+                    </li>
                 }
                 <!-- Quản lý đề tài -->
                 @if (isAdmin || isLecturer)
