@@ -531,6 +531,20 @@
                             </span>
                         </a>
                     </li>
+
+                    <li class="menu-item">
+                        <a asp-controller="InternshipPositions"
+                           asp-action="Index"
+                           class="menu-link @(currentController == "InternshipPositions" ? "active" : "")">
+
+                            <span class="menu-link-content">
+                                <i class="bi bi-briefcase menu-icon text-info"></i>
+                                <span class="menu-label fw-semibold">
+                                    Vị trí thực tập
+                                </span>
+                            </span>
+                        </a>
+                    </li>
                 }
                 <!-- Quản lý đề tài -->
                 @if (isAdmin || isLecturer)

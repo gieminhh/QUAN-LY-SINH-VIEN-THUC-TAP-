@@ -1,0 +1,130 @@
+@model InternshipManagement.Web.Models.InternshipPosition
+@{
+    ViewData["Title"] = "Đăng vị trí thực tập";
+}
+
+<div class="page-container" style="max-width: 920px;">
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-plus-circle me-2"></i>@ViewData["Title"]
+            </h4>
+            <div class="text-muted small">
+                Điền thông tin vị trí thực tập để gửi Khoa xét duyệt
+            </div>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Danh sách vị trí
+        </a>
+    </div>
+
+    <div class="card card-custom">
+        <div class="card-header-custom">
+            Thông tin vị trí thực tập
+        </div>
+
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger py-2 small"
+                     role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="CampaignId" class="form-label small fw-semibold"></label>
+                        <span class="text-danger">*</span>
+                        <select asp-for="CampaignId" asp-items="ViewBag.Campaigns" class="form-select form-select-sm">
+                            <option value="">-- Chọn đợt thực tập --</option>
+                        </select>
+                        <span asp-validation-for="CampaignId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="InternshipPlaceId" class="form-label small fw-semibold"></label>
+                        <span class="text-danger">*</span>
+                        <select asp-for="InternshipPlaceId" asp-items="ViewBag.InternshipPlaces" class="form-select form-select-sm">
+                            <option value="">-- Chọn doanh nghiệp --</option>
+                        </select>
+                        <span asp-validation-for="InternshipPlaceId" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label asp-for="Title" class="form-label small fw-semibold"></label>
+                        <span class="text-danger">*</span>
+                        <input asp-for="Title" class="form-control form-control-sm"
+                               placeholder="VD: Thực tập sinh .NET / Backend Developer" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Slots" class="form-label small fw-semibold"></label>
+                        <span class="text-danger">*</span>
+                        <input asp-for="Slots" type="number" min="1" max="500" class="form-control form-control-sm" />
+                        <span asp-validation-for="Slots" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label asp-for="Skills" class="form-label small fw-semibold"></label>
+                        <input asp-for="Skills" class="form-control form-control-sm"
+                               placeholder="VD: C#, ASP.NET Core, MySQL, Git" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Deadline" class="form-label small fw-semibold"></label>
+                        <input asp-for="Deadline" type="date" class="form-control form-control-sm" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label small fw-semibold"></label>
+                    <span class="text-danger">*</span>
+                    <textarea asp-for="Description" rows="4" class="form-control form-control-sm"
+                              placeholder="Mô tả nội dung công việc sinh viên sẽ tham gia..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Requirements" class="form-label small fw-semibold"></label>
+                        <textarea asp-for="Requirements" rows="3" class="form-control form-control-sm"></textarea>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Benefits" class="form-label small fw-semibold"></label>
+                        <textarea asp-for="Benefits" rows="3" class="form-control form-control-sm"></textarea>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input asp-for="IsOpen" class="form-check-input" />
+                        <label asp-for="IsOpen" class="form-check-label small fw-semibold"></label>
+                    </div>
+                    <small class="text-muted">
+                        Vị trí mới tạo sẽ ở trạng thái chờ Khoa duyệt trước khi hiển thị rộng rãi.
+                    </small>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3">
+                        Hủy bỏ
+                    </a>
+                    <button type="submit" class="btn btn-sm btn-primary px-4">
+                        <i class="bi bi-send me-1"></i> Gửi đăng vị trí
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
