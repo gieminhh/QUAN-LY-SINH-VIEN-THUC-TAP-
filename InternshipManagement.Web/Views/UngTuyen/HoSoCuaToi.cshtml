@@ -1,0 +1,46 @@
+@model IEnumerable<InternshipManagement.Web.Models.HoSoUngTuyen>
+@using InternshipManagement.Web.Models
+
+@{
+    ViewData["Title"] = "Hồ sơ ứng tuyển của tôi";
+}
+
+<div class="page-container">
+    <h4 class="fw-bold text-primary mb-3">Hồ sơ ứng tuyển của tôi</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Vị trí</th>
+                    <th>Doanh nghiệp</th>
+                    <th>Ngày nộp</th>
+                    <th>Trạng thái</th>
+                    <th>Phản hồi</th>
+                    <th>CV</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ViTriThucTap?.Title</td>
+                        <td>@item.ViTriThucTap?.CreatedByUser?.DoanhNghiep?.Ten</td>
+                        <td>@item.NgayNop.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@item.TrangThai</td>
+                        <td>@item.GhiChuPhanHoi</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(item.FileCV))
+                            {
+                                <a href="@item.FileCV" target="_blank" rel="noopener">Xem CV</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted">Bạn chưa nộp hồ sơ nào.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,66 @@
+@model IEnumerable<InternshipManagement.Web.Models.HoSoUngTuyen>
+@using InternshipManagement.Web.Models
+
+@{
+    ViewData["Title"] = "Hồ sơ ứng tuyển";
+}
+
+<div class="page-container">
+    <h4 class="fw-bold text-primary mb-3">Hồ sơ ứng tuyển</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Vị trí</th>
+                    <th>Sinh viên</th>
+                    <th>Ngày nộp</th>
+                    <th>Trạng thái / Phản hồi</th>
+                    <th>CV</th>
+                    <th>Phản hồi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ViTriThucTap?.Title</td>
+                        <td>@item.SinhVien?.FullName</td>
+                        <td>@item.NgayNop.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <div>@item.TrangThai</div>
+                            <small class="text-muted">@item.GhiChuPhanHoi</small>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(item.FileCV))
+                            {
+                                <a href="@item.FileCV" target="_blank" rel="noopener">Xem CV</a>
+                            }
+                        </td>
+                        <td>
+                            @if (item.TrangThai is not (TrangThaiUngTuyen.ChapNhan or TrangThaiUngTuyen.TuChoi))
+                            {
+                                <form asp-action="PhanHoi" method="post">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input name="ghiChuPhanHoi" class="form-control form-control-sm mb-1"
+                                           value="@item.GhiChuPhanHoi" placeholder="Ghi chú" />
+                                    <div class="d-flex gap-1">
+                                        <button name="trangThai" value="@TrangThaiUngTuyen.DangPhongVan"
+                                                class="btn btn-outline-primary btn-sm">Phỏng vấn</button>
+                                        <button name="trangThai" value="@TrangThaiUngTuyen.ChapNhan"
+                                                class="btn btn-success btn-sm">Nhận</button>
+                                        <button name="trangThai" value="@TrangThaiUngTuyen.TuChoi"
+                                                class="btn btn-danger btn-sm">Từ chối</button>
+                                    </div>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted">Chưa có hồ sơ ứng tuyển.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

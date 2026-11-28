@@ -30,6 +30,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<InternshipRegistrationReview> InternshipRegistrationReviews => Set<InternshipRegistrationReview>();
     public DbSet<InternshipPosition> InternshipPositions => Set<InternshipPosition>();
     public DbSet<DoanhNghiep> DoanhNghieps => Set<DoanhNghiep>();
+    public DbSet<HoSoUngTuyen> HoSoUngTuyens => Set<HoSoUngTuyen>();
 
     public DbSet<TopicStudentAssignment> TopicStudentAssignments => Set<TopicStudentAssignment>();
     public DbSet<StudentTopicPreference> StudentTopicPreferences => Set<StudentTopicPreference>();
@@ -55,6 +56,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             b.HasOne(u => u.Major)
              .WithMany()
              .HasForeignKey(u => u.MajorId)
+             .OnDelete(DeleteBehavior.SetNull);
+            b.HasOne(u => u.DoanhNghiep)
+             .WithMany()
+             .HasForeignKey(u => u.DoanhNghiepId)
              .OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -423,6 +428,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
              .WithMany()
              .HasForeignKey(p => p.ReviewedByUserId)
              .OnDelete(DeleteBehavior.SetNull);
+        });
+        builder.Entity<HoSoUngTuyen>(b =>
+        {
+            b.HasIndex(h => new { h.ViTriThucTapId, h.SinhVienId }).IsUnique();
+            b.HasOne(h => h.ViTriThucTap)
+             .WithMany()
+             .HasForeignKey(h => h.ViTriThucTapId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(h => h.SinhVien)
+             .WithMany(u => u.HoSoUngTuyens)
+             .HasForeignKey(h => h.SinhVienId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

@@ -1,0 +1,64 @@
+@model IEnumerable<InternshipManagement.Web.Models.InternshipPosition>
+@using InternshipManagement.Web.Models
+
+@{
+    ViewData["Title"] = "Tìm vị trí thực tập";
+    var doanhNghieps = ViewBag.DoanhNghieps as List<DoanhNghiep> ?? new List<DoanhNghiep>();
+}
+
+<div class="page-container">
+    <h4 class="fw-bold text-primary mb-3">Tìm vị trí thực tập</h4>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-5">
+            <input name="tuKhoa" value="@ViewBag.TuKhoa" class="form-control" placeholder="Từ khóa" />
+        </div>
+        <div class="col-md-4">
+            <select name="doanhNghiepId" class="form-select">
+                <option value="">Tất cả doanh nghiệp</option>
+                @foreach (var doanhNghiep in doanhNghieps)
+                {
+                    <option value="@doanhNghiep.Id" selected="@(ViewBag.DoanhNghiepId == doanhNghiep.Id)">
+                        @doanhNghiep.Ten
+                    </option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
+        </div>
+    </form>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted">Không có vị trí đang mở phù hợp.</p>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var item in Model)
+            {
+                <div class="col-12">
+                    <div class="card card-custom">
+                        <div class="card-body">
+                            <h5 class="card-title">@item.Title</h5>
+                            <div class="text-muted mb-2">@(item.CreatedByUser?.DoanhNghiep?.Ten ?? "Doanh nghiệp")</div>
+                            <p class="card-text">@item.Description</p>
+                            <div class="mb-3">Số lượng: @item.Slots</div>
+                            <form asp-action="Apply" method="post" enctype="multipart/form-data">
+                                <input type="hidden" name="viTriThucTapId" value="@item.Id" />
+                                <div class="input-group">
+                                    <input type="file" name="fileCV" class="form-control"
+                                           accept=".pdf,.doc,.docx" />
+                                    <button type="submit" class="btn btn-primary">Ứng tuyển</button>
+                                </div>
+                                <small class="text-muted">CV tùy chọn, PDF/DOC/DOCX, tối đa 5MB.</small>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
