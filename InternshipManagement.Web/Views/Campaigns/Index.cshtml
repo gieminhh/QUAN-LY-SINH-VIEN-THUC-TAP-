@@ -148,6 +148,9 @@
                                         <a asp-action="Details" asp-route-id="@c.Id" class="btn btn-outline-info" title="Xem chi tiết">
                                             <i class="bi bi-eye"></i>
                                         </a>
+                                        <a asp-controller="MatchingPreview" asp-action="Index" asp-route-id="@c.Id" class="btn btn-outline-success" title="Xem trước kết quả ghép" aria-label="Xem trước kết quả ghép">
+                                            <i class="bi bi-table"></i>
+                                        </a>
                                         @if (c.CanEdit)
                                         {
                                             <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-primary" title="Chỉnh sửa đợt">

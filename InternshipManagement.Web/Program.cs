@@ -54,6 +54,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<IUserScopeService, UserScopeService>();
 builder.Services.AddScoped<ParticipationService>();
 builder.Services.AddScoped<ITopicAssignmentService, TopicAssignmentService>();
+builder.Services.AddScoped<IMatchingPreviewService, MatchingPreviewService>();
 
 // Add Authorization Policies
 builder.Services.AddAuthorization(options =>

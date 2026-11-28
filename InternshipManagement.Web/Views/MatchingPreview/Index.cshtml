@@ -1,0 +1,118 @@
+@model InternshipManagement.Web.ViewModels.Assignments.MatchingPreviewViewModel
+@using InternshipManagement.Web.Models
+@{
+    ViewData["Title"] = "Xem trước kết quả ghép";
+    var preview = Model.Preview;
+    var topics = preview.Input.Topics.ToDictionary(t => t.Id);
+}
+
+<div class="page-container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">Xem trước kết quả ghép</h4>
+            <div>@preview.Input.CampaignName</div>
+        </div>
+        <a asp-controller="Campaigns" asp-action="Index" class="btn btn-outline-secondary">Danh sách đợt</a>
+    </div>
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="alert alert-success" role="status">@success</div>
+    }
+    @if (TempData["ErrorMessage"] is string error)
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+    }
+    <div class="alert alert-info">
+        Kết quả dự kiến, chưa công bố. Xem trước không thay đổi dữ liệu. Xác nhận sẽ lưu kết quả ghép và giữ nguyên các kết quả đã ghép trước đó.
+        <div class="small mt-1">
+            Thứ tự xét: @(preview.Input.Order == MatchingOrder.Random ? "Ngẫu nhiên" : "Thời gian đăng ký").
+            Chính sách khi không có nguyện vọng hợp lệ:
+            @(preview.Input.Policy switch {
+                NoPreferencePolicy.ManualByAdmin => "Chờ cán bộ ghép thủ công",
+                NoPreferencePolicy.RandomFill => "Ghép ngẫu nhiên vào chỗ trống",
+                NoPreferencePolicy.SupplementaryRound => "Chờ vòng bổ sung",
+                _ => "Để chưa ghép"
+            }).
+        </div>
+    </div>
+    @foreach (var problem in preview.Errors)
+    {
+        <div class="alert alert-danger" role="alert">@problem</div>
+    }
+    @if (preview.Input.CampaignStatus == CampaignStatuses.Archived)
+    {
+        <div class="alert alert-warning">Đợt đã lưu trữ, không thể xác nhận thêm kết quả.</div>
+    }
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-lg-3"><div class="card card-body">Tổng sinh viên <strong class="fs-4">@preview.Total</strong></div></div>
+        <div class="col-sm-6 col-lg-3"><div class="card card-body">Đã / dự kiến ghép <strong class="fs-4">@preview.Matched</strong></div></div>
+        <div class="col-sm-6 col-lg-3"><div class="card card-body">Chưa ghép <strong class="fs-4">@preview.Unmatched</strong></div></div>
+        <div class="col-sm-6 col-lg-3"><div class="card card-body">Chờ ghép thủ công <strong class="fs-4">@preview.PendingManual</strong></div></div>
+    </div>
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>Thống kê nguyện vọng được đáp ứng</h5>
+            <div class="d-flex flex-wrap gap-4">
+                @for (var priority = 1; priority <= 3; priority++)
+                {
+                    <div><strong>NV@(priority): @preview.PriorityRate(priority).ToString("0.##")%</strong> (@preview.PriorityCount(priority) / @preview.Total SV)</div>
+                }
+            </div>
+            <p class="small text-muted mb-0 mt-2">Mẫu số là toàn bộ sinh viên trong danh sách xét ghép của ngành, gồm cả sinh viên chưa ghép. Ghép ngoài nguyện vọng không tính vào NV1/2/3.</p>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <caption>Nguyện vọng và kết quả ghép dự kiến theo đợt</caption>
+            <thead><tr><th scope="col">Sinh viên</th><th scope="col">Nguyện vọng đăng ký</th><th scope="col">Đề tài được ghép</th><th scope="col">Trạng thái</th></tr></thead>
+            <tbody>
+            @foreach (var row in preview.Rows)
+            {
+                <tr>
+                    <td><strong>@row.Student.Name</strong><div class="small text-muted">@row.Student.Code</div></td>
+                    <td>
+                        @if (row.Preferences.Count == 0) { <span class="text-muted">Chưa đăng ký</span> }
+                        @foreach (var preference in row.Preferences)
+                        {
+                            var topic = topics.GetValueOrDefault(preference.TopicId);
+                            <div>NV@(preference.Priority): @(topic?.Title ?? "Đề tài không tồn tại")
+                                @if (topic?.ApprovalStatus != TopicApprovalStatuses.Approved) { <span class="badge bg-warning text-dark">Không hợp lệ</span> }
+                            </div>
+                        }
+                    </td>
+                    <td>
+                        @(row.TopicTitle ?? "—")
+                        @if (row.TopicId.HasValue)
+                        {
+                            <div class="small text-muted">@(row.MatchedPriority.HasValue ? $"Đáp ứng NV{row.MatchedPriority}" : "Ngoài nguyện vọng")</div>
+                        }
+                    </td>
+                    <td>
+                        @if (row.Existing) { <span class="badge bg-secondary">Đã ghép, giữ nguyên</span> }
+                        else if (row.Status == MatchStatus.Matched) { <span class="badge bg-success">Dự kiến ghép</span> }
+                        else if (row.Status == MatchStatus.PendingManual) { <span class="badge bg-warning text-dark">Chờ ghép thủ công</span> }
+                        else { <span class="badge bg-danger">Chưa ghép</span> }
+                    </td>
+                </tr>
+            }
+            @if (preview.Total == 0) { <tr><td colspan="4" class="text-center text-muted">Không có sinh viên trong danh sách xét ghép của ngành.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
+        <a asp-action="Index" asp-route-id="@preview.Input.CampaignId" class="btn btn-outline-primary">Tải lại kết quả</a>
+        @if (preview.CanConfirm)
+        {
+            <form asp-action="Confirm" asp-route-id="@preview.Input.CampaignId" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="token" value="@Model.Token" />
+                <button type="submit" class="btn btn-primary">Xác nhận và lưu @preview.Changes kết quả</button>
+            </form>
+            <span class="small text-muted">Phiên xem trước có hiệu lực 30 phút.</span>
+        }
+        else if (preview.Errors.Count == 0 && preview.Changes == 0)
+        {
+            <span class="text-muted">Không có kết quả mới cần xác nhận.</span>
+        }
+    </div>
+</div>
