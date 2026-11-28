@@ -12,7 +12,8 @@ public interface ITopicAssignmentService
     string studentUserId,
     string staffUserId,
     string? adjustmentReason = null,
-    ulong? groupId = null);
+    ulong? groupId = null,
+    string? groupName = null);
 
     Task<AssignResult> RemoveAsync(
         ulong assignmentId,
@@ -21,9 +22,11 @@ public interface ITopicAssignmentService
 
     Task<AssignResult> LockAsync(
         ulong assignmentId,
-        string staffUserId);
+        string staffUserId,
+        string? adjustmentReason = null);
 
     Task<AssignResult> UnlockAsync(
         ulong assignmentId,
-        string staffUserId);
+        string staffUserId,
+        string? adjustmentReason = null);
 }
