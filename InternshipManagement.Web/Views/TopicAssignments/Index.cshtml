@@ -11,9 +11,7 @@
 
     var studentsJson = JsonSerializer.Serialize(
         Model.Students.Select(x => new { id = x.Value, text = x.Text }));
-
-    var groupsJson = JsonSerializer.Serialize(
-        Model.Groups.Select(x => new { id = x.Value, text = x.Text }));
+    var groupsJson = (string)ViewBag.GroupsJson;
 }
 
 <div class="container-fluid">
@@ -72,16 +70,26 @@
                     <div id="studentSuggestions" class="list-group"></div>
                 </div>
 
+                
                 <div class="mb-3">
                     <label class="form-label">Nhóm (nếu là đề tài nhóm)</label>
+
                     <input type="text"
-                           id="groupSearch"
-                           class="form-control"
-                           placeholder="Nhập tên nhóm..."
-                           autocomplete="off" />
+                        id="groupSearch"
+                        class="form-control"
+                        placeholder="Chọn nhóm có sẵn hoặc nhập tên nhóm mới..."
+                        autocomplete="off" />
+
                     <input type="hidden" name="groupId" id="groupId" />
+                    <input type="hidden" name="groupName" id="groupName" />
+
                     <div id="groupSuggestions" class="list-group"></div>
+
+                    <small class="text-muted">
+                        Nếu không chọn nhóm có sẵn, hệ thống sẽ tạo nhóm mới theo tên bạn nhập.
+                    </small>
                 </div>
+
 
                 <div class="mb-3">
                     <label class="form-label">Lý do điều chỉnh</label>
@@ -121,8 +129,7 @@
                             @foreach (var item in Model.Assignments)
                             {
                                 <tr>
-                                    <td>Đề tài #@item.TopicId</td>
-                                    <td>
+                                    <td>@(item.Topic?.Title ?? $"Đề tài #{item.TopicId}")</td>                                    <td>
                                         @(item.StudentUser?.Email
                                             ?? item.StudentUser?.UserName
                                             ?? item.StudentUserId)
@@ -145,6 +152,11 @@
                                             <form asp-action="Unlock" method="post">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="assignmentId" value="@item.Id" />
+                                                <input type="text"
+                                                        name="adjustmentReason"
+                                                        class="form-control form-control-sm mb-2"
+                                                        placeholder="Nhập lý do mở khóa..."
+                                                        required />
                                                 <button class="btn btn-warning btn-sm">Mở khóa</button>
                                             </form>
                                         }
@@ -153,13 +165,22 @@
                                             <form asp-action="Lock" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="assignmentId" value="@item.Id" />
+                                                <input type="text"
+                                                    name="adjustmentReason"
+                                                    class="form-control form-control-sm mb-2"
+                                                    placeholder="Nhập lý do khóa..."
+                                                    required />
                                                 <button class="btn btn-secondary btn-sm">Khóa</button>
                                             </form>
 
                                             <form asp-action="Remove" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="assignmentId" value="@item.Id" />
-                                                <input type="hidden" name="adjustmentReason" value="Cán bộ gỡ cặp ghép" />
+                                                <input type="text"
+                                                    name="adjustmentReason"
+                                                    class="form-control form-control-sm mb-2"
+                                                    placeholder="Nhập lý do gỡ cặp..."
+                                                    required />
                                                 <button class="btn btn-danger btn-sm"
                                                         onclick="return confirm('Bạn có chắc muốn gỡ cặp này?')">
                                                     Gỡ cặp
@@ -252,14 +273,27 @@
             groups,
             function (item) {
                 const topicId = document.getElementById("topicId").value;
-                return topicId && item.text.includes("(Đề tài #" + topicId + ")");
+                return topicId && item.topicId === topicId;
             }
         );
         document.getElementById("assignForm").addEventListener("submit", function (event) {
-            if (!document.getElementById("topicId").value ||
-                !document.getElementById("studentUserId").value) {
+            const topicId = document.getElementById("topicId").value;
+            const studentUserId = document.getElementById("studentUserId").value;
+
+            if (!topicId || !studentUserId) {
                 event.preventDefault();
                 alert("Vui lòng chọn đề tài và sinh viên từ danh sách gợi ý.");
+                return;
+            }
+
+            const groupSearch = document.getElementById("groupSearch");
+            const groupId = document.getElementById("groupId");
+            const groupName = document.getElementById("groupName");
+
+            if (groupId.value) {
+                groupName.value = "";
+            } else {
+                groupName.value = groupSearch.value.trim();
             }
         });
     </script>
