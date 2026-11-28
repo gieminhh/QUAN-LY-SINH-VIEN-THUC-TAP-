@@ -1,0 +1,230 @@
+@using InternshipManagement.Web.Models
+@model IEnumerable<InternshipPosition>
+@{
+    ViewData["Title"] = "Quản lý vị trí thực tập";
+    var currentSearch = ViewBag.Search as string ?? "";
+    var currentStatus = ViewBag.SelectedStatus as string ?? "ALL";
+    var itemsList = Model.ToList();
+    var totalCount = itemsList.Count;
+}
+
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-briefcase me-2"></i>@ViewData["Title"]
+            </h4>
+            <div class="text-muted small">
+                Danh sách vị trí thực tập do doanh nghiệp đăng và xét duyệt của Khoa
+            </div>
+        </div>
+        <a asp-action="Create" class="btn btn-primary btn-sm px-3">
+            <i class="bi bi-plus-circle me-1"></i> Đăng vị trí thực tập
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 small" role="alert">
+            <i class="bi bi-check-circle me-1"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 small" role="alert">
+            <i class="bi bi-exclamation-triangle me-1"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Search & Filter -->
+    <div class="card card-custom p-3 mb-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Tên vị trí, kỹ năng, doanh nghiệp..." value="@currentSearch">
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <select name="campaignId" asp-items="ViewBag.Campaigns" class="form-select form-select-sm">
+                    <option value="">-- Tất cả đợt thực tập --</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="ALL" selected="@(currentStatus == "ALL")">-- Tất cả trạng thái duyệt --</option>
+                    @foreach (var st in InternshipPositionApprovalStatuses.All)
+                    {
+                        <option value="@st" selected="@(currentStatus == st)">@InternshipPositionApprovalStatuses.GetLabel(st)</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100" title="Áp dụng bộ lọc">
+                    <i class="bi bi-funnel me-1"></i>Lọc
+                </button>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary" title="Xóa bộ lọc">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Positions Table -->
+    <div class="card card-custom">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span>Danh sách vị trí thực tập (@totalCount vị trí)</span>
+            <span class="small text-muted">
+                Trang @(totalCount > 0 ? 1 : 0) / @(totalCount > 0 ? 1 : 0)
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                    <tr>
+                        <th>Vị trí thực tập</th>
+                        <th>Doanh nghiệp</th>
+                        <th>Đợt thực tập</th>
+                        <th class="text-center">Chỉ tiêu</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-center">Trạng thái duyệt</th>
+                        <th class="text-end pe-3">Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody class="small">
+                    @if (itemsList.Any())
+                    {
+                        @foreach (var item in itemsList)
+                        {
+                            var approvalBadgeClass = item.ApprovalStatus switch
+                            {
+                                InternshipPositionApprovalStatuses.Approved => "bg-success",
+                                InternshipPositionApprovalStatuses.Pending => "bg-warning text-dark",
+                                InternshipPositionApprovalStatuses.Rejected => "bg-danger",
+                                _ => "bg-secondary"
+                            };
+                            var modalId = $"reviewModal_{item.Id}";
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@item.Title</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.Skills))
+                                    {
+                                        <div class="text-muted">Kỹ năng: @item.Skills</div>
+                                    }
+                                    @if (item.Deadline.HasValue)
+                                    {
+                                        <div class="text-muted">Hạn: @item.Deadline.Value.ToString("dd/MM/yyyy")</div>
+                                    }
+                                </td>
+                                <td>@(item.InternshipPlace?.Name ?? "—")</td>
+                                <td>@(item.Campaign?.Name ?? "—")</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border">@item.Slots SV</span>
+                                </td>
+                                <td class="text-center">
+                                    @if (item.IsOpen)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-eye me-1"></i>Đang mở
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-eye-slash me-1"></i>Đang đóng
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @approvalBadgeClass">@InternshipPositionApprovalStatuses.GetLabel(item.ApprovalStatus)</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.ReviewNote))
+                                    {
+                                        <div class="text-muted mt-1">@item.ReviewNote</div>
+                                    }
+                                </td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button"
+                                                class="btn btn-outline-success"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#@modalId"
+                                                title="Xét duyệt vị trí">
+                                            <i class="bi bi-check2-square"></i>
+                                        </button>
+                                        <a asp-action="Edit" asp-route-id="@item.Id"
+                                           class="btn btn-outline-primary" title="Chỉnh sửa">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                    </div>
+
+                                    <div class="modal fade text-start" id="@modalId" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <form asp-action="Review" asp-route-id="@item.Id" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <div class="modal-header">
+                                                        <h6 class="modal-title fw-bold text-primary mb-0">
+                                                            <i class="bi bi-check2-circle me-1"></i>Xét duyệt vị trí thực tập
+                                                        </h6>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body small">
+                                                        <div class="mb-2">
+                                                            <span class="text-muted">Vị trí:</span>
+                                                            <div class="fw-semibold">@item.Title</div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <span class="text-muted">Doanh nghiệp:</span>
+                                                            <div>@(item.InternshipPlace?.Name ?? "—")</div>
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label class="form-label fw-semibold">Ghi chú xét duyệt / Lý do từ chối</label>
+                                                            <textarea name="reviewNote" rows="3" class="form-control form-control-sm"
+                                                                      placeholder="Nhập ghi chú phản hồi cho doanh nghiệp (bắt buộc nếu từ chối)...">@item.ReviewNote</textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer py-2">
+                                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                                        <button type="submit" name="decision"
+                                                                value="@InternshipPositionApprovalStatuses.Rejected"
+                                                                class="btn btn-sm btn-outline-danger">
+                                                            <i class="bi bi-x-circle me-1"></i>Từ chối
+                                                        </button>
+                                                        <button type="submit" name="decision"
+                                                                value="@InternshipPositionApprovalStatuses.Approved"
+                                                                class="btn btn-sm btn-success">
+                                                            <i class="bi bi-check-circle me-1"></i>Duyệt vị trí
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+                                Chưa có vị trí thực tập nào phù hợp.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

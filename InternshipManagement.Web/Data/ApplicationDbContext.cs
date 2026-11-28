@@ -28,6 +28,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<InternshipPlace> InternshipPlaces => Set<InternshipPlace>();
     public DbSet<InternshipRegistration> InternshipRegistrations => Set<InternshipRegistration>();
     public DbSet<InternshipRegistrationReview> InternshipRegistrationReviews => Set<InternshipRegistrationReview>();
+    public DbSet<InternshipPosition> InternshipPositions => Set<InternshipPosition>();
     public DbSet<DoanhNghiep> DoanhNghieps => Set<DoanhNghiep>();
 
     public DbSet<TopicStudentAssignment> TopicStudentAssignments => Set<TopicStudentAssignment>();
@@ -392,6 +393,35 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<DoanhNghiep>(b =>
         {
             b.HasIndex(d => d.MaSoThue).IsUnique();
+        });
+        builder.Entity<InternshipPosition>(b =>
+        {
+            b.ToTable("internship_positions");
+            b.Property(p => p.ApprovalStatus)
+             .HasDefaultValue(InternshipPositionApprovalStatuses.Pending);
+
+            b.HasIndex(p => new { p.CampaignId, p.ApprovalStatus });
+            b.HasIndex(p => p.InternshipPlaceId);
+
+            b.HasOne(p => p.Campaign)
+             .WithMany()
+             .HasForeignKey(p => p.CampaignId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(p => p.InternshipPlace)
+             .WithMany()
+             .HasForeignKey(p => p.InternshipPlaceId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(p => p.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(p => p.CreatedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(p => p.ReviewedByUser)
+             .WithMany()
+             .HasForeignKey(p => p.ReviewedByUserId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

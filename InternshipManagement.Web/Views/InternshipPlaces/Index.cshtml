@@ -4,113 +4,172 @@
     ViewData["Title"] = "Danh mục doanh nghiệp và tình trạng hợp tác";
     var currentSearch = ViewBag.Search as string ?? "";
     var currentStatus = ViewBag.Status as string ?? "ALL";
+    var itemsList = Model.ToList();
+    var totalCount = itemsList.Count;
 }
 
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">@ViewData["Title"]</h4>
-        <a asp-action="Create" class="btn btn-primary">+ Thêm doanh nghiệp</a>
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold text-primary mb-1">
+                <i class="bi bi-buildings me-2"></i>@ViewData["Title"]
+            </h4>
+            <div class="text-muted small">
+                Quản lý danh sách doanh nghiệp tiếp nhận thực tập và theo dõi tình trạng hợp tác
+            </div>
+        </div>
+        <a asp-action="Create" class="btn btn-primary btn-sm px-3">
+            <i class="bi bi-plus-circle me-1"></i> Thêm doanh nghiệp
+        </a>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
+        <div class="alert alert-success alert-dismissible fade show py-2 small" role="alert">
+            <i class="bi bi-check-circle me-1"></i>@TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
+        <div class="alert alert-danger alert-dismissible fade show py-2 small" role="alert">
+            <i class="bi bi-exclamation-triangle me-1"></i>@TempData["ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
 
-    <form method="get" class="row g-2 mb-3">
-        <div class="col-md-5">
-            <input type="text" name="search" value="@currentSearch" class="form-control"
-                   placeholder="Tìm theo tên, mã số thuế, địa chỉ, người liên hệ..." />
-        </div>
-        <div class="col-md-3">
-            <select name="status" class="form-select">
-                <option value="ALL" selected="@(currentStatus == "ALL")">Tất cả tình trạng hợp tác</option>
-                @foreach (var st in BusinessCooperationStatuses.All)
-                {
-                    <option value="@st" selected="@(currentStatus == st)">@BusinessCooperationStatuses.GetLabel(st)</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-4 d-flex gap-2">
-            <button type="submit" class="btn btn-outline-primary">Lọc</button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Đặt lại</a>
-        </div>
-    </form>
+    <!-- Search & Filter -->
+    <div class="card card-custom p-3 mb-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Tìm theo tên, mã số thuế, địa chỉ, người liên hệ..." value="@currentSearch">
+                </div>
+            </div>
 
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Doanh nghiệp</th>
-                    <th>Mã số thuế</th>
-                    <th>Liên hệ</th>
-                    <th>Vị trí gợi ý</th>
-                    <th>Hồ sơ ĐK</th>
-                    <th>Tình trạng hợp tác</th>
-                    <th style="width: 150px;">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
-                    <tr>
-                        <td colspan="7" class="text-center text-muted py-4">Chưa có doanh nghiệp nào phù hợp bộ lọc.</td>
-                    </tr>
-                }
-                else
-                {
-                    @foreach (var item in Model)
+            <div class="col-md-4">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="ALL" selected="@(currentStatus == "ALL")">-- Tất cả tình trạng hợp tác --</option>
+                    @foreach (var st in BusinessCooperationStatuses.All)
                     {
-                        var badgeClass = item.CooperationStatus switch
+                        <option value="@st" selected="@(currentStatus == st)">@BusinessCooperationStatuses.GetLabel(st)</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100" title="Áp dụng bộ lọc">
+                    <i class="bi bi-funnel me-1"></i>Lọc
+                </button>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary" title="Xóa bộ lọc">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card card-custom">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span>Danh sách doanh nghiệp (@totalCount doanh nghiệp)</span>
+            <span class="small text-muted">
+                Trang @(totalCount > 0 ? 1 : 0) / @(totalCount > 0 ? 1 : 0)
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                    <tr>
+                        <th>Doanh nghiệp</th>
+                        <th>Mã số thuế</th>
+                        <th>Liên hệ</th>
+                        <th>Vị trí gợi ý</th>
+                        <th class="text-center">Hồ sơ ĐK</th>
+                        <th class="text-center">Tình trạng hợp tác</th>
+                        <th class="text-end pe-3">Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody class="small">
+                    @if (itemsList.Any())
+                    {
+                        @foreach (var item in itemsList)
                         {
-                            BusinessCooperationStatuses.ActivePartner => "bg-success",
-                            BusinessCooperationStatuses.PendingVerify => "bg-warning text-dark",
-                            BusinessCooperationStatuses.Suspended => "bg-secondary",
-                            BusinessCooperationStatuses.Terminated => "bg-danger",
-                            _ => "bg-light text-dark"
-                        };
+                            var badgeClass = item.CooperationStatus switch
+                            {
+                                BusinessCooperationStatuses.ActivePartner => "bg-success",
+                                BusinessCooperationStatuses.PendingVerify => "bg-warning text-dark",
+                                BusinessCooperationStatuses.Suspended => "bg-secondary",
+                                BusinessCooperationStatuses.Terminated => "bg-danger",
+                                _ => "bg-light text-dark border"
+                            };
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@item.Name</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.Address))
+                                    {
+                                        <div class="text-muted">@item.Address</div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.TaxCode))
+                                    {
+                                        <span class="fw-semibold font-monospace text-primary">@item.TaxCode</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div>@(item.ContactPerson ?? "—")</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.ContactPhone) || !string.IsNullOrWhiteSpace(item.ContactEmail))
+                                    {
+                                        <div class="text-muted">
+                                            @item.ContactPhone
+                                            @(!string.IsNullOrWhiteSpace(item.ContactPhone) && !string.IsNullOrWhiteSpace(item.ContactEmail) ? " | " : "")
+                                            @item.ContactEmail
+                                        </div>
+                                    }
+                                </td>
+                                <td>@(item.DefaultPosition ?? "—")</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border">@item.Registrations.Count</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @badgeClass">@BusinessCooperationStatuses.GetLabel(item.CooperationStatus)</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.CooperationNote))
+                                    {
+                                        <div class="text-muted mt-1">@item.CooperationNote</div>
+                                    }
+                                </td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Edit" asp-route-id="@item.Id"
+                                           class="btn btn-outline-primary" title="Sửa / Đổi trạng thái">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
                         <tr>
-                            <td>
-                                <div class="fw-semibold">@item.Name</div>
-                                @if (!string.IsNullOrWhiteSpace(item.Address))
-                                {
-                                    <div class="small text-muted">@item.Address</div>
-                                }
-                            </td>
-                            <td>@(item.TaxCode ?? "—")</td>
-                            <td>
-                                <div>@(item.ContactPerson ?? "—")</div>
-                                @if (!string.IsNullOrWhiteSpace(item.ContactPhone) || !string.IsNullOrWhiteSpace(item.ContactEmail))
-                                {
-                                    <div class="small text-muted">@item.ContactPhone @(!string.IsNullOrWhiteSpace(item.ContactPhone) && !string.IsNullOrWhiteSpace(item.ContactEmail) ? " | " : "") @item.ContactEmail</div>
-                                }
-                            </td>
-                            <td>@(item.DefaultPosition ?? "—")</td>
-                            <td>@item.Registrations.Count</td>
-                            <td>
-                                <span class="badge @badgeClass">@BusinessCooperationStatuses.GetLabel(item.CooperationStatus)</span>
-                                @if (!string.IsNullOrWhiteSpace(item.CooperationNote))
-                                {
-                                    <div class="small text-muted mt-1">@item.CooperationNote</div>
-                                }
-                            </td>
-                            <td>
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Sửa / Đổi trạng thái</a>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-building-x fs-3 d-block mb-1"></i>
+                                Chưa có doanh nghiệp nào phù hợp bộ lọc.
                             </td>
                         </tr>
                     }
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
