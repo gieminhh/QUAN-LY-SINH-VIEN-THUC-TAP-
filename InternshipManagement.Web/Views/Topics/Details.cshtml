@@ -121,6 +121,45 @@
         </div>
     </div>
 
+    <!-- DUYỆT ĐỀ TÀI -->
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="card card-custom mb-3">
+            <div class="card-header-custom">
+                <i class="bi bi-check-circle me-2"></i>Duyệt đề tài
+            </div>
+
+            <div class="card-body">
+                @if (Model.ApprovalStatus == "PENDING")
+                {
+                    <span class="badge bg-warning text-dark mb-3">
+                        Chờ duyệt
+                    </span>
+
+                    <form asp-action="Approve"
+                        asp-route-id="@Model.Id"
+                        method="post"
+                        onsubmit="return confirm('Bạn có chắc chắn muốn duyệt đề tài này?');">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Duyệt đề tài
+                        </button>
+                    </form>
+                }
+                else if (Model.ApprovalStatus == "APPROVED")
+                {
+                    <span class="badge bg-success">Đã duyệt</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger">Đã từ chối</span>
+                }
+            </div>
+        </div>
+    }
     <!-- Nội dung đề tài -->
     <div class="card card-custom mb-3">
         <div class="card-header-custom">
