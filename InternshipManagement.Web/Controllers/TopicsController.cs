@@ -976,6 +976,7 @@ public async Task<IActionResult> Create(TopicCreateEditViewModel model)
             MaxStudents = topic.MaxStudents,
             MaxGroups = topic.MaxGroups,
             Status = topic.Status,
+            ApprovalStatus = topic.ApprovalStatus,
             CreatedByName = topic.CreatedByUser?.FullName ?? "Không xác định",
             CreatedAt = topic.CreatedAt,
             UpdatedAt = topic.UpdatedAt,
@@ -996,6 +997,45 @@ public async Task<IActionResult> Create(TopicCreateEditViewModel model)
         };
 
         return View(model);
+    }
+
+    // ADMIN DUYỆT ĐỀ TÀI
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Approve(ulong id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null || !user.IsActive)
+            return Forbid();
+
+        // Chỉ Admin được duyệt
+        if (!User.IsInRole(AppRoles.Admin))
+            return Forbid();
+
+        var topic = await _context.Topics
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (topic == null)
+            return NotFound();
+
+        if (topic.ApprovalStatus != TopicApprovalStatuses.Pending)
+        {
+            TempData["Error"] = "Đề tài không ở trạng thái chờ duyệt.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        topic.ApprovalStatus = TopicApprovalStatuses.Approved;
+        topic.ReviewedByUserId = user.Id;
+        topic.ReviewedAt = DateTime.UtcNow;
+        topic.RejectionReason = null;
+        topic.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Đã duyệt đề tài thành công.";
+
+        return RedirectToAction(nameof(Details), new { id });
     }
     private async Task PopulateTopicOptionsAsync(
         TopicCreateEditViewModel model,
