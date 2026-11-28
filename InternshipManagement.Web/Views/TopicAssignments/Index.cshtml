@@ -1,0 +1,300 @@
+
+@model InternshipManagement.Web.ViewModels.TopicAssignments.TopicAssignmentViewModel
+
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Quản lý ghép cặp";
+
+    var topicsJson = JsonSerializer.Serialize(
+        Model.Topics.Select(x => new { id = x.Value, text = x.Text }));
+
+    var studentsJson = JsonSerializer.Serialize(
+        Model.Students.Select(x => new { id = x.Value, text = x.Text }));
+    var groupsJson = (string)ViewBag.GroupsJson;
+}
+
+<div class="container-fluid">
+    <h2 class="mb-4">Quản lý ghép cặp sinh viên - đề tài</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <strong>Ghép sinh viên vào đề tài</strong>
+        </div>
+
+        <div class="card-body">
+            <form asp-controller="TopicAssignments"
+                  asp-action="Assign"
+                  method="post"
+                  id="assignForm">
+
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label">Chọn đề tài</label>
+                    <input type="text"
+                           id="topicSearch"
+                           class="form-control"
+                           placeholder="Nhập để tìm đề tài..."
+                           autocomplete="off"
+                           required />
+                    <input type="hidden" name="topicId" id="topicId" />
+                    <div id="topicSuggestions" class="list-group"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Chọn sinh viên</label>
+                    <input type="text"
+                           id="studentSearch"
+                           class="form-control"
+                           placeholder="Nhập tên, email hoặc mã sinh viên..."
+                           autocomplete="off"
+                           required />
+                    <input type="hidden" name="studentUserId" id="studentUserId" />
+                    <div id="studentSuggestions" class="list-group"></div>
+                </div>
+
+                
+                <div class="mb-3">
+                    <label class="form-label">Nhóm (nếu là đề tài nhóm)</label>
+
+                    <input type="text"
+                        id="groupSearch"
+                        class="form-control"
+                        placeholder="Chọn nhóm có sẵn hoặc nhập tên nhóm mới..."
+                        autocomplete="off" />
+
+                    <input type="hidden" name="groupId" id="groupId" />
+                    <input type="hidden" name="groupName" id="groupName" />
+
+                    <div id="groupSuggestions" class="list-group"></div>
+
+                    <small class="text-muted">
+                        Nếu không chọn nhóm có sẵn, hệ thống sẽ tạo nhóm mới theo tên bạn nhập.
+                    </small>
+                </div>
+
+
+                <div class="mb-3">
+                    <label class="form-label">Lý do điều chỉnh</label>
+                    <textarea name="adjustmentReason"
+                              class="form-control"
+                              rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Ghép sinh viên
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header">
+            <strong>Danh sách cặp đã ghép</strong>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Đề tài</th>
+                            <th>Sinh viên</th>
+                            <th>Nhóm</th>
+                            <th>Ngày ghép</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Assignments.Any())
+                        {
+                            @foreach (var item in Model.Assignments)
+                            {
+                                <tr>
+                                    <td>@(item.Topic?.Title ?? $"Đề tài #{item.TopicId}")</td>                                    <td>
+                                        @(item.StudentUser?.Email
+                                            ?? item.StudentUser?.UserName
+                                            ?? item.StudentUserId)
+                                    </td>
+                                    <td>@(item.Group?.GroupName ?? "—")</td>
+                                    <td>@item.AssignedAt.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @if (item.IsLocked)
+                                        {
+                                            <span class="badge bg-danger">Đã khóa</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Chưa khóa</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.IsLocked)
+                                        {
+                                            <form asp-action="Unlock" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="assignmentId" value="@item.Id" />
+                                                <input type="text"
+                                                        name="adjustmentReason"
+                                                        class="form-control form-control-sm mb-2"
+                                                        placeholder="Nhập lý do mở khóa..."
+                                                        required />
+                                                <button class="btn btn-warning btn-sm">Mở khóa</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Lock" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="assignmentId" value="@item.Id" />
+                                                <input type="text"
+                                                    name="adjustmentReason"
+                                                    class="form-control form-control-sm mb-2"
+                                                    placeholder="Nhập lý do khóa..."
+                                                    required />
+                                                <button class="btn btn-secondary btn-sm">Khóa</button>
+                                            </form>
+
+                                            <form asp-action="Remove" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="assignmentId" value="@item.Id" />
+                                                <input type="text"
+                                                    name="adjustmentReason"
+                                                    class="form-control form-control-sm mb-2"
+                                                    placeholder="Nhập lý do gỡ cặp..."
+                                                    required />
+                                                <button class="btn btn-danger btn-sm"
+                                                        onclick="return confirm('Bạn có chắc muốn gỡ cặp này?')">
+                                                    Gỡ cặp
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    Chưa có cặp ghép nào.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const topics = @Html.Raw(topicsJson);
+        const students = @Html.Raw(studentsJson);
+        const groups = @Html.Raw(groupsJson);
+
+        
+        function setupSearch(inputId, hiddenId, suggestionsId, data, filterFn = null) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            const suggestions = document.getElementById(suggestionsId);
+
+            input.addEventListener("input", function () {
+                hidden.value = "";
+                suggestions.innerHTML = "";
+                if (inputId === "topicSearch") {
+                    document.getElementById("groupSearch").value = "";
+                    document.getElementById("groupId").value = "";
+                    document.getElementById("groupSuggestions").innerHTML = "";
+                }
+
+                const keyword = input.value.trim().toLowerCase();
+
+                if (!keyword) return;
+
+                let source = filterFn ? data.filter(filterFn) : data;
+
+                const results = source.filter(item =>
+                    item.text.toLowerCase().includes(keyword)
+                ).slice(0, 10);
+
+                results.forEach(item => {
+                    const option = document.createElement("button");
+                    option.type = "button";
+                    option.className = "list-group-item list-group-item-action";
+                    option.textContent = item.text;
+
+                    option.addEventListener("click", function () {
+                        input.value = item.text;
+                        hidden.value = item.id;
+                        suggestions.innerHTML = "";
+                    });
+
+                    suggestions.appendChild(option);
+                });
+
+                if (results.length === 0) {
+                    const empty = document.createElement("div");
+                    empty.className = "list-group-item text-muted";
+                    empty.textContent = "Không tìm thấy kết quả";
+                    suggestions.appendChild(empty);
+                }
+            });
+        }
+
+
+        setupSearch("topicSearch", "topicId", "topicSuggestions", topics);
+
+        setupSearch("studentSearch", "studentUserId", "studentSuggestions", students);
+
+        setupSearch(
+            "groupSearch",
+            "groupId",
+            "groupSuggestions",
+            groups,
+            function (item) {
+                const topicId = document.getElementById("topicId").value;
+                return topicId && item.topicId === topicId;
+            }
+        );
+        document.getElementById("assignForm").addEventListener("submit", function (event) {
+            const topicId = document.getElementById("topicId").value;
+            const studentUserId = document.getElementById("studentUserId").value;
+
+            if (!topicId || !studentUserId) {
+                event.preventDefault();
+                alert("Vui lòng chọn đề tài và sinh viên từ danh sách gợi ý.");
+                return;
+            }
+
+            const groupSearch = document.getElementById("groupSearch");
+            const groupId = document.getElementById("groupId");
+            const groupName = document.getElementById("groupName");
+
+            if (groupId.value) {
+                groupName.value = "";
+            } else {
+                groupName.value = groupSearch.value.trim();
+            }
+        });
+    </script>
+}
