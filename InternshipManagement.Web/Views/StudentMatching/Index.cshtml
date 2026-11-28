@@ -1,0 +1,87 @@
+@model InternshipManagement.Web.ViewModels.Assignments.StudentMatchingPage
+@using InternshipManagement.Web.Models
+@{
+    ViewData["Title"] = "Kết quả ghép & bổ sung";
+}
+<div class="page-container">
+    <h4 class="fw-bold text-primary mb-3">Kết quả ghép &amp; đăng ký bổ sung</h4>
+    @if (TempData["SuccessMessage"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+    @if (TempData["ErrorMessage"] is string error) { <div class="alert alert-danger" role="alert">@error</div> }
+    <form method="get" class="d-flex gap-2 mb-3">
+        <select class="form-select" name="campaignId" aria-label="Đợt xét ghép">
+            @foreach (var campaign in Model.Campaigns) { <option value="@campaign.Id" selected="@(campaign.Id == Model.Campaign?.Id)">@campaign.Name</option> }
+        </select>
+        <button class="btn btn-outline-primary text-nowrap">Xem đợt</button>
+    </form>
+    @if (Model.Campaign is null) { <div class="alert alert-info">Chưa có đợt cho ngành của bạn.</div> }
+    else
+    {
+        @if (Model.PublishedRound is null)
+        {
+            <div class="alert alert-info">Chưa có kết quả được cán bộ duyệt công bố. Vui lòng quay lại sau.</div>
+        }
+        else
+        {
+            <div class="card card-body mb-3">
+                <h5>Kết quả của bạn — vòng @Model.PublishedRound.Number</h5>
+                <p class="small text-muted">Công bố lúc @Model.PublishedRound.PublishedAt?.AddHours(7).ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam).</p>
+                @if (Model.Result?.Status == MatchStatus.Matched && Model.Result.TopicId.HasValue)
+                {
+                    <p>Đề tài: <strong>@Model.Result.TopicTitle</strong></p>
+                    @if (Model.Result.ConfirmedAt.HasValue)
+                    {
+                        <div class="alert alert-success mb-0">Bạn đã xác nhận lúc @Model.Result.ConfirmedAt.Value.AddHours(7).ToString("dd/MM/yyyy HH:mm").</div>
+                    }
+                    else
+                    {
+                        <form asp-action="Confirm" method="post">
+                            <input type="hidden" name="campaignId" value="@Model.Campaign.Id" />
+                            <input type="hidden" name="roundId" value="@Model.PublishedRound.Id" />
+                            <input type="hidden" name="topicId" value="@Model.Result.TopicId" />
+                            <button class="btn btn-success">Xác nhận cặp ghép của tôi</button>
+                        </form>
+                    }
+                }
+                else { <p class="mb-0">Bạn chưa có cặp ghép được công bố. Theo dõi vòng bổ sung bên dưới.</p> }
+            </div>
+        }
+        @if (Model.SupplementaryRound is not null)
+        {
+            <div class="card card-body">
+                <h5>Vòng bổ sung @Model.SupplementaryRound.Number</h5>
+                <p>Hạn đăng ký: @Model.SupplementaryRound.ClosesAt?.AddHours(7).ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam).</p>
+                @if (Model.CanRegister)
+                {
+                    <p>Chọn tối đa 3 đề tài khác nhau theo thứ tự ưu tiên. Kết quả chỉ hiện sau khi cán bộ duyệt công bố.</p>
+                    <form asp-action="SavePreferences" method="post">
+                        <input type="hidden" name="campaignId" value="@Model.Campaign.Id" />
+                        <input type="hidden" name="roundId" value="@Model.SupplementaryRound.Id" />
+                        <input type="hidden" name="version" value="@Model.PreferenceVersion" />
+                        @for (var priority = 1; priority <= 3; priority++)
+                        {
+                            var selected = Model.Preferences.FirstOrDefault(p => p.Priority == priority)?.TopicId;
+                            <div class="mb-3">
+                                <label class="form-label" for="preference-@priority">Nguyện vọng @priority</label>
+                                <select id="preference-@priority" name="topicIds" class="form-select">
+                                    <option value="0">Không chọn</option>
+                                    @foreach (var topic in Model.Topics) { <option value="@topic.Id" selected="@(selected == topic.Id)">@topic.Title — @(topic.Remaining.HasValue ? $"còn {topic.Remaining} chỗ" : "không giới hạn")</option> }
+                                    @if (selected.HasValue && !Model.Topics.Any(t => t.Id == selected)) { <option value="@selected" selected>Đề tài đã chọn hiện không còn chỗ / không hợp lệ — vui lòng chọn lại</option> }
+                                </select>
+                            </div>
+                        }
+                        <button class="btn btn-primary">Lưu nguyện vọng bổ sung</button>
+                        <p class="small text-muted mt-2 mb-0">Để trống cả ba để hủy đăng ký bổ sung. Chỉ tiêu có thể thay đổi trước lúc chốt.</p>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-info mb-0">Bạn đã có cặp ghép hoặc đã hết thời gian đăng ký. Nguyện vọng được giữ để cán bộ xét công bố.</div>
+                }
+            </div>
+        }
+        else if (Model.PublishedRound is not null && Model.Result?.Status != MatchStatus.Matched)
+        {
+            <p class="text-muted">Chưa mở vòng bổ sung mới.</p>
+        }
+    }
+</div>

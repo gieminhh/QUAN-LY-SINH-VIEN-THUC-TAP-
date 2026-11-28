@@ -37,6 +37,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     {
         base.OnModelCreating(builder);
         builder.ConfigureParticipation();
+        builder.ConfigureMatchingPublication();
 
         // Map ASP.NET Core Identity tables
         builder.Entity<ApplicationUser>(b =>

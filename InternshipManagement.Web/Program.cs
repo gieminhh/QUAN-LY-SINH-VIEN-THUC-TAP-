@@ -56,6 +56,9 @@ builder.Services.AddScoped<ParticipationService>();
 builder.Services.AddScoped<ITopicAssignmentService, TopicAssignmentService>();
 
 // Add Authorization Policies
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<MatchingPublicationService>();
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireAdmin", policy => policy.RequireRole(AppRoles.Admin));

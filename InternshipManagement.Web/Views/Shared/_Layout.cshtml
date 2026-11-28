@@ -400,12 +400,14 @@
                 </li>
 
                 @if (isStudent) {
+                    <li class="menu-item"><a class="menu-link" asp-controller="StudentMatching" asp-action="Index"><span class="menu-link-content"><i class="bi bi-check2-circle menu-icon"></i><span class="menu-label">Kết quả ghép &amp; bổ sung</span></span></a></li>
                     <li class="menu-item"><a class="menu-link" asp-controller="ProjectGroups" asp-action="Index"><span class="menu-link-content"><i class="bi bi-people menu-icon"></i><span class="menu-label">Đăng ký cá nhân / nhóm</span></span></a></li>
                 }
                 @if (isLecturer) {
                     <li class="menu-item"><a class="menu-link" asp-controller="LecturerPriorities" asp-action="Index"><span class="menu-link-content"><i class="bi bi-list-ol menu-icon"></i><span class="menu-label">Ưu tiên sinh viên</span></span></a></li>
                 }
                 @if (isManager) {
+                    <li class="menu-item"><a class="menu-link" asp-controller="MatchingPublications" asp-action="Index"><span class="menu-link-content"><i class="bi bi-megaphone menu-icon"></i><span class="menu-label">Công bố kết quả ghép</span></span></a></li>
                     <li class="menu-item"><a class="menu-link" asp-controller="ParticipationPolicies" asp-action="Index"><span class="menu-link-content"><i class="bi bi-sliders menu-icon"></i><span class="menu-label">Chính sách nhóm / ưu tiên</span></span></a></li>
                 }
 

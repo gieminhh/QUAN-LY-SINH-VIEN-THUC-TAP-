@@ -789,6 +789,112 @@ namespace InternshipManagement.Web.Migrations
                     b.ToTable("majors", (string)null);
                 });
 
+            modelBuilder.Entity("InternshipManagement.Web.Models.MatchingPublishedResult", b =>
+                {
+                    b.Property<ulong>("RoundId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<string>("StudentId")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<ulong?>("TopicId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<string>("TopicTitle")
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)");
+
+                    b.HasKey("RoundId", "StudentId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("TopicId");
+
+                    b.ToTable("matching_published_results");
+                });
+
+            modelBuilder.Entity("InternshipManagement.Web.Models.MatchingRound", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<ulong>("CampaignId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<DateTime?>("ClosesAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("OpenedBy")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("PublishedBy")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpenedBy");
+
+                    b.HasIndex("PublishedBy");
+
+                    b.HasIndex("CampaignId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("matching_rounds");
+                });
+
+            modelBuilder.Entity("InternshipManagement.Web.Models.MatchingRoundPreference", b =>
+                {
+                    b.Property<ulong>("RoundId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<string>("StudentId")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<ulong>("TopicId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("RoundId", "StudentId", "TopicId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("TopicId");
+
+                    b.HasIndex("RoundId", "StudentId", "Priority")
+                        .IsUnique();
+
+                    b.ToTable("matching_round_preferences");
+                });
+
             modelBuilder.Entity("InternshipManagement.Web.Models.ParticipationPolicy", b =>
                 {
                     b.Property<ulong>("CampaignId")
@@ -1682,6 +1788,67 @@ namespace InternshipManagement.Web.Migrations
                         .IsRequired();
 
                     b.Navigation("Faculty");
+                });
+
+            modelBuilder.Entity("InternshipManagement.Web.Models.MatchingPublishedResult", b =>
+                {
+                    b.HasOne("InternshipManagement.Web.Models.MatchingRound", null)
+                        .WithMany()
+                        .HasForeignKey("RoundId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.Topic", null)
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("InternshipManagement.Web.Models.MatchingRound", b =>
+                {
+                    b.HasOne("InternshipManagement.Web.Models.Campaign", null)
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("OpenedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("PublishedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("InternshipManagement.Web.Models.MatchingRoundPreference", b =>
+                {
+                    b.HasOne("InternshipManagement.Web.Models.MatchingRound", null)
+                        .WithMany()
+                        .HasForeignKey("RoundId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InternshipManagement.Web.Models.Topic", null)
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("InternshipManagement.Web.Models.ParticipationPolicy", b =>
